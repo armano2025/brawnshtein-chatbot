@@ -1,0 +1,57 @@
+/* =========== בסיס =========== */
+:root{
+  --bg:#f5f7fb; --card:#fff; --text:#0f172a; --muted:#475569;
+  --border:#e5e7eb; --primary:#2563eb; --primary-800:#1e40af;
+  --ok:#10b981; --err:#ef4444; --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,Helvetica; color:var(--text);
+  background: radial-gradient(900px 500px at 100% -20%, #cfe3ff44, transparent 60%) , var(--bg);
+  direction: rtl;
+}
+
+/* =========== מבנה =========== */
+.wrap{max-width:900px;margin:28px auto;padding:0 16px}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:22px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--primary),var(--primary-800));color:#fff;font-weight:700}
+.title{font-weight:700}
+
+.body{padding:18px;min-height:380px}
+.footer{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--border)}
+
+/* =========== קומפוננטות =========== */
+.bubble{
+  background:#f8fafc; border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; margin:10px 0; line-height:1.8;
+}
+.muted{color:var(--muted)}
+.summary{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#f1f5ff;
+  border:1px solid #dbeafe;border-radius:14px;padding:10px 12px;margin:8px 0
+}
+.chip{padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #dbeafe;font-size:14px}
+
+.btn{
+  width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);
+  background:#fff;cursor:pointer;transition:.2s;margin:8px 0;font-size:16px
+}
+.btn:hover{transform:translateY(-1px);border-color:#cbd5e1;background:#fdfdfd}
+.btn.primary{background:linear-gradient(145deg,var(--primary),var(--primary-800));color:#fff;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.02)}
+
+.input-wrap{display:grid;gap:8px;margin:8px 0}
+.input-wrap label{font-weight:700}
+.input,.textarea{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:15px;direction:rtl
+}
+.textarea{min-height:96px;resize:vertical}
+
+.ok{background:#ecfdf5;border-color:#bbf7d0}
+.err{background:#fef2f2;border-color:#fecaca}
