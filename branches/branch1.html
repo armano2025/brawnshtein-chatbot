@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>יוסטון – שיעור על בסיס מקום פנוי</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div id="chat-box" class="chat-box"></div>
+    <input id="chat-input" class="chat-input" type="text" placeholder="הקלד כאן..." />
+    <button id="send-btn" class="send-btn">שלח</button>
+  </div>
+
+  <script>
+    const sheetUrl = "https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec";
+    let conversationPath = [];
+
+    function addMessage(text, sender = "bot") {
+      const chatBox = document.getElementById("chat-box");
+      const message = document.createElement("div");
+      message.classList.add("message", sender);
+      message.innerHTML = text;
+      chatBox.appendChild(message);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addButtons(options) {
+      const chatBox = document.getElementById("chat-box");
+      const btnContainer = document.createElement("div");
+      btnContainer.classList.add("btn-container");
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt.text;
+        btn.onclick = () => {
+          conversationPath.push(opt.text);
+          addMessage(opt.text, "user");
+          opt.action();
+        };
+        btnContainer.appendChild(btn);
+      });
+      chatBox.appendChild(btnContainer);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function askPlanType() {
+      addMessage("בחר/י את סוג המסלול הרצוי:");
+      addButtons([
+        { text: "מסלול קבוצה – 80₪", action: askSubject },
+        { text: "מסלול טריפל – 100₪", action: askSubject },
+        { text: "מסלול פרטי – 160₪", action: askSubject }
+      ]);
+    }
+
+    function askSubject() {
+      addMessage("בחר/י מקצוע:");
+      addButtons([
+        { text: "אנגלית", action: askAvailability },
+        { text: "מתמטיקה", action: askAvailability },
+        { text: "פיזיקה", action: askAvailability },
+        { text: "שפה", action: askAvailability },
+        { text: "אנגלית מדוברת", action: askAvailability }
+      ]);
+    }
+
+    function askAvailability() {
+      addMessage("ציין/י ימים ושעות בהם נוח לך להגיע:");
+      waitForText(answer => {
+        conversationPath.push("זמינות: " + answer);
+        askExtraNotes();
+      });
+    }
+
+    function askExtraNotes() {
+      addMessage("האם יש לך בקשות או הערות נוספות?");
+      waitForText(answer => {
+        conversationPath.push("הערות: " + answer);
+        askFullName();
+      });
+    }
+
+    function askFullName() {
+      addMessage("מה שמך המלא?");
+      waitForText(answer => {
+        conversationPath.push("שם: " + answer);
+        askPhone();
+      });
+    }
+
+    function askPhone() {
+      addMessage("מה מספר הטלפון שלך?");
+      waitForText(answer => {
+        conversationPath.push("טלפון: " + answer);
+        sendToSheet();
+      });
+    }
+
+    function sendToSheet() {
+      const payload = {
+        path: conversationPath.join(" > "),
+        fullName: conversationPath.find(p => p.startsWith("שם: ")).replace("שם: ", ""),
+        phone: conversationPath.find(p => p.startsWith("טלפון: ")).replace("טלפון: ", "")
+      };
+      fetch(sheetUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      }).then(res => res.json())
+        .then(() => addMessage("הבקשה נשלחה למזכירות. נחזור אליך בהקדם 🚀"))
+        .catch(() => addMessage("אירעה שגיאה בשליחת הבקשה."));
+    }
+
+    function waitForText(callback) {
+      const input = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("send-btn");
+
+      function handler() {
+        const val = input.value.trim();
+        if (val) {
+          addMessage(val, "user");
+          input.value = "";
+          sendBtn.removeEventListener("click", handler);
+          callback(val);
+        }
+      }
+
+      sendBtn.addEventListener("click", handler);
+    }
+
+    // התחלה
+    addMessage("היי, אני יוסטון 👨‍🚀<br>העוזר הדיגיטלי של מרכז בראונשטיין.<br>איך אוכל לעזור?");
+    addButtons([
+      { text: "אני מעוניינת בשיעור על בסיס מקום פנוי", action: askPlanType }
+    ]);
+  </script>
+</body>
+</html>
