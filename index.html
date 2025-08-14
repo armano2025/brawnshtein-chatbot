@@ -86,16 +86,19 @@
 
       // כפתורים
       setTimeout(()=>{
+        // ענף 1
         actionBtn('שיעור על בסיס מקום פנוי', ()=>{
           user('שיעור על בסיס מקום פנוי');
           setTimeout(()=> location.href='branches/branch1.html', 200);
         }, 'btn primary');
 
-        actionBtn('פרטים על מנוי חודשי (בקרוב)', ()=>{
+        // ענף 2 - הופך לפעיל
+        actionBtn('פרטים על מנוי חודשי', ()=>{
           user('פרטים על מנוי חודשי');
-          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
+          setTimeout(()=> location.href='branches/branch2.html', 200);
         });
 
+        // ענף 3 - נשאר "בקרוב"
         actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
           user('מנויה קיימת – פעולות');
           typingThen('האפשרות הזו תתווסף בקרוב 🕒');
