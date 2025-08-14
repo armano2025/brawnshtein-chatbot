@@ -256,3 +256,50 @@ body{
   .logo{ width:40px; height:40px }
   .bubble{ max-width: 92% }
 }
+
+/* =========================
+   Buttons – no blue, nice feedback
+   ========================= */
+
+/* ביטול היילייט כחול במובייל */
+button, .btn { -webkit-tap-highlight-color: transparent; }
+
+/* הסרת outline/צל כחול דיפולטי */
+button:focus,
+button:active,
+.btn:focus,
+.btn:active {
+  outline: none;
+  box-shadow: none;
+  background-color: inherit;
+  color: inherit;
+  border-color: inherit;
+}
+
+/* פידבק לחיץ רך על הקשה */
+.btn:active {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* טבעת נראות נגישה במקלדת (בלי למלא בכחול) */
+.btn:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(37,99,235,0.28),
+    0 4px 12px rgba(0,0,0,0.15);
+  border-color: rgba(37,99,235,0.35);
+}
+
+/* גרסה מותאמת ל-primary */
+.btn.primary:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(37,99,235,0.32),
+    0 8px 20px rgba(37,99,235,0.25);
+}
+
+/* ניקוי פוקוס ישן בפיירפוקס */
+button::-moz-focus-inner,
+.btn::-moz-focus-inner { border: 0; }
+
+/* למקרה שספארי מתעקש על outline */
+button:focus { outline-color: transparent; }
