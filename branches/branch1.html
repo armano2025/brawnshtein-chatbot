@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור על בסיס מקום פנוי</title>
 
-  <!-- חשוב: להתאים לשם הקובץ אצלך (styles.css) -->
   <link rel="stylesheet" href="../styles.css" />
   <meta name="theme-color" content="#2563eb" />
 </head>
@@ -59,24 +58,38 @@
 
     /* ===== עזרים UI ===== */
     const clear = ()=> area.innerHTML = '';
-    function bubble(html){
+
+    // בועה של בוט (שמאל)
+    function bot(html){
       const d=document.createElement('div');
-      d.className='bubble';
+      d.className='bubble bot';
       d.innerHTML=html;
       area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
       return d;
     }
+    // בועה של משתמש (ימין)
+    function user(html){
+      const d=document.createElement('div');
+      d.className='bubble user';
+      d.innerHTML=html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+
     function button(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
       b.textContent=text;
       b.onclick=onClick;
       area.appendChild(b);
+      area.scrollTop = area.scrollHeight;
       return b;
     }
     function inputRow(label, {type='text', id, textarea=false, placeholder=''}={}){
       const wrap=document.createElement('div');
-      wrap.className='input-wrap bubble';
+      wrap.className='input-wrap bubble bot'; /* שדות נראים כבוט */
       const l=document.createElement('label'); l.textContent=label;
       let el;
       if(textarea){
@@ -87,6 +100,7 @@
       el.id=id; el.placeholder=placeholder; el.dir='rtl';
       wrap.append(l, el);
       area.appendChild(wrap);
+      area.scrollTop = area.scrollHeight;
       return el;
     }
     function summaryChips(){
@@ -94,6 +108,7 @@
       if(state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
       if(state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
       area.appendChild(s);
+      area.scrollTop = area.scrollHeight;
     }
     function chip(text){
       const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c;
@@ -108,8 +123,7 @@
       area.scrollTop = area.scrollHeight;
       setTimeout(()=>{
         typing.remove();
-        bubble(text);
-        area.scrollTop = area.scrollHeight;
+        bot(text);
       }, 1500);
     }
 
@@ -144,30 +158,45 @@
     function start(){
       clear(); push(start);
       addBotMessageWithTyping('<strong>היי, אני יוסטון 👨‍🚀</strong><br>נקבע שיעור חד־פעמי על בסיס מקום פנוי.');
-      button('יאללה נתחיל', stepPlan, 'btn primary');
+      button('יאללה נתחיל', ()=>{
+        user('יאללה נתחיל');
+        stepPlan();
+      }, 'btn primary');
     }
 
     // שלב 1 – בחירת מסלול
     function stepPlan(){
       clear(); push(stepPlan);
-      bubble('<strong>בחרי מסלול</strong><br><span class="muted">חד־פעמי בלבד.</span>');
-      button('קבוצה – עד 5 תלמידים – 80₪',  ()=>{ state.data.planType='group';  state.data.price=PRICES.group;  stepSubject(); });
-      button('טריפל – עד 3 תלמידים – 100₪', ()=>{ state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject(); });
-      button('פרטי – 160₪',                   ()=>{ state.data.planType='private';state.data.price=PRICES.private;stepSubject(); });
+      bot('<strong>בחרי מסלול</strong><br><span class="muted">חד־פעמי בלבד.</span>');
+      button('קבוצה – עד 5 תלמידים – 80₪',  ()=>{
+        user('קבוצה – עד 5 תלמידים – 80₪');
+        state.data.planType='group';  state.data.price=PRICES.group;  stepSubject();
+      });
+      button('טריפל – עד 3 תלמידים – 100₪', ()=>{
+        user('טריפל – עד 3 תלמידים – 100₪');
+        state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
+      });
+      button('פרטי – 160₪', ()=>{
+        user('פרטי – 160₪');
+        state.data.planType='private';state.data.price=PRICES.private;stepSubject();
+      });
     }
 
     // שלב 2 – בחירת מקצוע
     function stepSubject(){
       clear(); push(stepSubject);
-      bubble('<strong>איזה מקצוע לשיעור?</strong>');
-      SUBJECTS.forEach(s=> button(s, ()=>{ state.data.subject=s; stepDetails(); }));
+      bot('<strong>איזה מקצוע לשיעור?</strong>');
+      SUBJECTS.forEach(s=> button(s, ()=>{
+        user(s);
+        state.data.subject=s; stepDetails();
+      }));
       summaryChips();
     }
 
     // שלב 3 (מרוכז) – זמינות, הודעה, שם, טלפון + שליחה
     function stepDetails(){
       clear(); push(stepDetails);
-      bubble('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי ונשלח למזכירות.</span>');
+      bot('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי ונשלח למזכירות.</span>');
       summaryChips();
 
       const availability = inputRow('ימי ושעות זמינות',{textarea:true,id:'availability',placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר'});
@@ -176,14 +205,15 @@
       const phone        = inputRow('טלפון לחזרה',{type:'tel',id:'phone',placeholder:'לדוגמה: 0501234567'});
 
       button('שליחה למזכירות', async ()=>{
+        user('שליחה למזכירות');
         const avail = (availability.value||'').trim();
         const note  = (message.value||'').trim();
         const name  = (fullName.value||'').trim();
         const tel   = normalizeILPhone(phone.value||'');
 
-        if(!avail){ bubble('אנא כתבי זמינות (ימים ושעות).').classList.add('err'); return; }
-        if(!name){  bubble('יש להזין שם מלא.').classList.add('err'); return; }
-        if(!validILPhone(tel)){ bubble('מספר טלפון לא תקין (למשל 0501234567).').classList.add('err'); return; }
+        if(!avail){ bot('אנא כתבי זמינות (ימים ושעות).').classList.add('bot','err'); return; }
+        if(!name){  bot('יש להזין שם מלא.').classList.add('bot','err'); return; }
+        if(!validILPhone(tel)){ bot('מספר טלפון לא תקין (למשל 0501234567).').classList.add('bot','err'); return; }
 
         state.data.availability = avail;
         state.data.message = note;
@@ -209,9 +239,9 @@
 
         clear();
         if(ok){
-          bubble('הבקשה נרשמה והועברה למזכירות 🛰️ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור.').classList.add('ok');
+          bot('הבקשה נרשמה והועברה למזכירות 🛰️ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור.').classList.add('ok');
         }else{
-          bubble('לא הצלחנו לשמור את הבקשה לגיליון. אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          bot('לא הצלחנו לשמור את הבקשה לגיליון. אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
         }
         button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
       }, 'btn primary');
