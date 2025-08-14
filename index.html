@@ -7,6 +7,11 @@
 
   <link rel="stylesheet" href="styles.css" />
   <meta name="theme-color" content="#2563eb" />
+
+  <style>
+    /* שיפור גלילה חלקה לאזור השיחה */
+    #area{ scroll-behavior:smooth; }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -34,12 +39,14 @@
   <script>
     const area = document.getElementById('area');
 
+    function autoscroll(){ area.scrollTop = area.scrollHeight; }
+
     function bot(html){
       const d=document.createElement('div');
       d.className='bubble bot';
       d.innerHTML=html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function user(html){
@@ -47,63 +54,67 @@
       d.className='bubble user';
       d.innerHTML=html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function actionBtn(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
       b.textContent=text;
-      b.onclick=onClick;
+      b.onclick=()=>{
+        // מניעת הקלקות כפולות
+        [...area.querySelectorAll('button')].forEach(btn=>btn.disabled=true);
+        onClick();
+      };
       area.appendChild(b);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return b;
     }
-    function typingThen(text, delay=1000){
+    function typingThen(text, delay=650){
       const t=document.createElement('div');
       t.className='typing-indicator';
       t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
       area.appendChild(t);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
     function start(){
       area.innerHTML = '';
 
-      // הודעת פתיחה
+      // הודעת פתיחה (קצרה ועניינית)
       typingThen(
         '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
         'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
         'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
-        900
+        600
       );
 
       // הנחיה
       setTimeout(()=>{
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 700);
-      }, 2000);
+        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
+      }, 900);
 
-      // כפתורים
+      // כפתורים (שלושת הענפים פעילים)
       setTimeout(()=>{
         // ענף 1
         actionBtn('שיעור על בסיס מקום פנוי', ()=>{
           user('שיעור על בסיס מקום פנוי');
-          setTimeout(()=> location.href='branches/branch1.html', 200);
+          setTimeout(()=> location.href='branches/branch1.html', 150);
         }, 'btn primary');
 
-        // ענף 2 - הופך לפעיל
+        // ענף 2
         actionBtn('פרטים על מנוי חודשי', ()=>{
           user('פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2.html', 200);
+          setTimeout(()=> location.href='branches/branch2.html', 150);
         });
 
-        // ענף 3 - נשאר "בקרוב"
-        actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
+        // ענף 3
+        actionBtn('מנויה קיימת – פעולות', ()=>{
           user('מנויה קיימת – פעולות');
-          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
+          setTimeout(()=> location.href='branches/branch3.html', 150);
         });
-      }, 3000);
+      }, 1600);
     }
 
     start();
