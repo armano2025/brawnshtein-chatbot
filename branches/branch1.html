@@ -31,35 +31,32 @@
   </div>
 
   <script>
-    /* ===== קונפיג ===== */
     const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
     const PRICES = { group: 80, triple: 100, private: 160 };
     const PLAN_HE = { group: 'קבוצה', triple: 'טריפל', private: 'פרטי' };
     const SUBJECTS = ['אנגלית','מתמטיקה','פיזיקה','שפה','אנגלית מדוברת'];
 
-    /* ===== DOM/State ===== */
     const area = document.getElementById('area');
     const backBtn = document.getElementById('backBtn');
     const state = {
       history: [],
       data: {
-        planType: null,       // group | triple | private
-        price: null,          // 80 | 100 | 160
-        subject: null,        // עברית
-        availability: null,   // טקסט חופשי
-        message: '',          // אופציונלי
+        planType: null,
+        price: null,
+        subject: null,
+        availability: null,
+        message: '',
         fullName: null,
         phone: null
       }
     };
-    const push  = (fn)=> state.history.push(fn);
-    const goBack= ()=>{ if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
+    const push  = fn => state.history.push(fn);
+    const goBack= () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
     backBtn.onclick = goBack;
 
-    /* ===== עזרים UI ===== */
+    /* ===== UI ===== */
     const clear = ()=> area.innerHTML = '';
 
-    // בועה של בוט (שמאל)
     function bot(html){
       const d=document.createElement('div');
       d.className='bubble bot';
@@ -68,7 +65,6 @@
       area.scrollTop = area.scrollHeight;
       return d;
     }
-    // בועה של משתמש (ימין)
     function user(html){
       const d=document.createElement('div');
       d.className='bubble user';
@@ -77,7 +73,6 @@
       area.scrollTop = area.scrollHeight;
       return d;
     }
-
     function button(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
@@ -89,7 +84,7 @@
     }
     function inputRow(label, {type='text', id, textarea=false, placeholder=''}={}){
       const wrap=document.createElement('div');
-      wrap.className='input-wrap bubble bot'; /* שדות נראים כבוט */
+      wrap.className='input-wrap bubble bot';
       const l=document.createElement('label'); l.textContent=label;
       let el;
       if(textarea){
@@ -114,20 +109,16 @@
       const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c;
     }
 
-    /* ===== אפקט “שלוש נקודות” (1.5 שניות) ===== */
-    function addBotMessageWithTyping(text){
-      const typing=document.createElement('div');
-      typing.className='typing-indicator';
-      typing.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(typing);
+    function typingThen(text, delay=1000){
+      const t=document.createElement('div');
+      t.className='typing-indicator';
+      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(t);
       area.scrollTop = area.scrollHeight;
-      setTimeout(()=>{
-        typing.remove();
-        bot(text);
-      }, 1500);
+      setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
-    /* ===== טלפון ישראלי ===== */
+    /* ===== Utils ===== */
     const normalizeILPhone = raw => {
       let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
       if(p.startsWith('+972')) p='0'+p.slice(4);
@@ -136,12 +127,11 @@
     };
     const validILPhone = p => /^0\d{8,9}$/.test(p||'');
 
-    /* ===== שליחה ל-Google Sheets ===== */
     async function sendLeadToSheet(payload){
       try{
         const res = await fetch(SHEETS_WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' }, // מפחית preflight
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify(payload)
         });
         const j = await res.json().catch(()=>({ok:false}));
@@ -152,51 +142,50 @@
       }
     }
 
-    /* ===== זרימה ===== */
-
-    // פתיחה
+    /* ===== Flow ===== */
     function start(){
       clear(); push(start);
-      addBotMessageWithTyping('<strong>היי, אני יוסטון 👨‍🚀</strong><br>נקבע שיעור חד־פעמי על בסיס מקום פנוי.');
-      button('יאללה נתחיל', ()=>{
-        user('יאללה נתחיל');
-        stepPlan();
-      }, 'btn primary');
+      typingThen(
+        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
+        'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
+        'בואי נקבע לך שיעור חד־פעמי על בסיס מקום פנוי 🗓️',
+        900
+      );
+      setTimeout(()=>{
+        typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 700);
+      }, 2000);
+
+      setTimeout(()=>{
+        button('קבוצה – עד 5 תלמידים – 80₪', ()=>{
+          user('קבוצה – עד 5 תלמידים – 80₪');
+          state.data.planType='group'; state.data.price=PRICES.group; stepSubject();
+        });
+        button('טריפל – עד 3 תלמידים – 100₪', ()=>{
+          user('טריפל – עד 3 תלמידים – 100₪');
+          state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
+        });
+        button('פרטי – 160₪', ()=>{
+          user('פרטי – 160₪');
+          state.data.planType='private'; state.data.price=PRICES.private; stepSubject();
+        });
+      }, 3000);
     }
 
-    // שלב 1 – בחירת מסלול
-    function stepPlan(){
-      clear(); push(stepPlan);
-      bot('<strong>בחרי מסלול</strong><br><span class="muted">חד־פעמי בלבד.</span>');
-      button('קבוצה – עד 5 תלמידים – 80₪',  ()=>{
-        user('קבוצה – עד 5 תלמידים – 80₪');
-        state.data.planType='group';  state.data.price=PRICES.group;  stepSubject();
-      });
-      button('טריפל – עד 3 תלמידים – 100₪', ()=>{
-        user('טריפל – עד 3 תלמידים – 100₪');
-        state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
-      });
-      button('פרטי – 160₪', ()=>{
-        user('פרטי – 160₪');
-        state.data.planType='private';state.data.price=PRICES.private;stepSubject();
-      });
-    }
-
-    // שלב 2 – בחירת מקצוע
     function stepSubject(){
       clear(); push(stepSubject);
-      bot('<strong>איזה מקצוע לשיעור?</strong>');
-      SUBJECTS.forEach(s=> button(s, ()=>{
-        user(s);
-        state.data.subject=s; stepDetails();
-      }));
-      summaryChips();
+      typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 700);
+      setTimeout(()=>{
+        SUBJECTS.forEach(s=> button(s, ()=>{
+          user(s);
+          state.data.subject=s; stepDetails();
+        }));
+        summaryChips();
+      }, 1600);
     }
 
-    // שלב 3 (מרוכז) – זמינות, הודעה, שם, טלפון + שליחה
     function stepDetails(){
       clear(); push(stepDetails);
-      bot('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי ונשלח למזכירות.</span>');
+      bot('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי את הפרטים ונעביר למזכירות 📋</span>');
       summaryChips();
 
       const availability = inputRow('ימי ושעות זמינות',{textarea:true,id:'availability',placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר'});
@@ -204,23 +193,23 @@
       const fullName     = inputRow('שם מלא',{id:'fullName',placeholder:'לדוגמה: דנה לוי'});
       const phone        = inputRow('טלפון לחזרה',{type:'tel',id:'phone',placeholder:'לדוגמה: 0501234567'});
 
-      button('שליחה למזכירות', async ()=>{
+      button('שליחה למזכירות 📤', async ()=>{
         user('שליחה למזכירות');
         const avail = (availability.value||'').trim();
         const note  = (message.value||'').trim();
         const name  = (fullName.value||'').trim();
         const tel   = normalizeILPhone(phone.value||'');
 
-        if(!avail){ bot('אנא כתבי זמינות (ימים ושעות).').classList.add('bot','err'); return; }
-        if(!name){  bot('יש להזין שם מלא.').classList.add('bot','err'); return; }
-        if(!validILPhone(tel)){ bot('מספר טלפון לא תקין (למשל 0501234567).').classList.add('bot','err'); return; }
+        if(!avail){ bot('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); return; }
+        if(!name){  bot('יש להזין שם מלא ✏️').classList.add('err'); return; }
+        if(!validILPhone(tel)){ bot('מספר טלפון לא תקין 📞').classList.add('err'); return; }
 
         state.data.availability = avail;
         state.data.message = note;
         state.data.fullName = name;
         state.data.phone = tel;
 
-        addBotMessageWithTyping('שולח למזכירות…');
+        typingThen('שולח למזכירות… ⏳');
 
         const ok = await sendLeadToSheet({
           path: 'שיעור על בסיס מקום פנוי',
@@ -239,9 +228,9 @@
 
         clear();
         if(ok){
-          bot('הבקשה נרשמה והועברה למזכירות 🛰️ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור.').classList.add('ok');
+          bot('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
         }else{
-          bot('לא הצלחנו לשמור את הבקשה לגיליון. אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          bot('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050-9570866.').classList.add('err');
         }
         button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
       }, 'btn primary');
@@ -249,7 +238,6 @@
       button('חזרה', goBack);
     }
 
-    // הפעלה
     start();
   </script>
 </body>
