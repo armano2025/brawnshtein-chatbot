@@ -34,7 +34,6 @@
     /* ===== קונפיג ===== */
     const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
     const ORIGAMI_URL = 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
-    const TERMS_URL   = 'https://forms.gle/orUvvLrrSuCGAPVVA';
 
     /* ===== DOM/State ===== */
     const area    = document.getElementById('area');
@@ -42,10 +41,7 @@
 
     const state = {
       history: [],
-      lead: {
-        fullName: null,
-        phone: null
-      }
+      lead: { fullName: null, phone: null }
     };
     const push   = fn => state.history.push(fn);
     const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
@@ -91,14 +87,20 @@
       return el;
     }
 
-    // אינדיקציית הקלדה -> הודעת בוט
-    function typingThen(text, delay=900){
-      const t = document.createElement('div');
-      t.className = 'typing-indicator';
-      t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t);
-      area.scrollTop = area.scrollHeight;
-      setTimeout(()=>{ t.remove(); bot(text); }, delay);
+    // typing -> הודעת בוט (גרסה אסינכרונית שמחזירה Promise)
+    function typingThenP(text, delay=900){
+      return new Promise(resolve=>{
+        const t = document.createElement('div');
+        t.className = 'typing-indicator';
+        t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+        area.appendChild(t);
+        area.scrollTop = area.scrollHeight;
+        setTimeout(()=>{
+          t.remove();
+          bot(text);
+          resolve();
+        }, delay);
+      });
     }
 
     // בועת “שומר…” עם פס התקדמות – מחזירה פונקציה להסרה
@@ -137,20 +139,20 @@
 
     /* ===== Flow ===== */
 
-    // פתיחה: מבקש שם + טלפון
-    function start(){
+    // פתיחה: קודם בועת טקסט, רק אחריה הטופס
+    async function start(){
       clear(); push(start);
 
-      typingThen(
+      await typingThenP(
         'מעולה! אשמח לעזור לך להקים מנוי במרכז הלמידה של חן בראונשטיין 👨‍🚀<br>' +
         'לפני שנתחיל:<br>מה השם המלא שלך?<br>ומה מספר הטלפון?',
         800
       );
 
-      const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
-      const phone = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+      // עכשיו – הטופס (מופיע אחרי בועת הבוט, לא לפניה)
+      const name  = inputRow('שם מלא',         { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const phone = inputRow('טלפון לחזרה',    { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
-      // כפתור השמירה – כתוב עליו "המשך"
       const nextBtn = button('המשך', async ()=>{
         user('המשך');
 
@@ -164,7 +166,6 @@
         state.lead.fullName = fullName;
         state.lead.phone    = phoneNorm;
 
-        // שמירה מיידית
         nextBtn.disabled = true;
         const stopProcessing = showProcessing();
 
@@ -182,7 +183,7 @@
 
         if(ok){
           bot('הפרטים נשמרו בהצלחה ✅');
-          setTimeout(()=> continueInfo(), 700); // ממשיכים למידע
+          setTimeout(()=> continueInfo(), 700);
         }else{
           bot('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
           nextBtn.disabled = false;
@@ -192,11 +193,11 @@
       button('חזרה', goBack);
     }
 
-    // מידע על המרכז -> מחירים -> לינק הרשמה
-    function continueInfo(){
+    // מידע -> מחירים -> לינק הרשמה
+    async function continueInfo(){
       clear(); push(continueInfo);
 
-      typingThen(
+      await typingThenP(
         'כמה מילים על איך אנחנו עובדים:<br>' +
         '• כל שיעור נמשך <strong>50 דקות</strong> ומתחיל בשעה עגולה.<br>' +
         '• לומדים את חומר הכיתה, משלימים פערים, עוזרים בשיעורי בית, מכינים למבחנים,<br>' +
@@ -204,41 +205,34 @@
         800
       );
 
-      setTimeout(()=>{
-        typingThen(
-          '<strong>מסלולים ומחירים</strong><br>' +
-          '• קבוצתי (עד 5 תלמידים): <strong>295 ₪ / חודש</strong><br>' +
-          '• טריפל (עד 3 תלמידים): <strong>385 ₪ / חודש</strong><br>' +
-          '— ואם תרצי להתחיל בקטן: <strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי – ' +
-          '80 ₪ (קבוצתי) / 100 ₪ (טריפל)',
-          800
-        );
-      }, 1200);
+      await typingThenP(
+        '<strong>מסלולים ומחירים</strong><br>' +
+        '• קבוצתי (עד 5 תלמידים): <strong>295 ₪ / חודש</strong><br>' +
+        '• טריפל (עד 3 תלמידים): <strong>385 ₪ / חודש</strong><br>' +
+        '— ואם תרצי להתחיל בקטן: <strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי – ' +
+        '80 ₪ (קבוצתי) / 100 ₪ (טריפל)',
+        800
+      );
 
-      setTimeout(()=>{
-        typingThen(
-          'כדי להיכנס לרשימת ההמתנה ולשריין מקום, נשמח שתמלאי את טופס הרישום:',
-          700
-        );
+      await typingThenP(
+        'כדי להיכנס לרשימת ההמתנה ולשריין מקום, נשמח שתמלאי את טופס הרישום:',
+        700
+      );
 
-        // כפתורים ללינק/מאוחר יותר/שיעור חד פעמי
-        button('פתחי את טופס ההרשמה 📝', ()=>{
-          user('פתחתי את טופס ההרשמה');
-          window.open(ORIGAMI_URL, '_blank', 'noopener');
-        }, 'btn primary');
+      button('פתחי את טופס ההרשמה 📝', ()=>{
+        user('פתחתי את טופס ההרשמה');
+        window.open(ORIGAMI_URL, '_blank', 'noopener');
+      }, 'btn primary');
 
-        button('אשלים את הטופס מאוחר יותר ⏳', ()=>{
-          user('אשלים את הטופס מאוחר יותר');
-          typingThen('סגור 🙂 כבר שמרתי את הפרטים שלך וניצור קשר בהקדם.');
-        });
+      button('אשלים את הטופס מאוחר יותר ⏳', ()=>{
+        user('אשלים את הטופס מאוחר יותר');
+        typingThenP('סגור 🙂 כבר שמרתי את הפרטים שלך וניצור קשר בהקדם.');
+      });
 
-        button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
-          user('שיעור חד־פעמי עכשיו');
-          // מפנים לזרימה של שיעור חד־פעמי (ענף 1)
-          setTimeout(()=> location.href='./branch1.html', 200);
-        });
-
-      }, 2600);
+      button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
+        user('שיעור חד־פעמי עכשיו');
+        setTimeout(()=> location.href='./branch1.html', 200);
+      });
     }
 
     // הפעלה
