@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>יוסטון – צ׳טבוט</title>
-
-  <link rel="stylesheet" href="styles.css" />
+  <title>יוסטון – צ'טבוט</title>
+  <link rel="stylesheet" href="style.css" />
   <meta name="theme-color" content="#2563eb" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-
-      <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
@@ -20,90 +17,22 @@
         </div>
       </div>
 
-      <!-- אזור התוכן -->
-      <div class="body" id="area"></div>
+      <div class="body" id="area">
+        <!-- בועת פתיחה -->
+        <div class="bubble bot">
+          היי 👋 אני יוסטון – העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>
+          אני כאן כדי לעזור לך לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויים קיימים.<br>
+          בחרי את האפשרות שמתאימה לך 👇
+        </div>
 
-      <!-- תחתית -->
-      <div class="footer">
-        <button class="btn" onclick="location.reload()">ריענון</button>
+        <!-- כפתורים ראשיים -->
+        <div class="options">
+          <a href="branch1.html" class="option-btn">שיעור על בסיס מקום פנוי 🗓️</a>
+          <a href="#" class="option-btn disabled">פרטים על מנוי חודשי (בקרוב)</a>
+          <a href="#" class="option-btn disabled">מנויה קיימת – פעולות (בקרוב)</a>
+        </div>
       </div>
-
     </div>
   </div>
-
-  <script>
-    const area = document.getElementById('area');
-
-    function bot(html){
-      const d=document.createElement('div');
-      d.className='bubble bot';
-      d.innerHTML=html;
-      area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
-      return d;
-    }
-    function user(html){
-      const d=document.createElement('div');
-      d.className='bubble user';
-      d.innerHTML=html;
-      area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
-      return d;
-    }
-    function actionBtn(text, onClick, cls='btn'){
-      const b=document.createElement('button');
-      b.className=cls;
-      b.textContent=text;
-      b.onclick=onClick;
-      area.appendChild(b);
-      area.scrollTop = area.scrollHeight;
-      return b;
-    }
-    function typingThen(text, delay=1000){
-      const t=document.createElement('div');
-      t.className='typing-indicator';
-      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t);
-      area.scrollTop = area.scrollHeight;
-      setTimeout(()=>{ t.remove(); bot(text); }, delay);
-    }
-
-    function start(){
-      area.innerHTML = '';
-
-      // הודעת פתיחה
-      typingThen(
-        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
-        'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
-        'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
-        900
-      );
-
-      // הנחיה
-      setTimeout(()=>{
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 700);
-      }, 2000);
-
-      // כפתורים
-      setTimeout(()=>{
-        actionBtn('שיעור על בסיס מקום פנוי', ()=>{
-          user('שיעור על בסיס מקום פנוי');
-          setTimeout(()=> location.href='branches/branch1.html', 200);
-        }, 'btn primary');
-
-        actionBtn('פרטים על מנוי חודשי (בקרוב)', ()=>{
-          user('פרטים על מנוי חודשי');
-          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
-        });
-
-        actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
-          user('מנויה קיימת – פעולות');
-          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
-        });
-      }, 3000);
-    }
-
-    start();
-  </script>
 </body>
 </html>
