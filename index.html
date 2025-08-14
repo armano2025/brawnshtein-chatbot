@@ -24,21 +24,7 @@
       </div>
 
       <!-- אזור התוכן -->
-      <div class="body" id="area">
-        <div class="bubble">
-          <strong>ברוכה הבאה 👋</strong><br>
-          בחרי ענף כדי להתחיל.
-        </div>
-
-        <!-- ענף פעיל -->
-        <button class="btn primary" onclick="location.href='branches/branch1.html'">
-          שיעור על בסיס מקום פנוי
-        </button>
-
-        <!-- ענפים לא פעילים (בקרוב) -->
-        <button class="btn" disabled>פרטים על מנוי חודשי (בקרוב)</button>
-        <button class="btn" disabled>מנויה קיימת – פעולות (בקרוב)</button>
-      </div>
+      <div class="body" id="area"></div>
 
       <!-- תחתית -->
       <div class="footer">
@@ -47,5 +33,72 @@
 
     </div>
   </div>
+
+  <script>
+    const area = document.getElementById('area');
+
+    // בועה של בוט (שמאל)
+    function bot(html){
+      const d=document.createElement('div');
+      d.className='bubble bot';
+      d.innerHTML=html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    // בועה של משתמש (ימין)
+    function user(html){
+      const d=document.createElement('div');
+      d.className='bubble user';
+      d.innerHTML=html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    // כפתור פעולה (נראה ככפתור רגיל, ממוקם אחרי הבועות)
+    function actionBtn(text, onClick, cls='btn'){
+      const b=document.createElement('button');
+      b.className=cls;
+      b.textContent=text;
+      b.onclick=onClick;
+      area.appendChild(b);
+      area.scrollTop = area.scrollHeight;
+      return b;
+    }
+    // אינדיקציית הקלדה של הבוט
+    function typingThen(text, delay=1000){
+      const t=document.createElement('div');
+      t.className='typing-indicator';
+      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(t);
+      area.scrollTop = area.scrollHeight;
+      setTimeout(()=>{ t.remove(); bot(text); }, delay);
+    }
+
+    // מסך פתיחה
+    function start(){
+      area.innerHTML = '';
+      typingThen('<strong>ברוכה הבאה</strong><br>בחרי ענף כדי להתחיל.');
+
+      // ענף פעיל
+      actionBtn('שיעור על בסיס מקום פנוי', ()=>{
+        user('שיעור על בסיס מקום פנוי');
+        setTimeout(()=> location.href='branches/branch1.html', 200);
+      }, 'btn primary');
+
+      // ענפים “בקרוב”
+      actionBtn('פרטים על מנוי חודשי (בקרוב)', ()=>{
+        user('פרטים על מנוי חודשי');
+        typingThen('הענף הזה יתווסף בקרוב.');
+      });
+
+      actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
+        user('מנויה קיימת – פעולות');
+        typingThen('הענף הזה יתווסף בקרוב.');
+      });
+    }
+
+    start();
+  </script>
 </body>
 </html>
