@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מנויה קיימת – פעולות</title>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <meta name="theme-color" content="#2563eb" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">מנויה קיימת – פעולות</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן -->
+      <div class="body" id="area"></div>
+
+      <!-- כפתורי ניווט תחתונים -->
+      <div class="footer">
+        <button id="backBtn" class="btn">חזרה</button>
+        <button id="homeBtn" class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== קונפיג ===== */
+    const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
+
+    /* ===== DOM/State ===== */
+    const area    = document.getElementById('area');
+    const backBtn = document.getElementById('backBtn');
+
+    const state = {
+      history: [],
+      data: {}
+    };
+    const push   = fn => state.history.push(fn);
+    const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
+    backBtn.onclick = goBack;
+
+    /* ===== UI helpers ===== */
+    const clear = () => area.innerHTML = '';
+
+    function bot(html){
+      const d = document.createElement('div');
+      d.className = 'bubble bot';
+      d.innerHTML = html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    function user(html){
+      const d = document.createElement('div');
+      d.className = 'bubble user';
+      d.innerHTML = html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    function button(text, onClick, cls='btn'){
+      const b = document.createElement('button');
+      b.className = cls;
+      b.textContent = text;
+      b.onclick = onClick;
+      area.appendChild(b);
+      area.scrollTop = area.scrollHeight;
+      return b;
+    }
+    function inputRow(label, {type='text', id, textarea=false, placeholder=''} = {}){
+      const wrap = document.createElement('div');
+      wrap.className = 'input-wrap bubble bot';
+      const l = document.createElement('label'); l.textContent = label;
+      let el;
+      if(textarea){
+        el = document.createElement('textarea'); el.className = 'textarea';
+      }else{
+        el = document.createElement('input'); el.type = type; el.className = 'input';
+      }
+      el.id = id; el.placeholder = placeholder; el.dir = 'rtl';
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      area.scrollTop = area.scrollHeight;
+      return el;
+    }
+    function typingThenP(text, delay=800){
+      return new Promise(resolve=>{
+        const t = document.createElement('div');
+        t.className = 'typing-indicator';
+        t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+        area.appendChild(t);
+        area.scrollTop = area.scrollHeight;
+        setTimeout(()=>{ t.remove(); bot(text); resolve(); }, delay);
+      });
+    }
+    function showProcessing(text='שולח למזכירות…'){
+      const d = document.createElement('div');
+      d.className = 'bubble bot processing';
+      d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return () => d.remove();
+    }
+
+    /* ===== Utils ===== */
+    const normalizeILPhone = raw => {
+      let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
+      if(p.startsWith('+972')) p='0'+p.slice(4);
+      if(p.startsWith('972'))  p='0'+p.slice(3);
+      return p;
+    };
+    const validILPhone = p => /^0\d{8,9}$/.test(p||'');
+
+    async function sendToSheet(payload){
+      try{
+        const res = await fetch(SHEETS_WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json().catch(()=>({ok:false}));
+        return j.ok === true || res.ok;
+      }catch(e){
+        console.error('Sheets error', e);
+        return false;
+      }
+    }
+
+    /* ===== בית – בחירת פעולה ===== */
+    async function stepHome(){
+      clear(); push(stepHome);
+      await typingThenP('היי 👋 אם את כבר מנויה אצלנו, אפשר לבצע כאן פעולות בחשבון. מה תרצי לעשות?');
+
+      button('שינוי יום/שעה קבועה של שיעור', stepReschedule);
+      button('ביטול שיעור עתידי', stepCancel);
+      button('עדכון פרטי תשלום', stepBilling);
+      button('שליחת הודעה למזכירות', stepMessage);
+    }
+
+    /* === פעולה: שינוי יום/שעה === */
+    async function stepReschedule(){
+      clear(); push(stepReschedule);
+      await typingThenP('אין בעיה! ✏️ כתבי את היום/השעה החדשים שמתאימים לך. נוסיף גם פרטי קשר כדי שנחזור לאשר.');
+
+      const when = inputRow('יום ושעה מועדפים', { id:'when', placeholder:'לדוגמה: שלישי 18:00 או חמישי 16:00' });
+      const notes = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'res_notes', placeholder:'כל דבר שחשוב שנדע' });
+      const name = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel  = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+
+      button('המשך לסיכום', ()=>{
+        const payload = {
+          path: 'מנויה קיימת – פעולות',
+          cta: 'שינוי יום/שעה קבועה',
+          request: (when.value||'').trim(),
+          extraNotes: (notes.value||'').trim(),
+          fullName: (name.value||'').trim(),
+          phone: normalizeILPhone(tel.value||''),
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        };
+        return stepReview(payload, {required:['request','fullName','phone']});
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    /* === פעולה: ביטול שיעור === */
+    async function stepCancel(){
+      clear(); push(stepCancel);
+      await typingThenP('מה התאריך של השיעור שתרצי לבטל? 📅 נוסיף גם פרטי קשר כדי שנאשר בהודעה חוזרת.');
+
+      const date = inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
+      const reason = inputRow('סיבת ביטול (רשות)', { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
+      const notes  = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'cancel_notes', placeholder:'כל דבר שחשוב שנדע' });
+      const name = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel  = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+
+      button('המשך לסיכום', ()=>{
+        const payload = {
+          path: 'מנויה קיימת – פעולות',
+          cta: 'ביטול שיעור',
+          lessonDate: (date.value||'').trim(),
+          reason: (reason.value||'').trim(),
+          extraNotes: (notes.value||'').trim(),
+          fullName: (name.value||'').trim(),
+          phone: normalizeILPhone(tel.value||''),
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        };
+        return stepReview(payload, {required:['lessonDate','fullName','phone']});
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    /* === פעולה: עדכון פרטי תשלום (ללא לינק) === */
+    async function stepBilling(){
+      clear(); push(stepBilling);
+      await typingThenP('כדי לעדכן פרטי תשלום—נאסוף ממך פרטי קשר ונחזיר אלייך להמשך טיפול אישי 🙏');
+
+      const notes = inputRow('פרטים שתרצי שנדע (רשות)', { textarea:true, id:'bill_notes', placeholder:'למשל: החלפת כרטיס, שינוי אמצעי חיוב וכו׳' });
+      const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+
+      button('המשך לסיכום', ()=>{
+        const payload = {
+          path: 'מנויה קיימת – פעולות',
+          cta: 'עדכון פרטי תשלום',
+          message: (notes.value||'').trim(),   // הערות חופשיות
+          fullName: (name.value||'').trim(),
+          phone: normalizeILPhone(tel.value||''),
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        };
+        return stepReview(payload, {required:['fullName','phone']});
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    /* === פעולה: הודעה למזכירות === */
+    async function stepMessage(){
+      clear(); push(stepMessage);
+      await typingThenP('מה תרצי לכתוב למזכירות שלנו? ✍️');
+
+      const msg   = inputRow('הודעה', { textarea:true, id:'msg', placeholder:'כתבי כאן כל דבר שתרצי' });
+      const notes = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'msg_notes', placeholder:'אם יש עוד פרטים חשובים' });
+      const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+
+      button('המשך לסיכום', ()=>{
+        const payload = {
+          path: 'מנויה קיימת – פעולות',
+          cta: 'פנייה למזכירות',
+          message: (msg.value||'').trim(),
+          extraNotes: (notes.value||'').trim(),
+          fullName: (name.value||'').trim(),
+          phone: normalizeILPhone(tel.value||''),
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        };
+        return stepReview(payload, {required:['message','fullName','phone']});
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    /* ===== סיכום ושליחה ===== */
+    function stepReview(payload, rules){
+      // ולידציה מינימלית
+      const errors = [];
+      (rules.required||[]).forEach(k=>{
+        if(!payload[k] || (typeof payload[k]==='string' && !payload[k].trim())){
+          errors.push(k);
+        }
+      });
+      if(payload.phone && !validILPhone(payload.phone)) errors.push('phone_invalid');
+
+      if(errors.length){
+        const e = errors[0];
+        if(e==='phone' || e==='phone_invalid'){
+          bot('מספר טלפון לא תקין 📞 (למשל 0501234567)').classList.add('err');
+        }else{
+          bot('חסר שדה נדרש. אנא מלאי ונסי שוב.').classList.add('err');
+        }
+        return;
+      }
+
+      clear(); push(()=>stepReview(payload, rules));
+      bot('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+
+      const card = document.createElement('div');
+      card.className = 'bubble bot';
+
+      // תצוגת סיכום ידידותית
+      const lines = [];
+      if(payload.cta) lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
+      if(payload.request) lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.request}`);
+      if(payload.lessonDate) lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
+      if(payload.reason) lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
+      if(payload.message) lines.push(`<strong>הודעה:</strong> ${payload.message}`);
+      if(payload.extraNotes) lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
+      if(payload.fullName) lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
+      if(payload.phone) lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
+
+      card.innerHTML = lines.join('<br>');
+      area.appendChild(card);
+
+      const sendBtn = button('אישור ושליחה למזכירות 📤', async ()=>{
+        sendBtn.disabled = true;
+        const stopProcessing = showProcessing();
+
+        const ok = await sendToSheet(payload);
+
+        stopProcessing();
+        clear();
+
+        if(ok){
+          // ניסוח מותאם במיוחד לעדכון תשלום (וגם כללי לשאר הפעולות)
+          const doneText = (payload.cta === 'עדכון פרטי תשלום')
+            ? 'הבקשה לעדכון פרטי תשלום נקלטה ✅ ניצור איתך קשר בהקדם להמשך טיפול.'
+            : 'הבקשה נקלטה והועברה למזכירות ✅ נחזור אלייך בהקדם.';
+          bot(doneText).classList.add('ok');
+        }else{
+          bot('לא הצלחנו לשמור את הבקשה ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+
+        button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
+      }, 'btn primary');
+
+      button('עריכה', ()=> {
+        // חזרה למסך הקודם
+        goBack();
+      });
+    }
+
+    // הפעלה
+    stepHome();
+  </script>
+</body>
+</html>
