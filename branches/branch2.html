@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מנוי חודשי – פרטים והרשמה</title>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <meta name="theme-color" content="#2563eb" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">מנוי חודשי – פרטים</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן -->
+      <div class="body" id="area"></div>
+
+      <!-- כפתורי ניווט תחתונים -->
+      <div class="footer">
+        <button id="backBtn" class="btn">חזרה</button>
+        <button id="homeBtn" class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== קונפיג ===== */
+    const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
+    const ORIGAMI_URL = 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
+    const TERMS_URL   = 'https://forms.gle/orUvvLrrSuCGAPVVA';
+
+    /* ===== DOM/State ===== */
+    const area    = document.getElementById('area');
+    const backBtn = document.getElementById('backBtn');
+
+    const state = {
+      history: [],
+      lead: {
+        fullName: null,
+        phone: null
+      }
+    };
+    const push   = fn => state.history.push(fn);
+    const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
+    backBtn.onclick = goBack;
+
+    /* ===== UI helpers ===== */
+    const clear = () => area.innerHTML = '';
+
+    function bot(html){
+      const d = document.createElement('div');
+      d.className = 'bubble bot';
+      d.innerHTML = html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    function user(html){
+      const d = document.createElement('div');
+      d.className = 'bubble user';
+      d.innerHTML = html;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return d;
+    }
+    function button(text, onClick, cls='btn'){
+      const b = document.createElement('button');
+      b.className = cls;
+      b.textContent = text;
+      b.onclick = onClick;
+      area.appendChild(b);
+      area.scrollTop = area.scrollHeight;
+      return b;
+    }
+    function inputRow(label, {type='text', id, placeholder=''} = {}){
+      const wrap = document.createElement('div');
+      wrap.className = 'input-wrap bubble bot';
+      const l = document.createElement('label'); l.textContent = label;
+      const el = document.createElement('input');
+      el.type = type; el.className = 'input'; el.id = id; el.placeholder = placeholder; el.dir='rtl';
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      area.scrollTop = area.scrollHeight;
+      return el;
+    }
+
+    // אינדיקציית הקלדה -> הודעת בוט
+    function typingThen(text, delay=900){
+      const t = document.createElement('div');
+      t.className = 'typing-indicator';
+      t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(t);
+      area.scrollTop = area.scrollHeight;
+      setTimeout(()=>{ t.remove(); bot(text); }, delay);
+    }
+
+    // בועת “שומר…” עם פס התקדמות – מחזירה פונקציה להסרה
+    function showProcessing(text='שומר למזכירות…'){
+      const d = document.createElement('div');
+      d.className = 'bubble bot processing';
+      d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
+      area.appendChild(d);
+      area.scrollTop = area.scrollHeight;
+      return () => d.remove();
+    }
+
+    /* ===== Utils ===== */
+    const normalizeILPhone = raw => {
+      let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
+      if(p.startsWith('+972')) p='0'+p.slice(4);
+      if(p.startsWith('972'))  p='0'+p.slice(3);
+      return p;
+    };
+    const validILPhone = p => /^0\d{8,9}$/.test(p||'');
+
+    async function sendToSheet(payload){
+      try{
+        const res = await fetch(SHEETS_WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json().catch(()=>({ok:false}));
+        return j.ok === true || res.ok;
+      }catch(e){
+        console.error('Sheets error', e);
+        return false;
+      }
+    }
+
+    /* ===== Flow ===== */
+
+    // פתיחה: מבקש שם + טלפון
+    function start(){
+      clear(); push(start);
+
+      typingThen(
+        'מעולה! אשמח לעזור לך להקים מנוי במרכז הלמידה של חן בראונשטיין 👨‍🚀<br>' +
+        'לפני שנתחיל:<br>מה השם המלא שלך?<br>ומה מספר הטלפון?',
+        800
+      );
+
+      const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const phone = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+
+      // כפתור השמירה – כתוב עליו "המשך"
+      const nextBtn = button('המשך', async ()=>{
+        user('המשך');
+
+        const fullName = (name.value||'').trim();
+        const rawPhone = (phone.value||'').trim();
+        const phoneNorm = normalizeILPhone(rawPhone);
+
+        if(!fullName){ bot('יש להזין שם מלא ✏️').classList.add('err'); return; }
+        if(!validILPhone(phoneNorm)){ bot('מספר טלפון לא תקין 📞 (למשל 0501234567)').classList.add('err'); return; }
+
+        state.lead.fullName = fullName;
+        state.lead.phone    = phoneNorm;
+
+        // שמירה מיידית
+        nextBtn.disabled = true;
+        const stopProcessing = showProcessing();
+
+        const ok = await sendToSheet({
+          path: 'מנוי חודשי – התעניינות',
+          fullName: state.lead.fullName,
+          phone: state.lead.phone,
+          cta: 'התעניינות במנוי חודשי',
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        });
+
+        stopProcessing();
+
+        if(ok){
+          bot('הפרטים נשמרו בהצלחה ✅');
+          setTimeout(()=> continueInfo(), 700); // ממשיכים למידע
+        }else{
+          bot('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          nextBtn.disabled = false;
+        }
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    // מידע על המרכז -> מחירים -> לינק הרשמה
+    function continueInfo(){
+      clear(); push(continueInfo);
+
+      typingThen(
+        'כמה מילים על איך אנחנו עובדים:<br>' +
+        '• כל שיעור נמשך <strong>50 דקות</strong> ומתחיל בשעה עגולה.<br>' +
+        '• לומדים את חומר הכיתה, משלימים פערים, עוזרים בשיעורי בית, מכינים למבחנים,<br>' +
+        '  בונים ביטחון — ואפילו מתקדמים בחומר מעבר לכיתה 🎯',
+        800
+      );
+
+      setTimeout(()=>{
+        typingThen(
+          '<strong>מסלולים ומחירים</strong><br>' +
+          '• קבוצתי (עד 5 תלמידים): <strong>295 ₪ / חודש</strong><br>' +
+          '• טריפל (עד 3 תלמידים): <strong>385 ₪ / חודש</strong><br>' +
+          '— ואם תרצי להתחיל בקטן: <strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי – ' +
+          '80 ₪ (קבוצתי) / 100 ₪ (טריפל)',
+          800
+        );
+      }, 1200);
+
+      setTimeout(()=>{
+        typingThen(
+          'כדי להיכנס לרשימת ההמתנה ולשריין מקום, נשמח שתמלאי את טופס הרישום:',
+          700
+        );
+
+        // כפתורים ללינק/מאוחר יותר/שיעור חד פעמי
+        button('פתחי את טופס ההרשמה 📝', ()=>{
+          user('פתחתי את טופס ההרשמה');
+          window.open(ORIGAMI_URL, '_blank', 'noopener');
+        }, 'btn primary');
+
+        button('אשלים את הטופס מאוחר יותר ⏳', ()=>{
+          user('אשלים את הטופס מאוחר יותר');
+          typingThen('סגור 🙂 כבר שמרתי את הפרטים שלך וניצור קשר בהקדם.');
+        });
+
+        button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
+          user('שיעור חד־פעמי עכשיו');
+          // מפנים לזרימה של שיעור חד־פעמי (ענף 1)
+          setTimeout(()=> location.href='./branch1.html', 200);
+        });
+
+      }, 2600);
+    }
+
+    // הפעלה
+    start();
+  </script>
+</body>
+</html>
