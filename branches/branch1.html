@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור על בסיס מקום פנוי</title>
 
-  <!-- קובץ העיצוב הראשי -->
+  <!-- חשוב: להתאים לשם הקובץ אצלך (styles.css) -->
   <link rel="stylesheet" href="../styles.css" />
-
-  <!-- צבע דפדפן בנייד -->
   <meta name="theme-color" content="#2563eb" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
@@ -24,21 +21,206 @@
       </div>
 
       <!-- אזור התוכן -->
-      <div class="body" id="area">
-        <div class="bubble">
-          כאן תוכלי לקבוע שיעור <strong>על בסיס מקום פנוי</strong>.
-        </div>
+      <div class="body" id="area"></div>
 
-        <button class="btn primary" onclick="alert('בקשה נשלחה!')">
-          שלחי בקשה
-        </button>
-
-        <button class="btn" onclick="location.href='../index.html'">
-          חזרה לתפריט הראשי
-        </button>
+      <!-- כפתורי ניווט תחתונים -->
+      <div class="footer">
+        <button id="backBtn" class="btn">חזרה</button>
+        <button id="homeBtn" class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
-
     </div>
   </div>
+
+  <script>
+    /* ===== קונפיג ===== */
+    const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
+    const PRICES = { group: 80, triple: 100, private: 160 };
+    const PLAN_HE = { group: 'קבוצה', triple: 'טריפל', private: 'פרטי' };
+    const SUBJECTS = ['אנגלית','מתמטיקה','פיזיקה','שפה','אנגלית מדוברת'];
+
+    /* ===== DOM/State ===== */
+    const area = document.getElementById('area');
+    const backBtn = document.getElementById('backBtn');
+    const state = {
+      history: [],
+      data: {
+        planType: null,       // group | triple | private
+        price: null,          // 80 | 100 | 160
+        subject: null,        // עברית
+        availability: null,   // טקסט חופשי
+        message: '',          // אופציונלי
+        fullName: null,
+        phone: null
+      }
+    };
+    const push  = (fn)=> state.history.push(fn);
+    const goBack= ()=>{ if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
+    backBtn.onclick = goBack;
+
+    /* ===== עזרים UI ===== */
+    const clear = ()=> area.innerHTML = '';
+    function bubble(html){
+      const d=document.createElement('div');
+      d.className='bubble';
+      d.innerHTML=html;
+      area.appendChild(d);
+      return d;
+    }
+    function button(text, onClick, cls='btn'){
+      const b=document.createElement('button');
+      b.className=cls;
+      b.textContent=text;
+      b.onclick=onClick;
+      area.appendChild(b);
+      return b;
+    }
+    function inputRow(label, {type='text', id, textarea=false, placeholder=''}={}){
+      const wrap=document.createElement('div');
+      wrap.className='input-wrap bubble';
+      const l=document.createElement('label'); l.textContent=label;
+      let el;
+      if(textarea){
+        el=document.createElement('textarea'); el.className='textarea';
+      }else{
+        el=document.createElement('input'); el.type=type; el.className='input';
+      }
+      el.id=id; el.placeholder=placeholder; el.dir='rtl';
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      return el;
+    }
+    function summaryChips(){
+      const s=document.createElement('div'); s.className='summary';
+      if(state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if(state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      area.appendChild(s);
+    }
+    function chip(text){
+      const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c;
+    }
+
+    /* ===== אפקט “שלוש נקודות” (1.5 שניות) ===== */
+    function addBotMessageWithTyping(text){
+      const typing=document.createElement('div');
+      typing.className='typing-indicator';
+      typing.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(typing);
+      area.scrollTop = area.scrollHeight;
+      setTimeout(()=>{
+        typing.remove();
+        bubble(text);
+        area.scrollTop = area.scrollHeight;
+      }, 1500);
+    }
+
+    /* ===== טלפון ישראלי ===== */
+    const normalizeILPhone = raw => {
+      let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
+      if(p.startsWith('+972')) p='0'+p.slice(4);
+      if(p.startsWith('972'))  p='0'+p.slice(3);
+      return p;
+    };
+    const validILPhone = p => /^0\d{8,9}$/.test(p||'');
+
+    /* ===== שליחה ל-Google Sheets ===== */
+    async function sendLeadToSheet(payload){
+      try{
+        const res = await fetch(SHEETS_WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' }, // מפחית preflight
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json().catch(()=>({ok:false}));
+        return j.ok === true || res.ok;
+      }catch(e){
+        console.error('Sheets error', e);
+        return false;
+      }
+    }
+
+    /* ===== זרימה ===== */
+
+    // פתיחה
+    function start(){
+      clear(); push(start);
+      addBotMessageWithTyping('<strong>היי, אני יוסטון 👨‍🚀</strong><br>נקבע שיעור חד־פעמי על בסיס מקום פנוי.');
+      button('יאללה נתחיל', stepPlan, 'btn primary');
+    }
+
+    // שלב 1 – בחירת מסלול
+    function stepPlan(){
+      clear(); push(stepPlan);
+      bubble('<strong>בחרי מסלול</strong><br><span class="muted">חד־פעמי בלבד.</span>');
+      button('קבוצה – עד 5 תלמידים – 80₪',  ()=>{ state.data.planType='group';  state.data.price=PRICES.group;  stepSubject(); });
+      button('טריפל – עד 3 תלמידים – 100₪', ()=>{ state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject(); });
+      button('פרטי – 160₪',                   ()=>{ state.data.planType='private';state.data.price=PRICES.private;stepSubject(); });
+    }
+
+    // שלב 2 – בחירת מקצוע
+    function stepSubject(){
+      clear(); push(stepSubject);
+      bubble('<strong>איזה מקצוע לשיעור?</strong>');
+      SUBJECTS.forEach(s=> button(s, ()=>{ state.data.subject=s; stepDetails(); }));
+      summaryChips();
+    }
+
+    // שלב 3 (מרוכז) – זמינות, הודעה, שם, טלפון + שליחה
+    function stepDetails(){
+      clear(); push(stepDetails);
+      bubble('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי ונשלח למזכירות.</span>');
+      summaryChips();
+
+      const availability = inputRow('ימי ושעות זמינות',{textarea:true,id:'availability',placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר'});
+      const message      = inputRow('הודעה חופשית (לא חובה)',{textarea:true,id:'message',placeholder:'העדפה למורה / רמה / הערות'});
+      const fullName     = inputRow('שם מלא',{id:'fullName',placeholder:'לדוגמה: דנה לוי'});
+      const phone        = inputRow('טלפון לחזרה',{type:'tel',id:'phone',placeholder:'לדוגמה: 0501234567'});
+
+      button('שליחה למזכירות', async ()=>{
+        const avail = (availability.value||'').trim();
+        const note  = (message.value||'').trim();
+        const name  = (fullName.value||'').trim();
+        const tel   = normalizeILPhone(phone.value||'');
+
+        if(!avail){ bubble('אנא כתבי זמינות (ימים ושעות).').classList.add('err'); return; }
+        if(!name){  bubble('יש להזין שם מלא.').classList.add('err'); return; }
+        if(!validILPhone(tel)){ bubble('מספר טלפון לא תקין (למשל 0501234567).').classList.add('err'); return; }
+
+        state.data.availability = avail;
+        state.data.message = note;
+        state.data.fullName = name;
+        state.data.phone = tel;
+
+        addBotMessageWithTyping('שולח למזכירות…');
+
+        const ok = await sendLeadToSheet({
+          path: 'שיעור על בסיס מקום פנוי',
+          planType: PLAN_HE[state.data.planType],
+          price: `${state.data.price}₪`,
+          subject: state.data.subject,
+          availability: state.data.availability,
+          message: state.data.message,
+          fullName: state.data.fullName,
+          phone: state.data.phone,
+          cta: 'שיעור חד־פעמי',
+          source: 'יוסטון – אתר',
+          status: 'חדש',
+          createdAt: new Date().toISOString()
+        });
+
+        clear();
+        if(ok){
+          bubble('הבקשה נרשמה והועברה למזכירות 🛰️ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור.').classList.add('ok');
+        }else{
+          bubble('לא הצלחנו לשמור את הבקשה לגיליון. אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+        button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    // הפעלה
+    start();
+  </script>
 </body>
 </html>
