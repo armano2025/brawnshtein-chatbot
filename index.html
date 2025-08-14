@@ -3,12 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>יוסטון – תפריט ענפים</title>
+  <title>יוסטון – צ׳טבוט</title>
 
-  <!-- קובץ העיצוב הראשי -->
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- צבע דפדפן בנייד -->
   <meta name="theme-color" content="#2563eb" />
 </head>
 <body>
@@ -37,7 +34,6 @@
   <script>
     const area = document.getElementById('area');
 
-    // בועה של בוט (שמאל)
     function bot(html){
       const d=document.createElement('div');
       d.className='bubble bot';
@@ -46,7 +42,6 @@
       area.scrollTop = area.scrollHeight;
       return d;
     }
-    // בועה של משתמש (ימין)
     function user(html){
       const d=document.createElement('div');
       d.className='bubble user';
@@ -55,7 +50,6 @@
       area.scrollTop = area.scrollHeight;
       return d;
     }
-    // כפתור פעולה (נראה ככפתור רגיל, ממוקם אחרי הבועות)
     function actionBtn(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
@@ -65,7 +59,6 @@
       area.scrollTop = area.scrollHeight;
       return b;
     }
-    // אינדיקציית הקלדה של הבוט
     function typingThen(text, delay=1000){
       const t=document.createElement('div');
       t.className='typing-indicator';
@@ -75,27 +68,39 @@
       setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
-    // מסך פתיחה
     function start(){
       area.innerHTML = '';
-      typingThen('<strong>ברוכה הבאה</strong><br>בחרי ענף כדי להתחיל.');
 
-      // ענף פעיל
-      actionBtn('שיעור על בסיס מקום פנוי', ()=>{
-        user('שיעור על בסיס מקום פנוי');
-        setTimeout(()=> location.href='branches/branch1.html', 200);
-      }, 'btn primary');
+      // הודעת פתיחה
+      typingThen(
+        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
+        'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
+        'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
+        900
+      );
 
-      // ענפים “בקרוב”
-      actionBtn('פרטים על מנוי חודשי (בקרוב)', ()=>{
-        user('פרטים על מנוי חודשי');
-        typingThen('הענף הזה יתווסף בקרוב.');
-      });
+      // הנחיה
+      setTimeout(()=>{
+        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 700);
+      }, 2000);
 
-      actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
-        user('מנויה קיימת – פעולות');
-        typingThen('הענף הזה יתווסף בקרוב.');
-      });
+      // כפתורים
+      setTimeout(()=>{
+        actionBtn('שיעור על בסיס מקום פנוי', ()=>{
+          user('שיעור על בסיס מקום פנוי');
+          setTimeout(()=> location.href='branches/branch1.html', 200);
+        }, 'btn primary');
+
+        actionBtn('פרטים על מנוי חודשי (בקרוב)', ()=>{
+          user('פרטים על מנוי חודשי');
+          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
+        });
+
+        actionBtn('מנויה קיימת – פעולות (בקרוב)', ()=>{
+          user('מנויה קיימת – פעולות');
+          typingThen('האפשרות הזו תתווסף בקרוב 🕒');
+        });
+      }, 3000);
     }
 
     start();
