@@ -40,7 +40,6 @@
 
     const state = {
       history: [],
-      data: {}
     };
     const push   = fn => state.history.push(fn);
     const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
@@ -48,13 +47,14 @@
 
     /* ===== UI helpers ===== */
     const clear = () => area.innerHTML = '';
+    const autoscroll = () => { area.scrollTop = area.scrollHeight; };
 
     function bot(html){
       const d = document.createElement('div');
       d.className = 'bubble bot';
       d.innerHTML = html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function user(html){
@@ -62,7 +62,7 @@
       d.className = 'bubble user';
       d.innerHTML = html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function button(text, onClick, cls='btn'){
@@ -71,7 +71,7 @@
       b.textContent = text;
       b.onclick = onClick;
       area.appendChild(b);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return b;
     }
     function inputRow(label, {type='text', id, textarea=false, placeholder=''} = {}){
@@ -87,7 +87,7 @@
       el.id = id; el.placeholder = placeholder; el.dir = 'rtl';
       wrap.append(l, el);
       area.appendChild(wrap);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return el;
     }
     function typingThenP(text, delay=800){
@@ -96,7 +96,7 @@
         t.className = 'typing-indicator';
         t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
         area.appendChild(t);
-        area.scrollTop = area.scrollHeight;
+        autoscroll();
         setTimeout(()=>{ t.remove(); bot(text); resolve(); }, delay);
       });
     }
@@ -105,7 +105,7 @@
       d.className = 'bubble bot processing';
       d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return () => d.remove();
     }
 
@@ -149,21 +149,22 @@
       clear(); push(stepReschedule);
       await typingThenP('אין בעיה! ✏️ כתבי את היום/השעה החדשים שמתאימים לך. נוסיף גם פרטי קשר כדי שנחזור לאשר.');
 
-      const when = inputRow('יום ושעה מועדפים', { id:'when', placeholder:'לדוגמה: שלישי 18:00 או חמישי 16:00' });
+      const when  = inputRow('יום ושעה מועדפים', { id:'when', placeholder:'לדוגמה: שלישי 18:00 או חמישי 16:00' });
       const notes = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'res_notes', placeholder:'כל דבר שחשוב שנדע' });
-      const name = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
-      const tel  = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+      const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       button('המשך לסיכום', ()=>{
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'שינוי יום/שעה קבועה',
           request: (when.value||'').trim(),
-          extraNotes: (notes.value||'').trim(),
+          message: '',                                // לא נדרש פה, נשמור ריק לעקביות
+          extraNotes: (notes.value||'').trim(),       // פרטים נוספים
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
         return stepReview(payload, {required:['request','fullName','phone']});
@@ -177,11 +178,11 @@
       clear(); push(stepCancel);
       await typingThenP('מה התאריך של השיעור שתרצי לבטל? 📅 נוסיף גם פרטי קשר כדי שנאשר בהודעה חוזרת.');
 
-      const date = inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
-      const reason = inputRow('סיבת ביטול (רשות)', { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
+      const date   = inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
+      const reason = inputRow('סיבת ביטול (רשות)',  { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
       const notes  = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'cancel_notes', placeholder:'כל דבר שחשוב שנדע' });
-      const name = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
-      const tel  = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+      const name   = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const tel    = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       button('המשך לסיכום', ()=>{
         const payload = {
@@ -189,11 +190,12 @@
           cta: 'ביטול שיעור',
           lessonDate: (date.value||'').trim(),
           reason: (reason.value||'').trim(),
+          message: '',                                // לא נדרש כאן
           extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
         return stepReview(payload, {required:['lessonDate','fullName','phone']});
@@ -215,11 +217,12 @@
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'עדכון פרטי תשלום',
-          message: (notes.value||'').trim(),   // הערות חופשיות
+          message: (notes.value||'').trim(),         // הערות חופשיות
+          extraNotes: '',                             // נשמור עמודה עקבית
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
         return stepReview(payload, {required:['fullName','phone']});
@@ -247,7 +250,7 @@
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
         return stepReview(payload, {required:['message','fullName','phone']});
@@ -285,20 +288,22 @@
 
       // תצוגת סיכום ידידותית
       const lines = [];
-      if(payload.cta) lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
-      if(payload.request) lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.request}`);
+      if(payload.cta)        lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
+      if(payload.request)    lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.request}`);
       if(payload.lessonDate) lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
-      if(payload.reason) lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
-      if(payload.message) lines.push(`<strong>הודעה:</strong> ${payload.message}`);
+      if(payload.reason)     lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
+      if(payload.message)    lines.push(`<strong>הודעה:</strong> ${payload.message}`);
       if(payload.extraNotes) lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
-      if(payload.fullName) lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
-      if(payload.phone) lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
+      if(payload.fullName)   lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
+      if(payload.phone)      lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
 
       card.innerHTML = lines.join('<br>');
       area.appendChild(card);
 
       const sendBtn = button('אישור ושליחה למזכירות 📤', async ()=>{
-        sendBtn.disabled = true;
+        // מניעת שליחה כפולה
+        [...area.querySelectorAll('button')].forEach(b=>b.disabled=true);
+
         const stopProcessing = showProcessing();
 
         const ok = await sendToSheet(payload);
@@ -307,7 +312,6 @@
         clear();
 
         if(ok){
-          // ניסוח מותאם במיוחד לעדכון תשלום (וגם כללי לשאר הפעולות)
           const doneText = (payload.cta === 'עדכון פרטי תשלום')
             ? 'הבקשה לעדכון פרטי תשלום נקלטה ✅ ניצור איתך קשר בהקדם להמשך טיפול.'
             : 'הבקשה נקלטה והועברה למזכירות ✅ נחזור אלייך בהקדם.';
@@ -319,10 +323,7 @@
         button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
       }, 'btn primary');
 
-      button('עריכה', ()=> {
-        // חזרה למסך הקודם
-        goBack();
-      });
+      button('עריכה', ()=> { goBack(); });
     }
 
     // הפעלה
