@@ -156,8 +156,8 @@
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'שינוי יום/שעה קבועה',
-          availability: (when.value||'').trim(),     // <<< שדה מותאם
-          message: '',                                // לשמירה על עקביות עמודות
+          availability: (when.value||'').trim(),     // <<< נשמר לעמודת availability
+          message: '',                                // עקביות עמודות
           extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
@@ -171,13 +171,13 @@
       button('חזרה', goBack);
     }
 
-    /* === פעולה: ביטול שיעור === */
+    /* === פעולה: ביטול שיעור — reason -> message === */
     async function stepCancel(){
       clear(); push(stepCancel);
       await typingThenP('מה התאריך של השיעור שתרצי לבטל? 📅 נוסיף גם פרטי קשר כדי שנאשר בהודעה חוזרת.');
 
       const date   = inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
-      const reason = inputRow('סיבת ביטול (רשות)',  { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
+      const reasonField = inputRow('סיבת ביטול (רשות)',  { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
       const notes  = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'cancel_notes', placeholder:'כל דבר שחשוב שנדע' });
       const name   = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
       const tel    = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
@@ -187,8 +187,8 @@
           path: 'מנויה קיימת – פעולות',
           cta: 'ביטול שיעור',
           lessonDate: (date.value||'').trim(),
-          reason: (reason.value||'').trim(),
-          message: '',                                // לא נדרש כאן
+          // reason הוחלף ל-message כדי להיכנס לעמודה הנכונה בשיטס
+          message: (reasonField.value||'').trim(),
           extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
@@ -285,14 +285,13 @@
       card.className = 'bubble bot';
 
       const lines = [];
-      if(payload.cta)         lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
-      if(payload.availability)lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.availability}`); // הוחלף מ-request
-      if(payload.lessonDate)  lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
-      if(payload.reason)      lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
-      if(payload.message)     lines.push(`<strong>הודעה:</strong> ${payload.message}`);
-      if(payload.extraNotes)  lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
-      if(payload.fullName)    lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
-      if(payload.phone)       lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
+      if(payload.cta)          lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
+      if(payload.availability) lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.availability}`);
+      if(payload.lessonDate)   lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
+      if(payload.message)      lines.push(`<strong>הודעה:</strong> ${payload.message}`);  // מציגים message במקום reason
+      if(payload.extraNotes)   lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
+      if(payload.fullName)     lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
+      if(payload.phone)        lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
 
       card.innerHTML = lines.join('<br>');
       area.appendChild(card);
