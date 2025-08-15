@@ -1,5 +1,5 @@
 /* =======================
-   יוסטון – styles.css (FULL)
+   יוסטון – styles.css (FULL, with fixes)
    ======================= */
 
 /* ---------- משתני בסיס ---------- */
@@ -28,9 +28,16 @@
   --radius: 18px;
   --shadow: 0 12px 28px rgba(0,0,0,0.20);
   --speed: .25s;
+
+  /* Fallbacks (פעילים אם media queries לא חלים) */
+  --bg: var(--bg-light, #f5f7fb);
+  --glass: var(--glass-light, rgba(255,255,255,0.7));
+  --border: var(--border-light, rgba(0,0,0,0.10));
+  --text: var(--text-dark, #0f172a);
+  --muted: var(--muted-dark, #475569);
 }
 
-/* מצב ברירת מחדל + אוטומטי לפי מערכת */
+/* מצב בהיר/כהה לפי מערכת */
 @media (prefers-color-scheme: light){
   :root{
     --bg: var(--bg-light);
@@ -62,6 +69,7 @@ body{
     radial-gradient(1000px 600px at 100% -20%, rgba(37,99,235,0.15), transparent 60%),
     radial-gradient(800px 400px at 0% 120%, rgba(16,185,129,0.15), transparent 55%),
     var(--bg);
+  /* במובייל נבטל fixed (ראה מדיה למטה) */
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,6 +83,7 @@ body{
   border-radius: 22px;
   box-shadow: var(--shadow);
   overflow: hidden;
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   transition: transform var(--speed), box-shadow var(--speed);
 }
@@ -98,9 +107,18 @@ body{
 .title{ font-weight:700; font-size:18px }
 
 /* ---------- גוף (אזור בועות/כפתורים) ---------- */
-.body{
+.body{ /* נשאר לשמירה על תאימות */
   padding:20px; min-height:380px;
   display:flex; flex-direction:column; gap:10px;
+}
+/* alias ברור */
+.chat-body{}
+
+/* אזור ההודעות – גלילה אמיתית */
+#area{
+  overflow-y: auto;
+  max-height: 70vh;           /* אפשר להגדיל ל-78vh/80vh אם נוח */
+  scroll-behavior: smooth;
 }
 
 /* ---------- תחתית ---------- */
@@ -121,24 +139,18 @@ body{
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  word-wrap: break-word;
+  overflow-wrap: anywhere;  /* עדיף מ-word-wrap */
 }
 .bubble strong{ font-weight:700 }
 .muted{ color: var(--muted) }
 
-/* בועת בוט – משמאל */
+/* בוט */
 .bubble.bot{
   align-self: flex-start;
   background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
   border-top-left-radius: 6px;
 }
-.bubble.bot::after{
-  content:""; position:absolute; left:-6px; bottom:10px;
-  border-width: 8px 8px 0 0; border-style: solid;
-  border-color: rgba(255,255,255,0.10) transparent transparent transparent;
-}
-
-/* בועת משתמש – מימין */
+/* משתמש */
 .bubble.user{
   align-self: flex-end;
   background: linear-gradient(145deg, var(--primary), var(--primary-800));
@@ -147,11 +159,10 @@ body{
   box-shadow: 0 6px 16px rgba(37,99,235,0.35);
 }
 .bubble.user .muted{ color: rgba(255,255,255,0.85) }
-.bubble.user::after{
-  content:""; position:absolute; right:-6px; bottom:10px;
-  border-width: 8px 0 0 8px; border-style: solid;
-  border-color: rgba(37,99,235,0.9) transparent transparent rgba(37,99,235,0.9);
-}
+
+/* מבטלים זנבות כדי למנוע "תפר" בגרדיאנט */
+.bubble.bot::after,
+.bubble.user::after{ content: none; }
 
 /* ---------- כרטיס סיכום/צ'יפס ---------- */
 .summary{
@@ -255,51 +266,35 @@ body{
   .title{ font-size:16px }
   .logo{ width:40px; height:40px }
   .bubble{ max-width: 92% }
+  /* ביטול רקע fixed במובייל למניעת גמגומים */
+  body{ background-attachment: scroll; }
 }
 
 /* =========================
-   Buttons – no blue, nice feedback
+   נגישות ו־Focus
    ========================= */
 
-/* ביטול היילייט כחול במובייל */
-button, .btn { -webkit-tap-highlight-color: transparent; }
-
-/* הסרת outline/צל כחול דיפולטי */
-button:focus,
-button:active,
-.btn:focus,
-.btn:active {
-  outline: none;
-  box-shadow: none;
-  background-color: inherit;
-  color: inherit;
-  border-color: inherit;
-}
-
-/* פידבק לחיץ רך על הקשה */
-.btn:active {
-  transform: translateY(0) scale(0.99);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-
-/* טבעת נראות נגישה במקלדת (בלי למלא בכחול) */
-.btn:focus-visible {
+/* אל תבטל outline; תן אפקט יפה כשבאמת יש Keyboard focus */
+button:focus { outline: auto; }
+button:focus-visible {
   box-shadow:
     0 0 0 3px rgba(37,99,235,0.28),
     0 4px 12px rgba(0,0,0,0.15);
   border-color: rgba(37,99,235,0.35);
 }
 
-/* גרסה מותאמת ל-primary */
-.btn.primary:focus-visible {
-  box-shadow:
-    0 0 0 3px rgba(37,99,235,0.32),
-    0 8px 20px rgba(37,99,235,0.25);
-}
-
-/* ניקוי פוקוס ישן בפיירפוקס */
+/* ניקוי חוקים פוגעניים ישנים (אם נשארו) */
 button::-moz-focus-inner,
 .btn::-moz-focus-inner { border: 0; }
 
-/* למקרה שספארי מתעקש על outline */
-button:focus { outline-color: transparent; }
+/* =========================
+   הפחתת אנימציה לפי העדפת משתמש
+   ========================= */
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
