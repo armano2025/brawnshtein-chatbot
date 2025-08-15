@@ -5,23 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יוסטון – צ׳טבוט</title>
 
+  <!-- פונט Rubik (אופציונלי אך מומלץ) -->
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles.css" />
   <meta name="theme-color" content="#2563eb" />
-
-  <style>
-    /* אזור השיחה – גלילה אמיתית וחלקה */
-    #area{
-      max-height: 70vh;         /* או גובה אחר שמתאים לעמוד שלך */
-      overflow-y: auto;
-      scroll-behavior: smooth;
-    }
-    /* קונטיינר ייעודי לכפתורי פעולה */
-    #actions{
-      display: grid;
-      gap: 10px;
-      padding: 12px 20px 0;
-    }
-  </style>
 </head>
 <body>
   <div class="wrap">
@@ -35,11 +23,8 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (בועות) -->
-      <div class="body" id="area" aria-live="polite" role="log"></div>
-
-      <!-- כפתורי פעולה דינמיים -->
-      <div id="actions"></div>
+      <!-- אזור התוכן (עם aria-live ל־SR וגלילה תקינה) -->
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
       <!-- תחתית -->
       <div class="footer">
@@ -51,38 +36,37 @@
 
   <script>
     const area = document.getElementById('area');
-    const actions = document.getElementById('actions');
 
     function autoscroll(){ area.scrollTop = area.scrollHeight; }
 
     function bot(html){
       const d=document.createElement('div');
       d.className='bubble bot';
-      d.innerHTML=html;           // נשאר HTML כי אתה שולט בתוכן
+      d.innerHTML=html;
       area.appendChild(d);
       autoscroll();
       return d;
     }
     function user(text){
+      // בטוח ל-XSS: לא מזריקים HTML
       const d=document.createElement('div');
       d.className='bubble user';
-      d.textContent=text;         // בטוח מ-XSS
+      d.textContent=text;
       area.appendChild(d);
       autoscroll();
       return d;
-    }
-    function clearActions(){
-      actions.innerHTML = '';
     }
     function actionBtn(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
       b.textContent=text;
       b.onclick=()=>{
-        b.disabled=true;          // משבית רק את עצמו
+        // מניעת הקלקה כפולה רק לעצם שלחצנו
+        b.disabled = true;
         onClick();
       };
-      actions.appendChild(b);
+      area.appendChild(b);
+      autoscroll();
       return b;
     }
     function typingThen(text, delay=650){
@@ -94,18 +78,10 @@
       setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
-    function safeNavigate(href){
-      try{
-        location.href = href;
-      }catch(_){
-        bot('לא הצלחתי לנווט לעמוד המבוקש. נסי שוב או רענני את הדף.').classList.add('err');
-      }
-    }
-
     function start(){
       area.innerHTML = '';
-      clearActions();
 
+      // הודעת פתיחה (קצרה ועניינית)
       typingThen(
         '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
         'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
@@ -113,26 +89,29 @@
         600
       );
 
+      // הנחיה
       setTimeout(()=>{
         typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
       }, 900);
 
+      // כפתורים (שלושת הענפים פעילים)
       setTimeout(()=>{
-        clearActions();
-
+        // ענף 1
         actionBtn('שיעור על בסיס מקום פנוי', ()=>{
           user('שיעור על בסיס מקום פנוי');
-          setTimeout(()=> safeNavigate('branches/branch1.html'), 150);
+          setTimeout(()=> location.href='branches/branch1.html', 150);
         }, 'btn primary');
 
+        // ענף 2
         actionBtn('פרטים על מנוי חודשי', ()=>{
           user('פרטים על מנוי חודשי');
-          setTimeout(()=> safeNavigate('branches/branch2.html'), 150);
+          setTimeout(()=> location.href='branches/branch2.html', 150);
         });
 
+        // ענף 3
         actionBtn('מנויה קיימת – פעולות', ()=>{
           user('מנויה קיימת – פעולות');
-          setTimeout(()=> safeNavigate('branches/branch3.html'), 150);
+          setTimeout(()=> location.href='branches/branch3.html', 150);
         });
       }, 1600);
     }
