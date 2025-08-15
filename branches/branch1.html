@@ -5,17 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יוסטון – צ׳טבוט</title>
 
+  <!-- חיבור לעיצוב הראשי -->
   <link rel="stylesheet" href="styles.css" />
   <meta name="theme-color" content="#2563eb" />
-  <style>
-    /* אזור הצ'אט עם גלילה מוגדרת */
-    #area {
-      scroll-behavior: smooth;
-      overflow-y: auto;
-      max-height: 60vh;
-      padding: 10px;
-    }
-  </style>
 </head>
 <body>
   <div class="wrap">
@@ -30,9 +22,9 @@
       </div>
 
       <!-- אזור הצ'אט -->
-      <div class="chat-body" id="area" aria-live="polite"></div>
+      <div class="body chat-body" id="area" aria-live="polite"></div>
 
-      <!-- כפתור רענון -->
+      <!-- כפתור ריענון -->
       <div class="footer">
         <button class="btn" onclick="location.reload()">ריענון</button>
       </div>
@@ -42,13 +34,17 @@
 
   <script>
     const area = document.getElementById('area');
+    let autoScrollEnabled = false; // בתחילה לא גוללים אוטומטית
 
-    // גלילה רק אחרי שהמשתמש התחיל אינטראקציה
-    function autoscroll() {
-      area.scrollTop = area.scrollHeight;
+    // גלילה לתחתית רק אם מאופשר
+    function autoscroll(force = false) {
+      if (force || autoScrollEnabled) {
+        area.scrollTop = area.scrollHeight;
+      }
     }
 
-    function bot(html) {
+    // בועת בוט (HTML אמין בלבד)
+    function botHTML(html) {
       const d = document.createElement('div');
       d.className = 'bubble bot';
       d.innerHTML = html;
@@ -57,34 +53,44 @@
       return d;
     }
 
-    function user(text) {
+    // בועת בוט (טקסט בלבד – בטוח)
+    function botText(text) {
       const d = document.createElement('div');
-      d.className = 'bubble user';
-      d.textContent = text; // לא משתמש ב-innerHTML למניעת XSS
+      d.className = 'bubble bot';
+      d.textContent = text;
       area.appendChild(d);
       autoscroll();
       return d;
     }
 
-    function actionBtn(text, onClick, cls = 'btn') {
-      const container = document.createElement('div');
-      container.className = 'action-container';
+    // בועת משתמש (תמיד טקסט)
+    function user(text) {
+      const d = document.createElement('div');
+      d.className = 'bubble user';
+      d.textContent = text;
+      area.appendChild(d);
+      autoscroll(true); // בגלילת משתמש – חובה לרדת למטה
+      autoScrollEnabled = true; // מפעיל גלילה אוטומטית להמשך
+      return d;
+    }
 
+    // כפתור פעולה
+    function actionBtn(text, onClick, cls = 'btn') {
       const b = document.createElement('button');
       b.className = cls;
       b.textContent = text;
       b.onclick = () => {
-        container.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        b.disabled = true;
         onClick();
+        autoScrollEnabled = true; // מרגע שלחיצה – מאפשר גלילה אוטומטית
       };
-
-      container.appendChild(b);
-      area.appendChild(container);
+      area.appendChild(b);
       autoscroll();
       return b;
     }
 
-    function typingThen(text, delay = 650) {
+    // אינדיקציית הקלדה -> ואז הודעה
+    function typingThen(html, delay = 650, trusted = true) {
       const t = document.createElement('div');
       t.className = 'typing-indicator';
       t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
@@ -92,24 +98,25 @@
       autoscroll();
       setTimeout(() => {
         t.remove();
-        bot(text);
+        trusted ? botHTML(html) : botText(html);
       }, delay);
     }
 
     function start() {
       area.innerHTML = '';
 
-      // פתיחה
+      // פתיחה – מציגים הודעה ראשונה בלי לגלול עד הסוף
       typingThen(
         '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
         'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
         'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
-        600
+        600,
+        true
       );
 
       // הנחיה
       setTimeout(() => {
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
+        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500, true);
       }, 900);
 
       // כפתורים
