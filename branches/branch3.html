@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מנויה קיימת – פעולות</title>
 
-  <link rel="stylesheet" href="../styles.css" />
+  <!-- חשוב: הענף נמצא בתוך /branches/, לכן ../ -->
+  <link rel="stylesheet" href="../styles.css?v=3" />
   <meta name="theme-color" content="#2563eb" />
+
   <style>
-    /* מבטיח גלילה בפועל לאזור הצ'אט */
+    /* חיזוק מקומי: גלילה אמיתית לאזור השיחה */
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth; }
   </style>
 </head>
@@ -43,10 +45,15 @@
     const backBtn = document.getElementById('backBtn');
 
     const state = { history: [] };
-    const last = () => state.history[state.history.length - 1];
+    const last  = () => state.history[state.history.length - 1];
 
-    // מונע "טיימרים רפאים" בין מסכים
+    // מניעת "טיימרים רפאים"
     let runToken = 0;
+
+    // שליטה עדינה בגלילה
+    let autoScrollEnabled = true;
+    const enableAutoScroll  = () => (autoScrollEnabled = true);
+    const disableAutoScroll = () => (autoScrollEnabled = false);
 
     const updateBack = () => { backBtn.disabled = state.history.length <= 1; };
     const push = fn => { state.history.push(fn); updateBack(); };
@@ -61,10 +68,12 @@
     backBtn.onclick = goBack;
 
     /* ===== UI helpers ===== */
-    const clear = () => { runToken++; area.innerHTML = ''; };
-    const autoscroll = () => { area.scrollTop = area.scrollHeight; };
+    const clear       = () => { runToken++; area.innerHTML = ''; };
+    const autoscroll  = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
+    const scrollStart = el => el?.scrollIntoView({ block:'start', behavior:'smooth' });
+    const waitP       = ms => new Promise(r=>setTimeout(r, ms));
 
-    // בוט: HTML אמין שאני יוצר (מותר <br>/<strong> וכו') מול טקסט בטוח (משתמש)
+    // בוט: HTML אמין (שלנו) מול טקסט בטוח (למשתמש/שרת)
     function botHTML(html){
       const d = document.createElement('div');
       d.className = 'bubble bot';
@@ -88,7 +97,7 @@
       const b = document.createElement('button');
       b.className = cls;
       b.textContent = text;
-      b.onclick = () => { b.disabled = true; onClick(); }; // מונע דאבל-קליק
+      b.onclick = () => { b.disabled = true; onClick(); }; // מניעת דאבל-קליק
       area.appendChild(b); autoscroll(); return b;
     }
 
@@ -108,7 +117,7 @@
       }
       el.id = id; el.placeholder = placeholder; el.dir = 'rtl';
 
-      // שדרוג נגישות מינימלי
+      // נגישות/אוטוקומפליט בסיסיים:
       if (id === 'fullName') { el.required = true; el.autocomplete = 'name'; }
       if (id === 'phone')    { el.required = true; el.autocomplete = 'tel'; el.setAttribute('inputmode','tel'); }
 
@@ -118,7 +127,7 @@
       return el;
     }
 
-    // טיפינג עם ביטול אם עוזבים מסך
+    // טיפינג שמכבד ביטולים
     function typingThenP(html, delay=800, trusted=true){
       const myToken = runToken;
       return new Promise(resolve=>{
@@ -187,19 +196,31 @@
     /* === פעולה: שינוי יום/שעה (availability) === */
     async function stepReschedule(){
       clear(); push(stepReschedule);
-      await typingThenP('אין בעיה! ✏️ כתבי את היום/השעה החדשים שמתאימים לך. נוסיף גם פרטי קשר כדי שנחזור לאשר.', 700, true);
 
+      // אנטי-קפיצה: מציגים כותרת, גוללים לראש, ורק אז בונים את השדות בהשהיה קצרה
+      disableAutoScroll();
+      const header = botHTML('אין בעיה! ✏️<br><span class="muted">כתבי את היום/השעה החדשים שמתאימים לך. נוסיף גם פרטי קשר לאישור.</span>');
+      scrollStart(header);
+      setTimeout(()=> enableAutoScroll(), 450);
+
+      await waitP(300);
       const when  = inputRow('יום ושעה מועדפים', { id:'when', placeholder:'לדוגמה: שלישי 18:00 או חמישי 16:00' });
+      await waitP(150);
       const notes = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'res_notes', placeholder:'כל דבר שחשוב שנדע' });
+      await waitP(150);
       const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      await waitP(150);
       const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
+      when.focus({ preventScroll:true });
+
+      await waitP(120);
       button('המשך לסיכום', ()=>{
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'שינוי יום/שעה קבועה',
-          availability: (when.value||'').trim(),   // >>> במקום request
-          message: '',                              // עקביות עמודות
+          availability: (when.value||'').trim(),   // לעמודת availability
+          message: '',
           extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
@@ -216,20 +237,32 @@
     /* === פעולה: ביטול שיעור — reason -> message === */
     async function stepCancel(){
       clear(); push(stepCancel);
-      await typingThenP('מה התאריך של השיעור שתרצי לבטל? 📅 נוסיף גם פרטי קשר כדי שנאשר בהודעה חוזרת.', 700, true);
 
+      disableAutoScroll();
+      const header = botHTML('מה התאריך של השיעור שתרצי לבטל? 📅<br><span class="muted">נוסיף גם פרטי קשר כדי שנאשר בהודעה חוזרת.</span>');
+      scrollStart(header);
+      setTimeout(()=> enableAutoScroll(), 450);
+
+      await waitP(300);
       const date   = inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
+      await waitP(150);
       const reason = inputRow('סיבת ביטול (רשות)',  { textarea:true, id:'reason', placeholder:'רשות: הסבר קצר' });
+      await waitP(150);
       const notes  = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'cancel_notes', placeholder:'כל דבר שחשוב שנדע' });
+      await waitP(150);
       const name   = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      await waitP(150);
       const tel    = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
+      date.focus({ preventScroll:true });
+
+      await waitP(120);
       button('המשך לסיכום', ()=>{
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'ביטול שיעור',
           lessonDate: (date.value||'').trim(),
-          message: (reason.value||'').trim(),      // >>> במקום reason
+          message: (reason.value||'').trim(),      // נכנס לעמודת message
           extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
@@ -246,17 +279,27 @@
     /* === פעולה: עדכון פרטי תשלום === */
     async function stepBilling(){
       clear(); push(stepBilling);
-      await typingThenP('כדי לעדכן פרטי תשלום—נאסוף ממך פרטי קשר ונחזיר אלייך להמשך טיפול אישי 🙏', 700, true);
 
+      disableAutoScroll();
+      const header = botHTML('כדי לעדכן פרטי תשלום — נרשום פרטי קשר ונחזור אלייך להמשך טיפול אישי 🙏');
+      scrollStart(header);
+      setTimeout(()=> enableAutoScroll(), 450);
+
+      await waitP(300);
       const notes = inputRow('פרטים שתרצי שנדע (רשות)', { textarea:true, id:'bill_notes', placeholder:'למשל: החלפת כרטיס, שינוי אמצעי חיוב וכו׳' });
+      await waitP(150);
       const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      await waitP(150);
       const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
+      notes.focus({ preventScroll:true });
+
+      await waitP(120);
       button('המשך לסיכום', ()=>{
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'עדכון פרטי תשלום',
-          message: (notes.value||'').trim(),       // הערות חופשיות (נכנס לעמודת message)
+          message: (notes.value||'').trim(),       // נכנס לעמודת message
           extraNotes: '',
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
@@ -273,13 +316,24 @@
     /* === פעולה: הודעה למזכירות === */
     async function stepMessage(){
       clear(); push(stepMessage);
-      await typingThenP('מה תרצי לכתוב למזכירות שלנו? ✍️', 700, true);
 
+      disableAutoScroll();
+      const header = botHTML('מה תרצי לכתוב למזכירות שלנו? ✍️');
+      scrollStart(header);
+      setTimeout(()=> enableAutoScroll(), 450);
+
+      await waitP(300);
       const msg   = inputRow('הודעה', { textarea:true, id:'msg', placeholder:'כתבי כאן כל דבר שתרצי' });
+      await waitP(150);
       const notes = inputRow('פרטים נוספים (רשות)', { textarea:true, id:'msg_notes', placeholder:'אם יש עוד פרטים חשובים' });
+      await waitP(150);
       const name  = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      await waitP(150);
       const tel   = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
+      msg.focus({ preventScroll:true });
+
+      await waitP(120);
       button('המשך לסיכום', ()=>{
         const payload = {
           path: 'מנויה קיימת – פעולות',
@@ -298,7 +352,7 @@
       button('חזרה', goBack);
     }
 
-    /* ===== סיכום ושליחה (בטוח מ-XSS) ===== */
+    /* ===== סיכום ושליחה (בטוח מ‑XSS) ===== */
     function stepReview(payload, rules){
       // ולידציה מינימלית
       const errors = [];
@@ -318,7 +372,9 @@
       }
 
       clear(); push(()=>stepReview(payload, rules));
-      botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+
+      const h = botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+      scrollStart(h); // רואים את תחילת הסיכום
 
       // בנייה ידנית כדי לא להזריק innerHTML של טקסט משתמש
       const card = document.createElement('div');
@@ -326,8 +382,8 @@
       const addLine = (label, val) => {
         if(!val) return;
         const row = document.createElement('div');
-        const b = document.createElement('strong'); b.textContent = label + ' ';
-        const s = document.createElement('span');  s.textContent = val;
+        const b   = document.createElement('strong'); b.textContent = label + ' ';
+        const s   = document.createElement('span');  s.textContent = val;
         row.append(b, s);
         card.appendChild(row);
       };
