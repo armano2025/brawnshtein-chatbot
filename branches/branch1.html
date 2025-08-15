@@ -3,48 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>יוסטון – צ׳טבוט</title>
+  <title>שיעור על בסיס מקום פנוי</title>
 
-  <!-- חיבור לעיצוב הראשי -->
-  <link rel="stylesheet" href="styles.css" />
+  <!-- חשוב: בענף בתוך /branches/ הנתיב ל-CSS חייב ../ -->
+  <link rel="stylesheet" href="../styles.css?v=2" />
   <meta name="theme-color" content="#2563eb" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
-          <div class="title">יוסטון – צ׳טבוט</div>
+          <div class="title">שיעור על בסיס מקום פנוי</div>
         </div>
       </div>
 
-      <!-- אזור הצ'אט -->
-      <div class="body chat-body" id="area" aria-live="polite"></div>
+      <!-- אזור התוכן (שמור על body + chat-body בדיוק כמו באינדקס) -->
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- כפתור ריענון -->
+      <!-- כפתורי ניווט תחתונים -->
       <div class="footer">
-        <button class="btn" onclick="location.reload()">ריענון</button>
+        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <button id="homeBtn" class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
-
     </div>
   </div>
 
   <script>
-    const area = document.getElementById('area');
-    let autoScrollEnabled = false; // בתחילה לא גוללים אוטומטית
+    /* ===== קונפיג ===== */
+    const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
+    const PRICES   = { group: 80, triple: 100, private: 160 };
+    const PLAN_HE  = { group: 'קבוצה', triple: 'טריפל', private: 'פרטי' };
+    const SUBJECTS = ['אנגלית','מתמטיקה','פיזיקה','שפה','אנגלית מדוברת'];
 
-    // גלילה לתחתית רק אם מאופשר
-    function autoscroll(force = false) {
-      if (force || autoScrollEnabled) {
-        area.scrollTop = area.scrollHeight;
+    /* ===== DOM/State ===== */
+    const area    = document.getElementById('area');
+    const backBtn = document.getElementById('backBtn');
+
+    const state = {
+      history: [],
+      data: {
+        planType: null, price: null, subject: null,
+        availability: null, message: '', fullName: null, phone: null
       }
-    }
+    };
+    let runToken = 0;
+    let autoScrollEnabled = true; // כאן כן נגלול עם כל הודעה
 
-    // בועת בוט (HTML אמין בלבד)
-    function botHTML(html) {
+    const last = () => state.history[state.history.length - 1];
+    const push = fn => { state.history.push(fn); updateBack(); };
+    const goBack = () => {
+      if (state.history.length > 1) {
+        state.history.pop();
+        updateBack();
+        runToken++;
+        last()();
+      }
+    };
+    backBtn.onclick = goBack;
+    function updateBack(){ backBtn.disabled = state.history.length <= 1; }
+
+    /* ===== UI ===== */
+    const clear = () => { runToken++; area.innerHTML = ''; };
+    const autoscroll = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
+
+    function botHTML(html){
       const d = document.createElement('div');
       d.className = 'bubble bot';
       d.innerHTML = html;
@@ -52,9 +77,7 @@
       autoscroll();
       return d;
     }
-
-    // בועת בוט (טקסט בלבד – בטוח)
-    function botText(text) {
+    function botText(text){
       const d = document.createElement('div');
       d.className = 'bubble bot';
       d.textContent = text;
@@ -62,82 +85,247 @@
       autoscroll();
       return d;
     }
-
-    // בועת משתמש (תמיד טקסט)
-    function user(text) {
+    function user(text){
       const d = document.createElement('div');
       d.className = 'bubble user';
       d.textContent = text;
       area.appendChild(d);
-      autoscroll(true); // בגלילת משתמש – חובה לרדת למטה
-      autoScrollEnabled = true; // מפעיל גלילה אוטומטית להמשך
+      autoscroll();
       return d;
     }
-
-    // כפתור פעולה
-    function actionBtn(text, onClick, cls = 'btn') {
+    function button(text, onClick, cls='btn'){
       const b = document.createElement('button');
       b.className = cls;
       b.textContent = text;
-      b.onclick = () => {
+      b.onclick = ()=>{
         b.disabled = true;
         onClick();
-        autoScrollEnabled = true; // מרגע שלחיצה – מאפשר גלילה אוטומטית
       };
       area.appendChild(b);
       autoscroll();
       return b;
     }
+    function inputRow(label, {type='text', id, textarea=false, placeholder='', required=false, autocomplete, inputmode} = {}){
+      const wrap = document.createElement('div');
+      wrap.className = 'input-wrap bubble bot';
+      const l = document.createElement('label'); l.textContent = label; if(id) l.htmlFor = id;
+      let el = textarea ? document.createElement('textarea') : document.createElement('input');
+      if(!textarea) el.type = type;
+      el.className = textarea ? 'textarea' : 'input';
+      el.id = id; el.placeholder = placeholder; el.dir='rtl';
+      if(required) el.required = true;
+      if(autocomplete) el.autocomplete = autocomplete;
+      if(inputmode) el.setAttribute('inputmode', inputmode);
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      autoscroll();
+      return el;
+    }
+    function summaryChips(){
+      const s = document.createElement('div'); s.className='summary';
+      if (state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if (state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      area.appendChild(s);
+      autoscroll();
+    }
+    function chip(text){ const c = document.createElement('div'); c.className='chip'; c.textContent=text; return c; }
 
-    // אינדיקציית הקלדה -> ואז הודעה
-    function typingThen(html, delay = 650, trusted = true) {
+    function typingThen(html, delay=800, trusted=true){
+      const myToken = runToken;
       const t = document.createElement('div');
       t.className = 'typing-indicator';
       t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t);
-      autoscroll();
-      setTimeout(() => {
+      area.appendChild(t); autoscroll();
+      setTimeout(()=>{
+        if(myToken!==runToken) return;
         t.remove();
         trusted ? botHTML(html) : botText(html);
       }, delay);
     }
 
-    function start() {
-      area.innerHTML = '';
+    function showProcessing(text='שולח למזכירות…'){
+      const d = document.createElement('div');
+      d.className = 'bubble bot processing';
+      d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
+      area.appendChild(d); autoscroll();
+      return () => d.remove();
+    }
 
-      // פתיחה – מציגים הודעה ראשונה בלי לגלול עד הסוף
+    /* ===== Utils ===== */
+    const normalizeILPhone = raw => {
+      let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
+      if(p.startsWith('+972')) p='0'+p.slice(4);
+      if(p.startsWith('972'))  p='0'+p.slice(3);
+      return p;
+    };
+    const validILPhone = p => /^0\d{8,9}$/.test(p||'');
+
+    async function sendLeadToSheet(payload){
+      const ctrl = new AbortController();
+      const timeout = setTimeout(()=>ctrl.abort(), 10000);
+      try{
+        const res = await fetch(SHEETS_WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload),
+          signal: ctrl.signal
+        });
+        try{
+          const j = await res.json();
+          return j && j.ok === true;
+        }catch(_){
+          return res.ok;
+        }
+      }catch(e){
+        console.error('Sheets error', e);
+        return false;
+      }finally{ clearTimeout(timeout); }
+    }
+
+    /* ===== Flow ===== */
+    function start(){
+      clear(); push(start);
+
       typingThen(
-        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
-        'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
-        'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
-        600,
-        true
+        'אשמח לעזור לך לקבוע שיעור חד־פעמי 🗓️<br><br>' +
+        'במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד מקבל יחס אישי ותכנית לימוד מותאמת לצרכים שלו — בלי קשר לקצב של אחרים.',
+        900, true
       );
 
-      // הנחיה
-      setTimeout(() => {
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500, true);
-      }, 900);
+      setTimeout(()=> typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 700, true), 2000);
 
-      // כפתורים
-      setTimeout(() => {
-        actionBtn('שיעור על בסיס מקום פנוי', () => {
-          user('שיעור על בסיס מקום פנוי');
-          setTimeout(() => location.href = 'branches/branch1.html', 150);
+      setTimeout(()=>{
+        button('קבוצה – עד 5 תלמידים – 80₪', ()=>{
+          user('קבוצה – עד 5 תלמידים – 80₪');
+          state.data.planType='group'; state.data.price=PRICES.group; stepSubject();
         }, 'btn primary');
 
-        actionBtn('פרטים על מנוי חודשי', () => {
-          user('פרטים על מנוי חודשי');
-          setTimeout(() => location.href = 'branches/branch2.html', 150);
+        button('טריפל – עד 3 תלמידים – 100₪', ()=>{
+          user('טריפל – עד 3 תלמידים – 100₪');
+          state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
         });
 
-        actionBtn('מנויה קיימת – פעולות', () => {
-          user('מנויה קיימת – פעולות');
-          setTimeout(() => location.href = 'branches/branch3.html', 150);
+        button('פרטי – 160₪', ()=>{
+          user('פרטי – 160₪');
+          state.data.planType='private'; state.data.price=PRICES.private; stepSubject();
         });
+      }, 3000);
+    }
+
+    function stepSubject(){
+      clear(); push(stepSubject);
+      typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 700, true);
+      setTimeout(()=>{
+        SUBJECTS.forEach(s => button(s, ()=>{
+          user(s);
+          state.data.subject = s;
+          stepDetails();
+        }));
+        summaryChips();
       }, 1600);
     }
 
+    function stepDetails(){
+      clear(); push(stepDetails);
+      botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי את הפרטים ונעבור לסיכום לפני שליחה 📋</span>');
+      summaryChips();
+
+      const availability = inputRow('ימי ושעות זמינות', { textarea:true, id:'availability', placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר', required:true });
+      const message      = inputRow('הודעה חופשית (לא חובה)', { textarea:true, id:'message', placeholder:'העדפה למורה / רמה / הערות' });
+      const fullName     = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
+      const phone        = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+
+      button('המשך לסיכום', ()=>{
+        user('המשך לסיכום');
+
+        const avail = (availability.value||'').trim();
+        const note  = (message.value||'').trim();
+        const name  = (fullName.value||'').trim();
+        const tel   = normalizeILPhone(phone.value||'');
+
+        if(!avail){ botText('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); return; }
+        if(!name){  botText('יש להזין שם מלא ✏️').classList.add('err'); return; }
+        if(!validILPhone(tel)){ botText('מספר טלפון לא תקין 📞').classList.add('err'); return; }
+
+        state.data.availability = avail;
+        state.data.message      = note;
+        state.data.fullName     = name;
+        state.data.phone        = tel;
+
+        stepReview();
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+    }
+
+    function stepReview(){
+      clear(); push(stepReview);
+
+      botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+
+      const card = document.createElement('div');
+      card.className = 'bubble bot';
+
+      const chips = document.createElement('div');
+      chips.className = 'summary';
+      if (state.data.planType) chips.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if (state.data.subject)  chips.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      card.appendChild(chips);
+
+      const details = document.createElement('div');
+      details.style.lineHeight = '1.9';
+      const addLine = (label, value) => {
+        const line = document.createElement('div');
+        const b = document.createElement('strong'); b.textContent = label + ' ';
+        const span = document.createElement('span'); span.textContent = value;
+        line.append(b, span);
+        details.appendChild(line);
+      };
+      addLine('זמינות:', state.data.availability);
+      if (state.data.message) addLine('הודעה:', state.data.message);
+      addLine('שם מלא:', state.data.fullName);
+      addLine('טלפון לחזרה:', state.data.phone);
+
+      card.appendChild(details);
+      area.appendChild(card);
+      autoscroll();
+
+      const sendBtn = button('אישור ושליחה למזכירות 📤', async ()=>{
+        sendBtn.disabled = true;
+        const stopProcessing = showProcessing();
+
+        const ok = await sendLeadToSheet({
+          path: 'שיעור על בסיס מקום פנוי',
+          planType: PLAN_HE[state.data.planType],
+          price: `${state.data.price}₪`,
+          subject: state.data.subject,
+          availability: state.data.availability,
+          message: state.data.message,
+          extraNotes: '',
+          fullName: state.data.fullName,
+          phone: state.data.phone,
+          cta: 'שיעור חד־פעמי',
+          source: 'יוסטון – אתר',
+          status: 'לטיפול',
+          createdAt: new Date().toISOString()
+        });
+
+        stopProcessing();
+        clear();
+
+        if(ok){
+          botText('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
+        }else{
+          botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+        const home = button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
+        home.focus();
+      }, 'btn primary');
+
+      button('עריכה', ()=> stepDetails());
+    }
+
+    // הפעלה
     start();
   </script>
 </body>
