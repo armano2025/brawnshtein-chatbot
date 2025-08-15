@@ -59,13 +59,14 @@
 
     /* ===== UI helpers ===== */
     const clear = () => area.innerHTML = '';
+    const autoscroll = () => { area.scrollTop = area.scrollHeight; };
 
     function bot(html){
       const d = document.createElement('div');
       d.className = 'bubble bot';
       d.innerHTML = html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function user(html){
@@ -73,7 +74,7 @@
       d.className = 'bubble user';
       d.innerHTML = html;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return d;
     }
     function button(text, onClick, cls='btn'){
@@ -82,7 +83,7 @@
       b.textContent = text;
       b.onclick = onClick;
       area.appendChild(b);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return b;
     }
     function inputRow(label, {type='text', id, textarea=false, placeholder=''} = {}){
@@ -99,7 +100,7 @@
       el.id = id; el.placeholder = placeholder; el.dir='rtl';
       wrap.append(l, el);
       area.appendChild(wrap);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return el;
     }
     function summaryChips(){
@@ -107,7 +108,7 @@
       if (state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
       if (state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
       area.appendChild(s);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
     }
     function chip(text){
       const c = document.createElement('div'); c.className='chip'; c.textContent=text; return c;
@@ -119,7 +120,7 @@
       t.className = 'typing-indicator';
       t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
       area.appendChild(t);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
@@ -129,7 +130,7 @@
       d.className = 'bubble bot processing';
       d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
       area.appendChild(d);
-      area.scrollTop = area.scrollHeight;
+      autoscroll();
       return () => d.remove();
     }
 
@@ -146,7 +147,7 @@
       try{
         const res = await fetch(SHEETS_WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'text/plain' }, // ללא preflight
           body: JSON.stringify(payload)
         });
         const j = await res.json().catch(()=>({ok:false}));
@@ -212,6 +213,8 @@
       const phone        = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       button('המשך לסיכום', ()=>{
+        user('המשך לסיכום');
+
         const avail = (availability.value||'').trim();
         const note  = (message.value||'').trim();
         const name  = (fullName.value||'').trim();
@@ -263,13 +266,14 @@
           planType: PLAN_HE[state.data.planType],
           price: `${state.data.price}₪`,
           subject: state.data.subject,
-          availability: state.data.availability,
-          message: state.data.message,
+          availability: state.data.availability, // מלל חופשי
+          message: state.data.message,           // מלל חופשי
+          extraNotes: '',                        // אחידות עמודות בגיליון
           fullName: state.data.fullName,
           phone: state.data.phone,
           cta: 'שיעור חד־פעמי',
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',                      // <<< חשוב
           createdAt: new Date().toISOString()
         });
 
