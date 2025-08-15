@@ -38,9 +38,7 @@
     const area    = document.getElementById('area');
     const backBtn = document.getElementById('backBtn');
 
-    const state = {
-      history: [],
-    };
+    const state = { history: [] };
     const push   = fn => state.history.push(fn);
     const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
     backBtn.onclick = goBack;
@@ -122,7 +120,7 @@
       try{
         const res = await fetch(SHEETS_WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'text/plain' }, // ללא preflight
           body: JSON.stringify(payload)
         });
         const j = await res.json().catch(()=>({ok:false}));
@@ -144,7 +142,7 @@
       button('שליחת הודעה למזכירות', stepMessage);
     }
 
-    /* === פעולה: שינוי יום/שעה === */
+    /* === פעולה: שינוי יום/שעה (availability) === */
     async function stepReschedule(){
       clear(); push(stepReschedule);
       await typingThenP('אין בעיה! ✏️ כתבי את היום/השעה החדשים שמתאימים לך. נוסיף גם פרטי קשר כדי שנחזור לאשר.');
@@ -158,16 +156,16 @@
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'שינוי יום/שעה קבועה',
-          request: (when.value||'').trim(),
-          message: '',                                // לא נדרש פה, נשמור ריק לעקביות
-          extraNotes: (notes.value||'').trim(),       // פרטים נוספים
+          availability: (when.value||'').trim(),     // <<< שדה מותאם
+          message: '',                                // לשמירה על עקביות עמודות
+          extraNotes: (notes.value||'').trim(),
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
-        return stepReview(payload, {required:['request','fullName','phone']});
+        return stepReview(payload, {required:['availability','fullName','phone']});
       }, 'btn primary');
 
       button('חזרה', goBack);
@@ -204,7 +202,7 @@
       button('חזרה', goBack);
     }
 
-    /* === פעולה: עדכון פרטי תשלום (ללא לינק) === */
+    /* === פעולה: עדכון פרטי תשלום === */
     async function stepBilling(){
       clear(); push(stepBilling);
       await typingThenP('כדי לעדכן פרטי תשלום—נאסוף ממך פרטי קשר ונחזיר אלייך להמשך טיפול אישי 🙏');
@@ -218,7 +216,7 @@
           path: 'מנויה קיימת – פעולות',
           cta: 'עדכון פרטי תשלום',
           message: (notes.value||'').trim(),         // הערות חופשיות
-          extraNotes: '',                             // נשמור עמודה עקבית
+          extraNotes: '',
           fullName: (name.value||'').trim(),
           phone: normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
@@ -286,16 +284,15 @@
       const card = document.createElement('div');
       card.className = 'bubble bot';
 
-      // תצוגת סיכום ידידותית
       const lines = [];
-      if(payload.cta)        lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
-      if(payload.request)    lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.request}`);
-      if(payload.lessonDate) lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
-      if(payload.reason)     lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
-      if(payload.message)    lines.push(`<strong>הודעה:</strong> ${payload.message}`);
-      if(payload.extraNotes) lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
-      if(payload.fullName)   lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
-      if(payload.phone)      lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
+      if(payload.cta)         lines.push(`<strong>פעולה:</strong> ${payload.cta}`);
+      if(payload.availability)lines.push(`<strong>יום/שעה מבוקשים:</strong> ${payload.availability}`); // הוחלף מ-request
+      if(payload.lessonDate)  lines.push(`<strong>תאריך/שעה לביטול:</strong> ${payload.lessonDate}`);
+      if(payload.reason)      lines.push(`<strong>סיבה:</strong> ${payload.reason}`);
+      if(payload.message)     lines.push(`<strong>הודעה:</strong> ${payload.message}`);
+      if(payload.extraNotes)  lines.push(`<strong>פרטים נוספים:</strong> ${payload.extraNotes}`);
+      if(payload.fullName)    lines.push(`<strong>שם מלא:</strong> ${payload.fullName}`);
+      if(payload.phone)       lines.push(`<strong>טלפון לחזרה:</strong> ${payload.phone}`);
 
       card.innerHTML = lines.join('<br>');
       area.appendChild(card);
