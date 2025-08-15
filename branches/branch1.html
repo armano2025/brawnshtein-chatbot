@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור על בסיס מקום פנוי</title>
 
-  <!-- חשובה ההפניה היחסית לקובץ העיצוב -->
-  <link rel="stylesheet" href="../styles.css" />
+  <!-- בענפים בתוך /branches/ חייבים ../ -->
+  <link rel="stylesheet" href="../styles.css?v=3" />
   <meta name="theme-color" content="#2563eb" />
-
-  <!-- חיזוק מקומי לגלילה (גם אם styles.css לא נטען מסיבה כלשהי) -->
   <style>
-    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth; }
+    /* חיזוק מקומי לגלילה באזור השיחה */
+    #area { overflow-y:auto; max-height:70vh; scroll-behavior:smooth; }
   </style>
 </head>
 <body>
@@ -25,7 +24,7 @@
         </div>
       </div>
 
-      <!-- אזור הצ'אט -->
+      <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
       <!-- כפתורי ניווט -->
@@ -49,41 +48,17 @@
 
     const state = {
       history: [],
-      data: { planType:null, price:null, subject:null, availability:null, message:'', fullName:null, phone:null }
+      data: {
+        planType: null, price: null, subject: null,
+        availability: null, message: '', fullName: null, phone: null
+      }
     };
 
-    // ביטול טיימרים "זומבים"
+    // ניהול טיימרים “זומבים” + אוטו‑סקְרוֹל
     let runToken = 0;
-
-    // גלילה חכמה
-    let suppressScroll = false;
-    function isNearBottom(pad=24){
-      return (area.scrollHeight - area.scrollTop - area.clientHeight) <= pad;
-    }
-    function maybeScroll(){
-      if (suppressScroll) return;
-      if (isNearBottom()) area.scrollTop = area.scrollHeight;
-    }
-
-    // רינדור במקבץ: בונה מסך שלם בלי קפיצה לתחתית, ואז גולל לראש המסך
-    function withBatch(renderFn, { scrollTo='first' } = {}){
-      suppressScroll = true;
-      const beforeLast = area.lastElementChild;
-      renderFn();                 // רינדור כל האלמנטים של המסך
-      suppressScroll = false;
-
-      if (scrollTo === 'none') return;
-
-      let target = null;
-      if (scrollTo === 'first'){
-        target = beforeLast ? beforeLast.nextElementSibling : area.firstElementChild;
-      }else if(scrollTo === 'last'){
-        target = area.lastElementChild;
-      }
-      if (target){
-        target.scrollIntoView({ block:'start', behavior:'smooth' });
-      }
-    }
+    let autoScrollEnabled = true;
+    const enableAutoScroll  = () => (autoScrollEnabled = true);
+    const disableAutoScroll = () => (autoScrollEnabled = false);
 
     const last = () => state.history[state.history.length - 1];
     const push = fn => { state.history.push(fn); updateBack(); };
@@ -91,7 +66,7 @@
       if (state.history.length > 1) {
         state.history.pop();
         updateBack();
-        runToken++;  // מבטל timeouts של המסך הקודם
+        runToken++;
         last()();
       }
     };
@@ -100,57 +75,77 @@
 
     /* ===== UI helpers ===== */
     const clear = () => { runToken++; area.innerHTML = ''; };
+    const autoscroll = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
+    const scrollStartOf = el => el?.scrollIntoView({ block:'start', behavior:'smooth' });
 
-    // הודעות
     function botHTML(html){
-      const d=document.createElement('div'); d.className='bubble bot';
-      d.innerHTML=html; area.appendChild(d); maybeScroll(); return d;
+      const d = document.createElement('div');
+      d.className = 'bubble bot';
+      d.innerHTML = html;
+      area.appendChild(d);
+      autoscroll();
+      return d;
     }
     function botText(text){
-      const d=document.createElement('div'); d.className='bubble bot';
-      d.textContent=text; area.appendChild(d); maybeScroll(); return d;
+      const d = document.createElement('div');
+      d.className = 'bubble bot';
+      d.textContent = text;
+      area.appendChild(d);
+      autoscroll();
+      return d;
     }
-    function userText(text){
-      const d=document.createElement('div'); d.className='bubble user';
-      d.textContent=text; area.appendChild(d); maybeScroll(); return d;
+    function user(text){
+      const d = document.createElement('div');
+      d.className = 'bubble user';
+      d.textContent = text;
+      area.appendChild(d);
+      autoscroll();
+      return d;
     }
-
-    // כפתור
     function button(text, onClick, cls='btn'){
-      const b=document.createElement('button');
-      b.className=cls; b.textContent=text;
-      b.onclick=()=>{ b.disabled=true; onClick(); };
-      area.appendChild(b); maybeScroll(); return b;
+      const b = document.createElement('button');
+      b.className = cls;
+      b.textContent = text;
+      b.onclick = ()=>{
+        b.disabled = true; // מונע דאבל-קליק
+        onClick();
+      };
+      area.appendChild(b);
+      autoscroll();
+      return b;
     }
+    function chip(text){ const c = document.createElement('div'); c.className='chip'; c.textContent=text; return c; }
 
-    // קלטים
     function inputRow(label, {type='text', id, textarea=false, placeholder='', required=false, autocomplete, inputmode} = {}){
-      const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
-      const l=document.createElement('label'); l.textContent=label; if(id) l.htmlFor=id;
-      const el = textarea ? document.createElement('textarea') : document.createElement('input');
-      if(!textarea) el.type=type;
-      el.className = textarea ? 'textarea' : 'input';
-      el.id=id; el.placeholder=placeholder; el.dir='rtl';
-      if(required) el.required=true;
-      if(autocomplete) el.autocomplete=autocomplete;
-      if(inputmode) el.setAttribute('inputmode', inputmode);
-      wrap.append(l, el); area.appendChild(wrap); maybeScroll(); return el;
-    }
-    function summaryChips(){
-      const s=document.createElement('div'); s.className='summary';
-      if (state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
-      if (state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
-      area.appendChild(s); maybeScroll();
-    }
-    function chip(text){ const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c; }
+      const wrap = document.createElement('div');
+      wrap.className = 'input-wrap bubble bot';
 
-    // typing (…) -> הודעת בוט
-    function typingThen(html, delay=800, trusted=true){
-      const myToken=runToken;
-      const t=document.createElement('div');
-      t.className='typing-indicator';
-      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t); maybeScroll();
+      const l = document.createElement('label');
+      l.textContent = label;
+      if(id) l.htmlFor = id;
+
+      let el = textarea ? document.createElement('textarea') : document.createElement('input');
+      if(!textarea) el.type = type;
+      el.className = textarea ? 'textarea' : 'input';
+      el.id = id; el.placeholder = placeholder; el.dir='rtl';
+      if(required) el.required = true;
+      if(autocomplete) el.autocomplete = autocomplete;
+      if(inputmode) el.setAttribute('inputmode', inputmode);
+
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      autoscroll();
+      return el;
+    }
+
+    // אינדיקציית הקלדה -> הודעת בוט (מכבד ביטולים)
+    function typingThen(html, delay=900, trusted=true){
+      const myToken = runToken;
+      const t = document.createElement('div');
+      t.className = 'typing-indicator';
+      t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(t);
+      autoscroll();
       setTimeout(()=>{
         if(myToken!==runToken) return;
         t.remove();
@@ -158,11 +153,13 @@
       }, delay);
     }
 
-    // “שולח…”
+    // “שולח…” עם פס התקדמות
     function showProcessing(text='שולח למזכירות…'){
-      const d=document.createElement('div'); d.className='bubble bot processing';
-      d.innerHTML=`<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
-      area.appendChild(d); maybeScroll(); return ()=>d.remove();
+      const d = document.createElement('div');
+      d.className = 'bubble bot processing';
+      d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
+      area.appendChild(d); autoscroll();
+      return () => d.remove();
     }
 
     /* ===== Utils ===== */
@@ -180,7 +177,7 @@
       try{
         const res = await fetch(SHEETS_WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' }, // simple request
+          headers: { 'Content-Type': 'text/plain' }, // simple request (ללא preflight)
           body: JSON.stringify(payload),
           signal: ctrl.signal
         });
@@ -196,7 +193,7 @@
       }finally{ clearTimeout(timeout); }
     }
 
-    /* ===== Flow ===== */
+    /* ===== זרימה ===== */
     function start(){
       clear(); push(start);
 
@@ -206,21 +203,21 @@
         900, true
       );
 
-      setTimeout(()=> typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 700, true), 2000);
+      setTimeout(()=> typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 800, true), 2000);
 
       setTimeout(()=>{
         button('קבוצה – עד 5 תלמידים – 80₪', ()=>{
-          userText('קבוצה – עד 5 תלמידים – 80₪');
+          user('קבוצה – עד 5 תלמידים – 80₪');
           state.data.planType='group'; state.data.price=PRICES.group; stepSubject();
         }, 'btn primary');
 
         button('טריפל – עד 3 תלמידים – 100₪', ()=>{
-          userText('טריפל – עד 3 תלמידים – 100₪');
+          user('טריפל – עד 3 תלמידים – 100₪');
           state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
         });
 
         button('פרטי – 160₪', ()=>{
-          userText('פרטי – 160₪');
+          user('פרטי – 160₪');
           state.data.planType='private'; state.data.price=PRICES.private; stepSubject();
         });
       }, 3000);
@@ -228,122 +225,156 @@
 
     function stepSubject(){
       clear(); push(stepSubject);
+      typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 800, true);
 
-      withBatch(()=>{
-        botHTML('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>');
+      setTimeout(()=>{
         SUBJECTS.forEach(s => button(s, ()=>{
-          userText(s);
+          user(s);
           state.data.subject = s;
           stepDetails();
         }));
-        summaryChips();
-        button('חזרה', goBack);
-      }, { scrollTo:'first' });
+        // מציגים צ׳יפס מסלול+מחיר כבר כאן (חיזוק הקשר הויזואלי)
+        const s = document.createElement('div'); s.className='summary';
+        if (state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+        area.appendChild(s); autoscroll();
+      }, 1500);
     }
 
-    function stepDetails(){
+    // שלב פרטים — רינדור מדורג ומבוקר (ללא קפיצה לתחתית)
+    async function stepDetails(){
       clear(); push(stepDetails);
 
-      withBatch(()=>{
-        botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי את הפרטים ונעבור לסיכום לפני שליחה 📋</span>');
-        summaryChips();
+      // 1) נועל אוטו-סקְרוֹל לזמן קצר כדי למנוע קפיצה
+      disableAutoScroll();
+      const header = botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">נמלא רגע פרטים ואז נסכם 📋</span>');
+      // מציגים צ׳יפסים
+      const chips = document.createElement('div'); chips.className='summary';
+      if (state.data.planType) chips.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if (state.data.subject)  chips.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      area.appendChild(chips);
 
-        const availability = inputRow('ימי ושעות זמינות', { textarea:true, id:'availability', placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר', required:true });
-        const message      = inputRow('הודעה חופשית (לא חובה)', { textarea:true, id:'message', placeholder:'העדפה למורה / רמה / הערות' });
-        const fullName     = inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
-        const phone        = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      // מגלגל בעדינות לראש הקטע, לא לתחתית
+      scrollStartOf(header);
 
-        button('המשך לסיכום', ()=>{
-          userText('המשך לסיכום');
+      // אחרי 450ms מחזירים אוטו-סקְרוֹל (המסך כבר ישב)
+      setTimeout(()=> enableAutoScroll(), 450);
 
-          const avail = (availability.value||'').trim();
-          const note  = (message.value||'').trim();
-          const name  = (fullName.value||'').trim();
-          const tel   = normalizeILPhone(phone.value||'');
+      // 2) רינדור שדות בהשהיה קלה בין אחד לשני (קריא יותר)
+      await waitP(300);
+      const availability = inputRow('ימי ושעות זמינות', {
+        textarea:true, id:'availability',
+        placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר', required:true
+      });
 
-          if(!avail){ botText('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); return; }
-          if(!name){  botText('יש להזין שם מלא ✏️').classList.add('err'); return; }
-          if(!validILPhone(tel)){ botText('מספר טלפון לא תקין 📞').classList.add('err'); return; }
+      await waitP(150);
+      const message = inputRow('הודעה חופשית (לא חובה)', {
+        textarea:true, id:'message', placeholder:'העדפה למורה / רמה / הערות'
+      });
 
-          state.data.availability = avail;
-          state.data.message      = note;
-          state.data.fullName     = name;
-          state.data.phone        = tel;
+      await waitP(150);
+      const fullName = inputRow('שם מלא', {
+        id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name'
+      });
 
-          stepReview();
-        }, 'btn primary');
+      await waitP(150);
+      const phone = inputRow('טלפון לחזרה', {
+        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567',
+        required:true, autocomplete:'tel', inputmode:'tel'
+      });
 
-        button('חזרה', goBack);
-      }, { scrollTo:'first' });
+      // נותן פוקוס לשדה הראשון – המשתמש מיד רואה איפה להתחיל
+      availability.focus({ preventScroll:true });
+
+      await waitP(120);
+      const next = button('המשך לסיכום', ()=>{
+        user('המשך לסיכום');
+
+        const avail = (availability.value||'').trim();
+        const note  = (message.value||'').trim();
+        const name  = (fullName.value||'').trim();
+        const tel   = normalizeILPhone(phone.value||'');
+
+        if(!avail){ botText('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); availability.focus(); return; }
+        if(!name){  botText('יש להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
+        if(!validILPhone(tel)){ botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
+
+        state.data.availability = avail;
+        state.data.message      = note;
+        state.data.fullName     = name;
+        state.data.phone        = tel;
+
+        stepReview();
+      }, 'btn primary');
+
+      button('חזרה', goBack);
+
+      // עוזר קטן להשהיות
+      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
     function stepReview(){
       clear(); push(stepReview);
 
-      withBatch(()=>{
-        botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+      const h = botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+      scrollStartOf(h); // גולל לראש הסיכום, לא לתחתית
 
-        const card = document.createElement('div');
-        card.className = 'bubble bot';
+      const card = document.createElement('div'); card.className = 'bubble bot';
 
-        const chips = document.createElement('div');
-        chips.className = 'summary';
-        if (state.data.planType) chips.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
-        if (state.data.subject)  chips.appendChild(chip(`מקצוע: ${state.data.subject}`));
-        card.appendChild(chips);
+      const chips = document.createElement('div'); chips.className='summary';
+      if (state.data.planType) chips.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if (state.data.subject)  chips.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      card.appendChild(chips);
 
-        const details = document.createElement('div');
-        details.style.lineHeight = '1.9';
-        const addLine = (label, value) => {
-          const line = document.createElement('div');
-          const b = document.createElement('strong'); b.textContent = label + ' ';
-          const span = document.createElement('span'); span.textContent = value;
-          line.append(b, span);
-          details.appendChild(line);
-        };
-        addLine('זמינות:', state.data.availability);
-        if (state.data.message) addLine('הודעה:', state.data.message);
-        addLine('שם מלא:', state.data.fullName);
-        addLine('טלפון לחזרה:', state.data.phone);
+      const details = document.createElement('div'); details.style.lineHeight = '1.9';
+      const addLine = (label, value) => {
+        const line = document.createElement('div');
+        const b = document.createElement('strong'); b.textContent = label + ' ';
+        const span = document.createElement('span'); span.textContent = value;
+        line.append(b, span);
+        details.appendChild(line);
+      };
+      addLine('זמינות:', state.data.availability);
+      if (state.data.message) addLine('הודעה:', state.data.message);
+      addLine('שם מלא:', state.data.fullName);
+      addLine('טלפון לחזרה:', state.data.phone);
 
-        card.appendChild(details);
-        area.appendChild(card);
+      card.appendChild(details);
+      area.appendChild(card);
+      autoscroll();
 
-        const sendBtn = button('אישור ושליחה למזכירות 📤', onSend, 'btn primary');
-        button('עריכה', ()=> stepDetails());
-      }, { scrollTo:'first' });
-    }
+      const sendBtn = button('אישור ושליחה למזכירות 📤', async ()=>{
+        sendBtn.disabled = true;
+        const stopProcessing = showProcessing();
 
-    async function onSend(){
-      this && (this.disabled = true);
-      const stopProcessing = showProcessing();
+        const ok = await sendLeadToSheet({
+          path: 'שיעור על בסיס מקום פנוי',
+          planType: PLAN_HE[state.data.planType],
+          price: `${state.data.price}₪`,
+          subject: state.data.subject,
+          availability: state.data.availability,
+          message: state.data.message,
+          extraNotes: '',
+          fullName: state.data.fullName,
+          phone: state.data.phone,
+          cta: 'שיעור חד־פעמי',
+          source: 'יוסטון – אתר',
+          status: 'לטיפול',
+          createdAt: new Date().toISOString()
+        });
 
-      const ok = await sendLeadToSheet({
-        path: 'שיעור על בסיס מקום פנוי',
-        planType: PLAN_HE[state.data.planType],
-        price: `${state.data.price}₪`,
-        subject: state.data.subject,
-        availability: state.data.availability,
-        message: state.data.message,
-        extraNotes: '',
-        fullName: state.data.fullName,
-        phone: state.data.phone,
-        cta: 'שיעור חד־פעמי',
-        source: 'יוסטון – אתר',
-        status: 'לטיפול',
-        createdAt: new Date().toISOString()
-      });
+        stopProcessing();
+        clear();
 
-      stopProcessing();
-      clear();
+        if(ok){
+          botText('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
+        }else{
+          botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+        const home = button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
+        home.focus();
+      }, 'btn primary');
 
-      if(ok){
-        botText('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
-      }else{
-        botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
-      }
-      const home = button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
-      home.focus();
+      button('עריכה', ()=> stepDetails());
     }
 
     // הפעלה
