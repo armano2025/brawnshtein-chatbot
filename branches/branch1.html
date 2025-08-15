@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור על בסיס מקום פנוי</title>
 
-  <!-- חשוב: בענף בתוך /branches/ הנתיב ל-CSS חייב ../ -->
-  <link rel="stylesheet" href="../styles.css?v=2" />
+  <!-- חשוב: הקובץ הזה יושב בתוך /branches לכן המסלול ../ -->
+  <link rel="stylesheet" href="../styles.css" />
   <meta name="theme-color" content="#2563eb" />
+  <style>
+    /* מבטיח גלילה בפועל גם אם יש קאש ישן של styles.css */
+    #area { overflow-y:auto; max-height:70vh; scroll-behavior:smooth; }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -20,7 +24,7 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (שמור על body + chat-body בדיוק כמו באינדקס) -->
+      <!-- אזור השיחה -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
       <!-- כפתורי ניווט תחתונים -->
@@ -45,12 +49,18 @@
     const state = {
       history: [],
       data: {
-        planType: null, price: null, subject: null,
-        availability: null, message: '', fullName: null, phone: null
+        planType: null,   // group | triple | private
+        price: null,      // 80 | 100 | 160
+        subject: null,    // עברית
+        availability: null,
+        message: '',
+        fullName: null,
+        phone: null
       }
     };
+
+    // ביטול טיימרים “זומבים” בזמן מעבר מסך/חזרה
     let runToken = 0;
-    let autoScrollEnabled = true; // כאן כן נגלול עם כל הודעה
 
     const last = () => state.history[state.history.length - 1];
     const push = fn => { state.history.push(fn); updateBack(); };
@@ -58,97 +68,86 @@
       if (state.history.length > 1) {
         state.history.pop();
         updateBack();
-        runToken++;
+        runToken++; // מבטל timeouts של המסך הקודם
         last()();
       }
     };
     backBtn.onclick = goBack;
     function updateBack(){ backBtn.disabled = state.history.length <= 1; }
 
-    /* ===== UI ===== */
+    /* ===== UI helpers ===== */
     const clear = () => { runToken++; area.innerHTML = ''; };
-    const autoscroll = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
+    const autoscroll = () => { area.scrollTop = area.scrollHeight; };
 
+    // הודעות בוט: HTML אמין (שלנו) לעומת טקסט “נקי”
     function botHTML(html){
-      const d = document.createElement('div');
-      d.className = 'bubble bot';
-      d.innerHTML = html;
-      area.appendChild(d);
-      autoscroll();
-      return d;
+      const d=document.createElement('div'); d.className='bubble bot';
+      d.innerHTML=html; area.appendChild(d); autoscroll(); return d;
     }
     function botText(text){
-      const d = document.createElement('div');
-      d.className = 'bubble bot';
-      d.textContent = text;
-      area.appendChild(d);
-      autoscroll();
-      return d;
+      const d=document.createElement('div'); d.className='bubble bot';
+      d.textContent=text; area.appendChild(d); autoscroll(); return d;
     }
-    function user(text){
-      const d = document.createElement('div');
-      d.className = 'bubble user';
-      d.textContent = text;
-      area.appendChild(d);
-      autoscroll();
-      return d;
+    function userText(text){
+      const d=document.createElement('div'); d.className='bubble user';
+      d.textContent=text; area.appendChild(d); autoscroll(); return d;
     }
+
     function button(text, onClick, cls='btn'){
-      const b = document.createElement('button');
-      b.className = cls;
-      b.textContent = text;
-      b.onclick = ()=>{
-        b.disabled = true;
-        onClick();
-      };
-      area.appendChild(b);
-      autoscroll();
-      return b;
+      const b=document.createElement('button');
+      b.className=cls; b.textContent=text;
+      b.onclick=()=>{ b.disabled=true; onClick(); };  // מניעת דאבל-קליק לכפתור המסוים
+      area.appendChild(b); autoscroll(); return b;
     }
+
     function inputRow(label, {type='text', id, textarea=false, placeholder='', required=false, autocomplete, inputmode} = {}){
-      const wrap = document.createElement('div');
-      wrap.className = 'input-wrap bubble bot';
-      const l = document.createElement('label'); l.textContent = label; if(id) l.htmlFor = id;
-      let el = textarea ? document.createElement('textarea') : document.createElement('input');
-      if(!textarea) el.type = type;
+      const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
+
+      const l=document.createElement('label'); l.textContent=label;
+      if(id) l.htmlFor=id;
+
+      const el = textarea ? document.createElement('textarea') : document.createElement('input');
+      if(!textarea) el.type=type;
       el.className = textarea ? 'textarea' : 'input';
-      el.id = id; el.placeholder = placeholder; el.dir='rtl';
+      el.id=id; el.placeholder=placeholder; el.dir='rtl';
+
       if(required) el.required = true;
       if(autocomplete) el.autocomplete = autocomplete;
       if(inputmode) el.setAttribute('inputmode', inputmode);
+
       wrap.append(l, el);
       area.appendChild(wrap);
       autoscroll();
       return el;
     }
-    function summaryChips(){
-      const s = document.createElement('div'); s.className='summary';
-      if (state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
-      if (state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
-      area.appendChild(s);
-      autoscroll();
-    }
-    function chip(text){ const c = document.createElement('div'); c.className='chip'; c.textContent=text; return c; }
 
+    function chip(text){ const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c; }
+    function summaryChips(){
+      const s=document.createElement('div'); s.className='summary';
+      if(state.data.planType) s.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
+      if(state.data.subject)  s.appendChild(chip(`מקצוע: ${state.data.subject}`));
+      area.appendChild(s); autoscroll();
+    }
+
+    // אינדיקציית הקלדה -> הודעת בוט (מכבד ביטולים)
     function typingThen(html, delay=800, trusted=true){
       const myToken = runToken;
-      const t = document.createElement('div');
-      t.className = 'typing-indicator';
-      t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      const t=document.createElement('div');
+      t.className='typing-indicator';
+      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
       area.appendChild(t); autoscroll();
       setTimeout(()=>{
-        if(myToken!==runToken) return;
+        if(myToken!==runToken) return; // בוטל עקב מעבר מסך
         t.remove();
         trusted ? botHTML(html) : botText(html);
       }, delay);
     }
 
+    // “שולח…” עם פס התקדמות
     function showProcessing(text='שולח למזכירות…'){
-      const d = document.createElement('div');
-      d.className = 'bubble bot processing';
-      d.innerHTML = `<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
-      area.appendChild(d); autoscroll();
-      return () => d.remove();
+      const d=document.createElement('div'); d.className='bubble bot processing';
+      d.innerHTML=`<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
+      area.appendChild(d); autoscroll(); return ()=>d.remove();
     }
 
     /* ===== Utils ===== */
@@ -162,24 +161,21 @@
 
     async function sendLeadToSheet(payload){
       const ctrl = new AbortController();
-      const timeout = setTimeout(()=>ctrl.abort(), 10000);
+      const timer = setTimeout(()=>ctrl.abort(), 10000); // 10 שניות timeout
       try{
         const res = await fetch(SHEETS_WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'text/plain' }, // simple request (בלי preflight)
           body: JSON.stringify(payload),
           signal: ctrl.signal
         });
-        try{
-          const j = await res.json();
-          return j && j.ok === true;
-        }catch(_){
-          return res.ok;
-        }
+        let ok=false;
+        try{ const j=await res.json(); ok = j?.ok===true; } catch{ ok = res.ok; }
+        return ok;
       }catch(e){
         console.error('Sheets error', e);
         return false;
-      }finally{ clearTimeout(timeout); }
+      }finally{ clearTimeout(timer); }
     }
 
     /* ===== Flow ===== */
@@ -196,17 +192,17 @@
 
       setTimeout(()=>{
         button('קבוצה – עד 5 תלמידים – 80₪', ()=>{
-          user('קבוצה – עד 5 תלמידים – 80₪');
+          userText('קבוצה – עד 5 תלמידים – 80₪');
           state.data.planType='group'; state.data.price=PRICES.group; stepSubject();
         }, 'btn primary');
 
         button('טריפל – עד 3 תלמידים – 100₪', ()=>{
-          user('טריפל – עד 3 תלמידים – 100₪');
+          userText('טריפל – עד 3 תלמידים – 100₪');
           state.data.planType='triple'; state.data.price=PRICES.triple; stepSubject();
         });
 
         button('פרטי – 160₪', ()=>{
-          user('פרטי – 160₪');
+          userText('פרטי – 160₪');
           state.data.planType='private'; state.data.price=PRICES.private; stepSubject();
         });
       }, 3000);
@@ -215,9 +211,10 @@
     function stepSubject(){
       clear(); push(stepSubject);
       typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 700, true);
+
       setTimeout(()=>{
         SUBJECTS.forEach(s => button(s, ()=>{
-          user(s);
+          userText(s);
           state.data.subject = s;
           stepDetails();
         }));
@@ -225,6 +222,7 @@
       }, 1600);
     }
 
+    // שלב פרטים -> סיכום
     function stepDetails(){
       clear(); push(stepDetails);
       botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">מלאי את הפרטים ונעבור לסיכום לפני שליחה 📋</span>');
@@ -236,7 +234,7 @@
       const phone        = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
 
       button('המשך לסיכום', ()=>{
-        user('המשך לסיכום');
+        userText('המשך לסיכום');
 
         const avail = (availability.value||'').trim();
         const note  = (message.value||'').trim();
@@ -258,6 +256,7 @@
       button('חזרה', goBack);
     }
 
+    // שלב סיכום (נבנה DOM כדי למנוע XSS)
     function stepReview(){
       clear(); push(stepReview);
 
@@ -266,14 +265,17 @@
       const card = document.createElement('div');
       card.className = 'bubble bot';
 
+      // צ׳יפים
       const chips = document.createElement('div');
       chips.className = 'summary';
       if (state.data.planType) chips.appendChild(chip(`מסלול: ${PLAN_HE[state.data.planType]} (${state.data.price}₪)`));
       if (state.data.subject)  chips.appendChild(chip(`מקצוע: ${state.data.subject}`));
       card.appendChild(chips);
 
+      // פירוט
       const details = document.createElement('div');
       details.style.lineHeight = '1.9';
+
       const addLine = (label, value) => {
         const line = document.createElement('div');
         const b = document.createElement('strong'); b.textContent = label + ' ';
@@ -281,6 +283,7 @@
         line.append(b, span);
         details.appendChild(line);
       };
+
       addLine('זמינות:', state.data.availability);
       if (state.data.message) addLine('הודעה:', state.data.message);
       addLine('שם מלא:', state.data.fullName);
@@ -300,8 +303,8 @@
           price: `${state.data.price}₪`,
           subject: state.data.subject,
           availability: state.data.availability,
-          message: state.data.message,
-          extraNotes: '',
+          message: state.data.message,     // עמודת message בגיליון
+          extraNotes: '',                  // אחידות עמודות
           fullName: state.data.fullName,
           phone: state.data.phone,
           cta: 'שיעור חד־פעמי',
