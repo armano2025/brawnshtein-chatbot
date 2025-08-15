@@ -41,7 +41,7 @@
 
     const state = {
       history: [],
-      lead: { fullName: null, phone: null }
+      lead: { fullName: null, phone: null, message: '' }
     };
     const push   = fn => state.history.push(fn);
     const goBack = () => { if(state.history.length>1){ state.history.pop(); state.history.at(-1)(); } };
@@ -83,6 +83,17 @@
       const l = document.createElement('label'); l.textContent = label;
       const el = document.createElement('input');
       el.type = type; el.className = 'input'; el.id = id; el.placeholder = placeholder; el.dir='rtl';
+      wrap.append(l, el);
+      area.appendChild(wrap);
+      autoscroll();
+      return el;
+    }
+    function textareaRow(label, {id, placeholder=''} = {}){
+      const wrap = document.createElement('div');
+      wrap.className = 'input-wrap bubble bot';
+      const l = document.createElement('label'); l.textContent = label;
+      const el = document.createElement('textarea');
+      el.className = 'textarea'; el.id = id; el.placeholder = placeholder; el.dir='rtl';
       wrap.append(l, el);
       area.appendChild(wrap);
       autoscroll();
@@ -137,7 +148,7 @@
 
     /* ===== זרימה בשלבים ===== */
 
-    // שלב 0 – פתיחה + טופס קצר (שם+טלפון)
+    // שלב 0 – פתיחה + טופס קצר (שם+טלפון+הערות רשות)
     async function start(){
       clear(); push(start);
 
@@ -148,18 +159,21 @@
 
       const name  = inputRow('שם מלא',      { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
       const phone = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+      const notes = textareaRow('הערות (רשות)', { id:'lead_notes', placeholder:'כל דבר שחשוב שנדע' });
 
       const nextBtn = button('המשך', async ()=>{
         user('המשך');
 
-        const fullName = (name.value||'').trim();
+        const fullName  = (name.value||'').trim();
         const phoneNorm = normalizeILPhone((phone.value||'').trim());
+        const message   = (notes.value||'').trim();
 
         if(!fullName){ bot('יש להזין שם מלא ✏️').classList.add('err'); return; }
         if(!validILPhone(phoneNorm)){ bot('מספר טלפון לא תקין 📞 (למשל 0501234567)').classList.add('err'); return; }
 
         state.lead.fullName = fullName;
         state.lead.phone    = phoneNorm;
+        state.lead.message  = message;
 
         nextBtn.disabled = true;
         const stopProcessing = showProcessing();
@@ -168,9 +182,11 @@
           path: 'מנוי חודשי – התעניינות',
           fullName: state.lead.fullName,
           phone: state.lead.phone,
+          message: state.lead.message,  // הודעה חופשית (רשות)
+          extraNotes: '',               // אחידות עמודות בגיליון
           cta: 'התעניינות במנוי חודשי',
           source: 'יוסטון – אתר',
-          status: 'חדש',
+          status: 'לטיפול',
           createdAt: new Date().toISOString()
         });
 
