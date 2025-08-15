@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מנוי חודשי – פרטים והרשמה</title>
 
-  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../styles.css?v=3" />
   <meta name="theme-color" content="#2563eb" />
   <style>
     /* מבטיח גלילה בפועל לאזור השיחה */
@@ -48,8 +48,12 @@
       lead: { fullName: null, phone: null, message: '' }
     };
 
-    // תאימות/ביטול טיימרים זומבים
+    // ביטול טיימרים זומבים + שליטה בגלילה
     let runToken = 0;
+    let autoScrollEnabled = true;
+    const enableAutoScroll  = () => (autoScrollEnabled = true);
+    const disableAutoScroll = () => (autoScrollEnabled = false);
+
     const last = () => state.history[state.history.length - 1];
     const push = fn => { state.history.push(fn); updateBack(); };
     const goBack = () => {
@@ -64,8 +68,10 @@
     function updateBack(){ backBtn.disabled = state.history.length <= 1; }
 
     /* ===== UI helpers ===== */
-    const clear = () => { runToken++; area.innerHTML = ''; };
-    const autoscroll = () => { area.scrollTop = area.scrollHeight; };
+    const clear       = () => { runToken++; area.innerHTML = ''; };
+    const autoscroll  = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
+    const scrollStart = el => el?.scrollIntoView({ block:'start', behavior:'smooth' });
+    const waitP       = ms => new Promise(r=>setTimeout(r, ms));
 
     // הודעות בוט אמינות (HTML שלנו) מול טקסט בטוח
     function botHTML(html){
@@ -171,10 +177,23 @@
         800, /* trusted */ true
       );
 
+      // אנטי-קפיצה: נציג כותרת/הנחיה, נגלול לראש, ואז נבנה את השדות בהדרגה
+      disableAutoScroll();
+      const anchor = botHTML('<span class="muted">פרטי קשר</span>');
+      scrollStart(anchor);
+      setTimeout(()=> enableAutoScroll(), 450);
+
+      await waitP(250);
       const name  = inputRow('שם מלא',      { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
+      await waitP(150);
       const phone = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      await waitP(150);
       const notes = textareaRow('הערות (רשות)', { id:'lead_notes', placeholder:'כל דבר שחשוב שנדע' });
 
+      // פוקוס בלי לגלול
+      name.focus({ preventScroll:true });
+
+      await waitP(120);
       const nextBtn = button('המשך', async ()=>{
         userText('המשך');
 
@@ -210,7 +229,7 @@
           botText('הפרטים נשמרו בהצלחה ✅');
           setTimeout(()=> stepAbout(), 600);
         }else{
-          botText('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          botText('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050-9570866.').classList.add('err');
           nextBtn.disabled = false;
         }
       }, 'btn primary');
@@ -226,7 +245,7 @@
         '<strong>כמה מילים על איך אנחנו עובדים:</strong><br>' +
         '• כל שיעור נמשך <strong>50 דקות</strong> ומתחיל בשעה עגולה.<br>' +
         '• לומדים את חומר הכיתה, משלימים פערים, עוזרים בשיעורי בית, מכינים למבחנים,<br>' +
-        '  בונים ביטחון — ואפילו מתקדמים בחומר מעבר לכיתה 🎯'
+        '  בונים ביטחון — ואפילו מתקדמים בחומר מעבר לכיתה 🎯'
       );
 
       button('המשך', stepPrices, 'btn primary');
