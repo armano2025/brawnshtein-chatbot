@@ -9,8 +9,18 @@
   <meta name="theme-color" content="#2563eb" />
 
   <style>
-    /* שיפור גלילה חלקה לאזור השיחה */
-    #area{ scroll-behavior:smooth; }
+    /* אזור השיחה – גלילה אמיתית וחלקה */
+    #area{
+      max-height: 70vh;         /* או גובה אחר שמתאים לעמוד שלך */
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    /* קונטיינר ייעודי לכפתורי פעולה */
+    #actions{
+      display: grid;
+      gap: 10px;
+      padding: 12px 20px 0;
+    }
   </style>
 </head>
 <body>
@@ -25,8 +35,11 @@
         </div>
       </div>
 
-      <!-- אזור התוכן -->
-      <div class="body" id="area"></div>
+      <!-- אזור התוכן (בועות) -->
+      <div class="body" id="area" aria-live="polite" role="log"></div>
+
+      <!-- כפתורי פעולה דינמיים -->
+      <div id="actions"></div>
 
       <!-- תחתית -->
       <div class="footer">
@@ -38,36 +51,38 @@
 
   <script>
     const area = document.getElementById('area');
+    const actions = document.getElementById('actions');
 
     function autoscroll(){ area.scrollTop = area.scrollHeight; }
 
     function bot(html){
       const d=document.createElement('div');
       d.className='bubble bot';
-      d.innerHTML=html;
+      d.innerHTML=html;           // נשאר HTML כי אתה שולט בתוכן
       area.appendChild(d);
       autoscroll();
       return d;
     }
-    function user(html){
+    function user(text){
       const d=document.createElement('div');
       d.className='bubble user';
-      d.innerHTML=html;
+      d.textContent=text;         // בטוח מ-XSS
       area.appendChild(d);
       autoscroll();
       return d;
+    }
+    function clearActions(){
+      actions.innerHTML = '';
     }
     function actionBtn(text, onClick, cls='btn'){
       const b=document.createElement('button');
       b.className=cls;
       b.textContent=text;
       b.onclick=()=>{
-        // מניעת הקלקות כפולות
-        [...area.querySelectorAll('button')].forEach(btn=>btn.disabled=true);
+        b.disabled=true;          // משבית רק את עצמו
         onClick();
       };
-      area.appendChild(b);
-      autoscroll();
+      actions.appendChild(b);
       return b;
     }
     function typingThen(text, delay=650){
@@ -79,10 +94,18 @@
       setTimeout(()=>{ t.remove(); bot(text); }, delay);
     }
 
+    function safeNavigate(href){
+      try{
+        location.href = href;
+      }catch(_){
+        bot('לא הצלחתי לנווט לעמוד המבוקש. נסי שוב או רענני את הדף.').classList.add('err');
+      }
+    }
+
     function start(){
       area.innerHTML = '';
+      clearActions();
 
-      // הודעת פתיחה (קצרה ועניינית)
       typingThen(
         '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
         'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
@@ -90,29 +113,26 @@
         600
       );
 
-      // הנחיה
       setTimeout(()=>{
         typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
       }, 900);
 
-      // כפתורים (שלושת הענפים פעילים)
       setTimeout(()=>{
-        // ענף 1
+        clearActions();
+
         actionBtn('שיעור על בסיס מקום פנוי', ()=>{
           user('שיעור על בסיס מקום פנוי');
-          setTimeout(()=> location.href='branches/branch1.html', 150);
+          setTimeout(()=> safeNavigate('branches/branch1.html'), 150);
         }, 'btn primary');
 
-        // ענף 2
         actionBtn('פרטים על מנוי חודשי', ()=>{
           user('פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2.html', 150);
+          setTimeout(()=> safeNavigate('branches/branch2.html'), 150);
         });
 
-        // ענף 3
         actionBtn('מנויה קיימת – פעולות', ()=>{
           user('מנויה קיימת – פעולות');
-          setTimeout(()=> location.href='branches/branch3.html', 150);
+          setTimeout(()=> safeNavigate('branches/branch3.html'), 150);
         });
       }, 1600);
     }
