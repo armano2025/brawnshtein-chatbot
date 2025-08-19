@@ -1,12 +1,10 @@
-// /js/chat-helpers.js
+// /branches/js/chat-helpers.js
 (function () {
   const cfg = window.APP_CONFIG || {};
 
   // ===== DOM =====
-  const $  = (s) => document.querySelector(s);
-  const $$ = (s) => Array.from(document.querySelectorAll(s));
-  const area    = $('#area');
-  const backBtn = $('#backBtn');
+  const area    = document.getElementById('area');
+  const backBtn = document.getElementById('backBtn');
 
   // ===== State + History =====
   const State = { history: [], data: {}, token: 0, autoScroll: true };
