@@ -40,12 +40,12 @@
       Chat.clear(); Chat.push(start);
 
       Chat.typingThen(
-        'אשמח לעזור לך לקבוע שיעור חד־פעמי 🗓️<br><br>' +
-        'במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד מקבל יחס אישי ותכנית לימוד מותאמת לצרכים שלו — בלי קשר לקצב של אחרים.',
+        'נשמח לעזור לתאם שיעור חד־פעמי 🗓️<br><br>' +
+        'במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד/ה מקבל/ת יחס אישי ותכנית לימוד מותאמת — ללא תלות בקצב של אחרים.',
         900, true
       );
 
-      setTimeout(()=> Chat.typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 800, true), 2000);
+      setTimeout(()=> Chat.typingThen('<strong>איזה סוג שיעור מתאים?</strong>', 800, true), 2000);
 
       setTimeout(()=>{
         const P = Chat.cfg.PRICES;
@@ -75,7 +75,7 @@
 
     function stepSubject(){
       Chat.clear(); Chat.push(stepSubject);
-      Chat.typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 800, true);
+      Chat.typingThen('<strong>באיזה מקצוע תרצו את השיעור? 📖</strong>', 800, true);
 
       setTimeout(()=>{
         Chat.cfg.SUBJECTS.forEach(s => Chat.button(s, ()=>{
@@ -96,7 +96,7 @@
 
       // נועל אוטו-סקרול קצר כדי לא "לקפוץ" לתחתית
       Chat.State.autoScroll = false;
-      const header = Chat.botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">נמלא רגע פרטים ואז נסכם 📋</span>');
+      const header = Chat.botHTML('<strong>פרטי תיאום</strong><br><span class="muted">נמלא כמה פרטים ואז נסכם 📋</span>');
 
       const chips = document.createElement('div'); chips.className='summary';
       if (Chat.State.data.planType) chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
@@ -106,16 +106,23 @@
       Chat.scrollStartOf(header);
       setTimeout(()=> Chat.State.autoScroll = true, 450);
 
+      // שעות פעילות + בקשת ימי/שעות
+      Chat.typingThen(
+        'שעות הפעילות שלנו: <strong>א׳–ה׳, 14:00–21:00</strong> ⏰<br>' +
+        'מהם הימים והשעות שנוחים לשיעור?',
+        700, true
+      );
+
       // שדות
       await waitP(300);
-      const availability = Chat.inputRow('ימי ושעות זמינות', {
+      const availability = Chat.inputRow('ימים ושעות מועדפים', {
         textarea:true, id:'availability',
-        placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר', required:true
+        placeholder:'לדוגמה: א׳–ג׳ 16:00–19:00 / שישי בוקר', required:true
       });
 
       await waitP(150);
-      const message = Chat.inputRow('הודעה חופשית (לא חובה)', {
-        textarea:true, id:'message', placeholder:'העדפה למורה / רמה / הערות'
+      const message = Chat.inputRow('הערות למזכירות (לא חובה)', {
+        textarea:true, id:'message', placeholder:'רמה/יעד/העדפות מיוחדות'
       });
 
       await waitP(150);
@@ -140,8 +147,8 @@
         const name  = (fullName.value||'').trim();
         const tel   = Chat.normalizeILPhone(phone.value||'');
 
-        if(!avail){ Chat.botText('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); availability.focus(); return; }
-        if(!name){  Chat.botText('יש להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
+        if(!avail){ Chat.botText('נא לציין זמינות (ימים ושעות) 🕒').classList.add('err'); availability.focus(); return; }
+        if(!name){  Chat.botText('נא להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
         if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
 
         Chat.State.data.availability = avail;
@@ -160,7 +167,7 @@
     function stepReview(){
       Chat.clear(); Chat.push(stepReview);
 
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
       Chat.scrollStartOf(h);
 
       const card = document.createElement('div'); card.className='bubble bot';
@@ -177,8 +184,8 @@
         const span=document.createElement('span'); span.textContent=value;
         line.append(b, span); details.appendChild(line);
       };
-      addLine('זמינות:', Chat.State.data.availability);
-      if (Chat.State.data.message) addLine('הודעה:', Chat.State.data.message);
+      addLine('ימים ושעות מועדפים:', Chat.State.data.availability);
+      if (Chat.State.data.message) addLine('הערות:', Chat.State.data.message);
       addLine('שם מלא:', Chat.State.data.fullName);
       addLine('טלפון לחזרה:', Chat.State.data.phone);
 
@@ -196,7 +203,7 @@
           subject: Chat.State.data.subject,
           availability: Chat.State.data.availability,
           message: Chat.State.data.message,
-          extraNotes: '',
+          extraNotes: 'שעות פעילות: א׳–ה׳ 14:00–21:00',
           fullName: Chat.State.data.fullName,
           phone: Chat.State.data.phone,
           cta: 'שיעור חד־פעמי',
@@ -209,9 +216,9 @@
         Chat.clear();
 
         if(ok){
-          Chat.botText('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
+          Chat.botText('הבקשה נשלחה למזכירות ✅ נחזור בהקדם לבדוק זמינות ולהשריין מועד 📅').classList.add('ok');
         }else{
-          Chat.botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ אפשר לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
         }
         const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
         home.focus();
