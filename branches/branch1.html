@@ -26,7 +26,8 @@
       <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <button class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
+        <!-- תמיד לבן כמו חזרה -->
+        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
     </div>
   </div>
@@ -36,24 +37,22 @@
   <script src="./js/chat-helpers.js?v=2"></script>
 
   <script>
-    // ==== התחלה: פתיח קצר ואז מקצוע ====
+    // ==== התחלה: קופצים ישר למקצוע; את פתיח "נשמח לעזור..." משולב בכותרת שלב המקצוע ====
     function start(){
       Chat.clear(); Chat.push(start);
-
-      Chat.typingThen(
-        'נשמח לעזור בתיאום שיעור חד־פעמי 🗓️<br><br>' +
-        'במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד מקבל יחס אישי ותכנית לימוד מותאמת — בלי קשר לקצב של אחרים.',
-        900, true
-      );
-
-      setTimeout(()=> stepSubject(), 1400);
+      stepSubject();
     }
 
     // ==== שלב 1: מקצוע ====
     function stepSubject(){
       Chat.clear(); Chat.push(stepSubject);
 
-      Chat.typingThen('<strong>באיזה מקצוע תרצו את השיעור? 📖</strong>', 700, true);
+      Chat.typingThen(
+        '<strong>נשמח לעזור בתיאום שיעור חד־פעמי 🗓️👨‍🚀</strong><br>' +
+        '<span class="muted">במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד מקבל יחס אישי ותכנית לימוד מותאמת.</span><br><br>' +
+        '<strong>באיזה מקצוע תרצו את השיעור? 📖</strong> 👨‍🚀',
+        700, true
+      );
 
       setTimeout(()=>{
         Chat.cfg.SUBJECTS.forEach(s => Chat.button(s, ()=>{
@@ -72,7 +71,7 @@
     function stepGrade(){
       Chat.clear(); Chat.push(stepGrade);
 
-      Chat.typingThen('<strong>באיזו כיתה או רמה?</strong>', 700, true);
+      Chat.typingThen('<strong>באיזו כיתה או רמה?</strong> 👨‍🚀', 700, true);
 
       const grades = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','חינוך ביתי','סטודנט/ית','אחר'];
       setTimeout(()=>{
@@ -94,7 +93,7 @@
     function stepUnits(){
       Chat.clear(); Chat.push(stepUnits);
 
-      Chat.typingThen('<strong>כמה יחידות בגרות?</strong>', 600, true);
+      Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
         ['3','4','5'].forEach(u => Chat.button(u, ()=>{
@@ -114,15 +113,23 @@
       Chat.clear(); Chat.push(stepPlan);
 
       const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
-      Chat.typingThen('<strong>בחירת מסלול</strong><br><span class="muted">נא לבחור מסלול מתאים:</span>', 600, true);
+      Chat.typingThen('<strong>בחירת מסלול</strong><br><span class="muted">נא לבחור מסלול מתאים:</span> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
-        Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
-          Chat.userBubble(`קבוצה – עד 5 תלמידים – ${P.group}₪`);
-          Chat.State.data.planType='group';
-          Chat.State.data.price=P.group;
-          stepAvailability();
-        }, 'btn primary');
+        // אם נבחר: י״א/י״ב + 5 יח״ל מתמטיקה → להסתיר קבוצה
+        const isMath = (Chat.State.data.subject || '').trim() === 'מתמטיקה';
+        const isHighGrade = ['יא','יב'].includes(Chat.State.data.grade);
+        const isFiveUnits = (Chat.State.data.units || '') === '5';
+        const allowGroup = !(isMath && isHighGrade && isFiveUnits);
+
+        if (allowGroup){
+          Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
+            Chat.userBubble(`קבוצה – עד 5 תלמידים – ${P.group}₪`);
+            Chat.State.data.planType='group';
+            Chat.State.data.price=P.group;
+            stepAvailability();
+          }, 'btn primary');
+        }
 
         Chat.button(`טריפל – עד 3 תלמידים – ${P.triple}₪`, ()=>{
           Chat.userBubble(`טריפל – עד 3 תלמידים – ${P.triple}₪`);
@@ -153,7 +160,7 @@
       Chat.typingThen(
         '<strong>שעות פתיחה</strong><br>' +
         '<span class="muted">אנחנו פתוחים בימים א׳–ה׳ בין 14:00–21:00.</span><br><br>' +
-        '<strong>באילו ימים ושעות נוח לקבוע?</strong>',
+        '<strong>באילו ימים ושעות נוח לקבוע?</strong> 👨‍🚀',
         700, true
       );
 
@@ -189,20 +196,20 @@
     function stepNotes(){
       Chat.clear(); Chat.push(stepNotes);
 
-      Chat.typingThen('<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)</span>', 600, true);
+      Chat.typingThen('<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)</span> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
         const message = Chat.inputRow('הערות (לא חובה)', {
           textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב'
         });
 
-        Chat.button('המשך לפרטים', ()=>{
-          Chat.userBubble('המשך לפרטים');
+        // מסירים כפילות: רק המשך + חזרה
+        Chat.button('המשך', ()=>{
+          Chat.userBubble('המשך');
           Chat.State.data.message = (message.value||'').trim();
           stepContact();
         }, 'btn primary');
 
-        Chat.button('דלג/י', ()=>{ Chat.userBubble('דלג/י'); stepContact(); });
         Chat.button('חזרה', Chat.goBack);
       }, 900);
     }
@@ -211,7 +218,9 @@
     async function stepContact(){
       Chat.clear(); Chat.push(stepContact);
 
-      Chat.typingThen('<strong>פרטי קשר לתיאום</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span>', 600, true);
+      // הכותרת העליונה חייבת להיות הכי למעלה
+      const header = Chat.botHTML('<strong>פרטי קשר לתיאום</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
+      Chat.scrollStartOf(header);
 
       await waitP(300);
       const firstName = Chat.inputRow('שם פרטי', {
@@ -256,7 +265,7 @@
     function stepReview(){
       Chat.clear(); Chat.push(stepReview);
 
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span>');
+      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
       Chat.scrollStartOf(h);
 
       const card = document.createElement('div'); card.className='bubble bot';
@@ -268,7 +277,7 @@
       if (Chat.State.data.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
       card.appendChild(chips);
 
-      // פירוט
+      // דו"ח סיכום בשפה אחידה
       const d = Chat.State.data;
       const details = document.createElement('div'); details.style.lineHeight='1.9';
       const addLine = (label, value)=>{
@@ -279,8 +288,11 @@
       };
       addLine('שם:', `${d.firstName||''}`);
       addLine('שם משפחה:', `${d.lastName||''}`);
+      addLine('מקצוע:', `${d.subject||''}`);
+      addLine('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יח׳`:''}`);
+      addLine('מסלול:', `${(Chat.cfg.PLAN_HE[d.planType]||'')}${d.price?` – ${d.price}₪`:''}`);
       addLine('ימים ושעות מועדפים:', d.availability||'');
-      if (d.message) addLine('הערות:', d.message);
+      if (d.message) addLine('הערות למזכירות:', d.message);
       addLine('טלפון לחזרה:', d.phone||'');
 
       card.appendChild(details);
@@ -302,7 +314,7 @@
           availability: Chat.State.data.availability,
           message: Chat.State.data.message || '',
           extraNotes: '',
-          fullName,                 // נשמר אחורה-תואם
+          fullName,                 // תאימות לאחור
           firstName: Chat.State.data.firstName,
           lastName:  Chat.State.data.lastName,
           phone: Chat.State.data.phone,
