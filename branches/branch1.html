@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>שיעור על בסיס מקום פנוי</title>
+  <title>יוסטון – צ׳טבוט</title>
 
-  <link rel="stylesheet" href="../styles.css?v=3" />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
   <meta name="theme-color" content="#2563eb" />
-  <style>#area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}</style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
-          <div class="title">שיעור על בסיס מקום פנוי</div>
+          <div class="title">יוסטון – צ׳טבוט</div>
         </div>
       </div>
 
@@ -25,202 +26,96 @@
 
       <!-- תחתית -->
       <div class="footer">
-        <button id="backBtn" class="btn" disabled>חזרה</button>
-        <button class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
+        <button class="btn" onclick="location.reload()">ריענון</button>
       </div>
+
     </div>
   </div>
 
-  <!-- סקריפטים משותפים -->
-  <script src="../js/config.js"></script>
-  <script src="../js/chat-helpers.js"></script>
-
   <script>
-    function start(){
-      Chat.clear(); Chat.push(start);
+    const area = document.getElementById('area');
 
-      Chat.typingThen(
-        'אשמח לעזור לך לקבוע שיעור חד־פעמי 🗓️<br><br>' +
-        'במרכז בראונשטיין, גם בשיעור קבוצתי כל תלמיד מקבל יחס אישי ותכנית לימוד מותאמת לצרכים שלו — בלי קשר לקצב של אחרים.',
-        900, true
+    function autoscroll(){ area.scrollTop = area.scrollHeight; }
+
+    function bot(html){
+      const d=document.createElement('div');
+      d.className='bubble bot';
+      d.innerHTML=html;
+      area.appendChild(d);
+      autoscroll();
+      return d;
+    }
+    function user(text){
+      const d=document.createElement('div');
+      d.className='bubble user';
+      d.textContent=text;
+      area.appendChild(d);
+      autoscroll();
+      return d;
+    }
+    function actionBtn(text, onClick, cls='btn'){
+      const b=document.createElement('button');
+      b.className=cls;
+      b.textContent=text;
+      b.onclick=()=>{
+        b.disabled = true;
+        onClick();
+      };
+      area.appendChild(b);
+      autoscroll();
+      return b;
+    }
+    function typingThen(text, delay=650){
+      const t=document.createElement('div');
+      t.className='typing-indicator';
+      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      area.appendChild(t);
+      autoscroll();
+      setTimeout(()=>{ t.remove(); bot(text); }, delay);
+    }
+
+    function start(){
+      area.innerHTML = '';
+
+      // שורה ראשונה
+      typingThen(
+        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
+        'אני העוזר הדיגיטלי של מרכז בראונשטיין.',
+        600
       );
 
-      setTimeout(()=> Chat.typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 800, true), 2000);
-
+      // שורה שנייה
       setTimeout(()=>{
-        const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
+        typingThen(
+          'אשמח לעזור לך לתאם שיעור חד פעמי על בסיס מקום פנוי, לבצע פעולות על מנוי קיים או לשמוע פרטים על מנוי חדש.',
+          500
+        );
+      }, 900);
 
-        Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
-          Chat.userBubble(`קבוצה – עד 5 תלמידים – ${P.group}₪`);
-          Chat.State.data.planType='group';
-          Chat.State.data.price=P.group;
-          stepSubject();
+      // שורה שלישית (הנחיה)
+      setTimeout(()=>{
+        typingThen('<strong>בחרו את מה שתרצו לעשות</strong>', 500);
+      }, 1600);
+
+      // כפתורים
+      setTimeout(()=>{
+        actionBtn('שיעור חד פעמי (על בסיס מקום פנוי)', ()=>{
+          user('שיעור חד פעמי (על בסיס מקום פנוי)');
+          setTimeout(()=> location.href='branches/branch1.html', 150);
         }, 'btn primary');
 
-        Chat.button(`טריפל – עד 3 תלמידים – ${P.triple}₪`, ()=>{
-          Chat.userBubble(`טריפל – עד 3 תלמידים – ${P.triple}₪`);
-          Chat.State.data.planType='triple';
-          Chat.State.data.price=P.triple;
-          stepSubject();
+        actionBtn('אני רוצה לברר על מנוי חודשי', ()=>{
+          user('אני רוצה לברר על מנוי חודשי');
+          setTimeout(()=> location.href='branches/branch2.html', 150);
         });
 
-        Chat.button(`פרטי – ${P.private}₪`, ()=>{
-          Chat.userBubble(`פרטי – ${P.private}₪`);
-          Chat.State.data.planType='private';
-          Chat.State.data.price=P.private;
-          stepSubject();
+        actionBtn('אני רוצה לעשות פעולות במנוי שלי', ()=>{
+          user('אני רוצה לעשות פעולות במנוי שלי');
+          setTimeout(()=> location.href='branches/branch3.html', 150);
         });
-      }, 3000);
+      }, 2200);
     }
 
-    function stepSubject(){
-      Chat.clear(); Chat.push(stepSubject);
-      Chat.typingThen('<strong>באיזה מקצוע תרצי את השיעור? 📖</strong>', 800, true);
-
-      setTimeout(()=>{
-        Chat.cfg.SUBJECTS.forEach(s => Chat.button(s, ()=>{
-          Chat.userBubble(s);
-          Chat.State.data.subject = s;
-          stepDetails();
-        }));
-        // צ׳יפס מסלול+מחיר
-        const s = document.createElement('div'); s.className='summary';
-        if (Chat.State.data.planType)
-          s.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
-        document.getElementById('area').appendChild(s);
-      }, 1500);
-    }
-
-    async function stepDetails(){
-      Chat.clear(); Chat.push(stepDetails);
-
-      // נועל אוטו-סקרול קצר כדי לא "לקפוץ" לתחתית
-      Chat.State.autoScroll = false;
-      const header = Chat.botHTML('<strong>פרטי שיבוץ</strong><br><span class="muted">נמלא רגע פרטים ואז נסכם 📋</span>');
-
-      const chips = document.createElement('div'); chips.className='summary';
-      if (Chat.State.data.planType) chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
-      if (Chat.State.data.subject)  chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
-      document.getElementById('area').appendChild(chips);
-
-      Chat.scrollStartOf(header);
-      setTimeout(()=> Chat.State.autoScroll = true, 450);
-
-      // שדות
-      await waitP(300);
-      const availability = Chat.inputRow('ימי ושעות זמינות', {
-        textarea:true, id:'availability',
-        placeholder:'לדוגמה: א׳–ג׳ 15:00–19:00; ו׳ בוקר', required:true
-      });
-
-      await waitP(150);
-      const message = Chat.inputRow('הודעה חופשית (לא חובה)', {
-        textarea:true, id:'message', placeholder:'העדפה למורה / רמה / הערות'
-      });
-
-      await waitP(150);
-      const fullName = Chat.inputRow('שם מלא', {
-        id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name'
-      });
-
-      await waitP(150);
-      const phone = Chat.inputRow('טלפון לחזרה', {
-        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567',
-        required:true, autocomplete:'tel', inputmode:'tel'
-      });
-
-      availability.focus({ preventScroll:true });
-
-      await waitP(120);
-      Chat.button('המשך לסיכום', ()=>{
-        Chat.userBubble('המשך לסיכום');
-
-        const avail = (availability.value||'').trim();
-        const note  = (message.value||'').trim();
-        const name  = (fullName.value||'').trim();
-        const tel   = Chat.normalizeILPhone(phone.value||'');
-
-        if(!avail){ Chat.botText('אנא כתבי זמינות (ימים ושעות) 🕒').classList.add('err'); availability.focus(); return; }
-        if(!name){  Chat.botText('יש להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
-        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
-
-        Chat.State.data.availability = avail;
-        Chat.State.data.message      = note;
-        Chat.State.data.fullName     = name;
-        Chat.State.data.phone        = tel;
-
-        stepReview();
-      }, 'btn primary');
-
-      Chat.button('חזרה', Chat.goBack);
-
-      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
-    }
-
-    function stepReview(){
-      Chat.clear(); Chat.push(stepReview);
-
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
-      Chat.scrollStartOf(h);
-
-      const card = document.createElement('div'); card.className='bubble bot';
-
-      const chips = document.createElement('div'); chips.className='summary';
-      if (Chat.State.data.planType) chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
-      if (Chat.State.data.subject)  chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
-      card.appendChild(chips);
-
-      const details = document.createElement('div'); details.style.lineHeight='1.9';
-      const addLine = (label, value)=>{
-        const line=document.createElement('div');
-        const b=document.createElement('strong'); b.textContent=label+' ';
-        const span=document.createElement('span'); span.textContent=value;
-        line.append(b, span); details.appendChild(line);
-      };
-      addLine('זמינות:', Chat.State.data.availability);
-      if (Chat.State.data.message) addLine('הודעה:', Chat.State.data.message);
-      addLine('שם מלא:', Chat.State.data.fullName);
-      addLine('טלפון לחזרה:', Chat.State.data.phone);
-
-      card.appendChild(details);
-      document.getElementById('area').appendChild(card);
-      (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
-
-      const sendBtn = Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
-        const stopProcessing = Chat.showProcessing();
-
-        const ok = await Chat.sendLeadToSheet({
-          path: 'שיעור על בסיס מקום פנוי',
-          planType: Chat.cfg.PLAN_HE[Chat.State.data.planType],
-          price: `${Chat.State.data.price}₪`,
-          subject: Chat.State.data.subject,
-          availability: Chat.State.data.availability,
-          message: Chat.State.data.message,
-          extraNotes: '',
-          fullName: Chat.State.data.fullName,
-          phone: Chat.State.data.phone,
-          cta: 'שיעור חד־פעמי',
-          source: 'יוסטון – אתר',
-          status: 'לטיפול',
-          createdAt: new Date().toISOString()
-        });
-
-        stopProcessing();
-        Chat.clear();
-
-        if(ok){
-          Chat.botText('הבקשה נרשמה והועברה למזכירות ✅ נחזור אלייך בקרוב כדי לבדוק זמינות ולהשריין שיעור 📅').classList.add('ok');
-        }else{
-          Chat.botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
-        }
-        const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn primary');
-        home.focus();
-      }, 'btn primary');
-
-      Chat.button('עריכה', ()=> stepDetails());
-    }
-
-    // הפעלה
     start();
   </script>
 </body>
