@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <!-- סקריפטים משותפים (תיקנו נתיב ל-branches/js) -->
+  <!-- סקריפטים משותפים -->
   <script src="./js/config.js?v=2"></script>
   <script src="./js/chat-helpers.js?v=2"></script>
 
@@ -48,7 +48,7 @@
       setTimeout(()=> Chat.typingThen('<strong>איזה סוג שיעור תרצי?</strong>', 800, true), 2000);
 
       setTimeout(()=>{
-        const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
+        const P = Chat.cfg.PRICES;
 
         Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
           Chat.userBubble(`קבוצה – עד 5 תלמידים – ${P.group}₪`);
@@ -186,7 +186,7 @@
       document.getElementById('area').appendChild(card);
       (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
 
-      const sendBtn = Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
+      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
         const stopProcessing = Chat.showProcessing();
 
         const ok = await Chat.sendLeadToSheet({
