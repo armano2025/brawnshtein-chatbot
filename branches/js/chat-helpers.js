@@ -1,5 +1,4 @@
-<!-- /js/chat-helpers.js -->
-<script>
+// /js/chat-helpers.js
 (function () {
   const cfg = window.APP_CONFIG || {};
 
@@ -11,8 +10,8 @@
 
   // ===== State + History =====
   const State = { history: [], data: {}, token: 0, autoScroll: true };
-  const last = () => State.history[State.history.length - 1];
-  const push = (fn) => { State.history.push(fn); updateBack(); };
+  const last  = () => State.history[State.history.length - 1];
+  const push  = (fn) => { State.history.push(fn); updateBack(); };
   const goBack = () => {
     if (State.history.length > 1) {
       State.history.pop();
@@ -119,4 +118,3 @@
     normalizeILPhone, validILPhone, sendLeadToSheet
   };
 })();
-</script>
