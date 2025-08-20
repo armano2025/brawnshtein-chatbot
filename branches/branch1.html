@@ -9,6 +9,12 @@
   <meta name="theme-color" content="#2563eb" />
   <style>
     #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
+    .card{position:relative}
+    /* כפתור ראשי עליון-שמאל */
+    .top-left-main{
+      position:absolute; top:8px; left:8px; z-index:10;
+    }
+
     /* הרחבה עדינה למסך זמינות */
     .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
     .slots-grid { display:grid; gap:8px; }
@@ -20,11 +26,20 @@
     .muted.small { font-size:.9rem; opacity:.8; }
     /* הודעת שגיאה קטנה לשורה */
     .row-error { color:#b00020; margin-top:4px; }
+
+    /* אזור פעולות בתחתית מסך הזמינות */
+    .slots-actions{
+      display:flex; gap:8px; align-items:center; justify-content:flex-start;
+      margin-top:12px; padding-top:8px; border-top:1px solid #eee;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <!-- כפתור קבוע: לתפריט ראשי (עליון-שמאל) -->
+      <button class="btn top-left-main" onclick="location.href='../index.html'">לתפריט ראשי</button>
+
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
@@ -39,7 +54,7 @@
       <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+        <!-- הכפתור 'לתפריט ראשי' הועבר למיקום העליון-שמאל -->
       </div>
     </div>
   </div>
@@ -108,7 +123,6 @@
       });
 
       await waitP(120);
-      // נשמור רפרנס לכפתור ההמשך כדי שנוכל "לשחרר" אותו אחרי תיקון
       const btnNext = Chat.button('המשך', ()=>{
         Chat.userBubble('המשך');
 
@@ -116,7 +130,6 @@
         const ln  = (lastName.value||'').trim();
         const tel = Chat.normalizeILPhone(phone.value||'');
 
-        // לא מנטרלים את הכפתור; רק מציגים שגיאה וחוזרים. מאזינים ל-input כדי לנקות שגיאות.
         if(!fn){  showInlineError('נדרש שם פרטי ✏️', firstName); return; }
         if(!ln){  showInlineError('נדרש שם משפחה ✏️', lastName); return; }
         if(!Chat.validILPhone(tel)){ showInlineError('מספר טלפון לא תקין 📞', phone); return; }
@@ -128,10 +141,9 @@
         stepSubject();
       }, 'btn primary');
 
-      // ניקוי הודעות שגיאה והבטחת זמינות הכפתור אחרי תיקון
       ;[firstName, lastName, phone].forEach(el=>{
         el.addEventListener('input', ()=>{
-          removeErrBubblesNear(el);
+          removeErrBubblesNear();
           btnNext.disabled = false;
         });
       });
@@ -141,14 +153,9 @@
         el.focus();
       }
       function removeErrBubblesNear(){
-        // מסיר רק את הודעות השגיאה האחרונות כדי לא להעמיס
         const area = document.getElementById('area');
-        [...area.querySelectorAll('.bubble.err, .err')].slice(-1).forEach(e=>{
-          // רק אם זו ההודעה האחרונה ולא הודעת מערכת חשובה
-          if(e.textContent.includes('נדרש') || e.textContent.includes('לא תקין') || e.textContent.includes('חייב')){
-            e.remove();
-          }
-        });
+        const lastErr = [...area.querySelectorAll('.bubble.err, .err')].pop();
+        if(lastErr) lastErr.remove();
       }
       function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
@@ -165,7 +172,6 @@
       );
 
       setTimeout(()=>{
-        // הוספת ביולוגיה + שינוי ניסוח "אנגלית מדוברת"
         const fromCfg = (Chat.cfg.SUBJECTS || []).map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
         if (!fromCfg.includes('ביולוגיה')) fromCfg.push('ביולוגיה');
 
@@ -205,7 +211,6 @@
         }, 'btn primary');
 
         gradeSelect.addEventListener('change', ()=>{
-          // מנקה שגיאה ומבטיח שהכפתור פעיל אחרי בחירה
           removeLastErr();
           btnNext.disabled = false;
         });
@@ -281,7 +286,7 @@
       }, 800);
     }
 
-    // ===== שלב 4: בחירת זמינות (רחב + פתיחת "הוסף" רק אחרי מילוי קודם) =====
+    // ===== שלב 4: בחירת זמינות (כפתור ההמשך בתחתית) =====
     function stepAvailability(){
       Chat.clear(); Chat.push(stepAvailability);
 
@@ -296,7 +301,6 @@
       setTimeout(()=>{
         const area = document.getElementById('area');
 
-        // מעטפת רחבה
         const pickerWrap = document.createElement('div');
         pickerWrap.className = 'bubble bot wide';
 
@@ -307,7 +311,6 @@
         rowsWrap.id = 'rowsWrap';
         rowsWrap.className = 'slots-grid';
 
-        // תצוגה מקדימה חיה
         const preview = document.createElement('div');
         preview.className = 'slot-preview';
 
@@ -327,7 +330,6 @@
           return sel;
         }
 
-        // הפעלת/כיבוי כפתור הוספה בהתאם למילוי השורה האחרונה
         function lastRowFilled(){
           const rows = Array.from(rowsWrap.children);
           if (!rows.length) return false;
@@ -349,16 +351,10 @@
               chosen.push({d,f,t});
             }
           }
-          if(!chosen.length){
-            const tip = document.createElement('div');
-            tip.className = 'muted small';
-            tip.textContent = 'נבחרים מוצגים כאן לאחר מילוי תקין של יום/משעה/עד שעה.';
-            preview.appendChild(tip);
-            return;
-          }
+          // אין טקסט ברירת מחדל; רק שבבים אם יש בחירות
           chosen.forEach(c => {
             const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
-            chip.classList.add('emph'); // בולט
+            chip.classList.add('emph');
             preview.appendChild(chip);
           });
         }
@@ -367,9 +363,8 @@
           const inputs = row.querySelectorAll('select');
           inputs.forEach(sel=>{
             sel.addEventListener('change', ()=>{
-              // סדר זמנים תקין? אם לא – הודעת שגיאה לשורה
               const [dSel, fSel, tSel] = row.querySelectorAll('select');
-              const d = dSel.value, f = fSel.value, t = tSel.value;
+              const f = fSel.value, t = tSel.value;
 
               const errPrev = row.querySelector('.row-error');
               if (errPrev) errPrev.remove();
@@ -382,14 +377,13 @@
               }
 
               addBtn.disabled = !lastRowFilled();
-              btnContinueRef.disabled = false; // לוודא שהכפתור חוזר לפעול אחרי תיקון
+              btnContinueRef.disabled = false; // לא נתקע – חוזר לפעיל אחרי תיקון
               refreshPreview();
             });
           });
         }
 
         function addRow(force=false, btnContinueRef){
-          // אם לא הכריחו (force=false), מותר להוסיף רק אם השורה האחרונה מלאה
           if (!force && !lastRowFilled()){
             Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
             return;
@@ -403,8 +397,8 @@
 
           row.append(daySel, fromSel, toSel);
           rowsWrap.appendChild(row);
-          wireRow(row, btnContinueRef);
-          addBtn.disabled = true;       // עד שימולא
+          wireRow(row, btnContinue);
+          addBtn.disabled = true;
           refreshPreview();
           area.scrollTop = area.scrollHeight;
           return row;
@@ -412,18 +406,24 @@
 
         const title = document.createElement('div');
         title.className='muted';
-        title.innerHTML = 'ניתן להוסיף יותר ממועד אחד. <span class="small">הוספת מועד נוסף תתאפשר רק לאחר מילוי המועד הנוכחי.</span>';
+        title.textContent = 'ניתן להוסיף יותר ממועד אחד';
 
         const addBtn = document.createElement('button');
         addBtn.className='btn';
         addBtn.textContent = '+ הוספת מועד נוסף';
         addBtn.disabled = true;
 
-        // כפתור המשך (נחזיק רפרנס עבור enable אחרי תיקון)
-        const btnContinue = Chat.button('המשך', ()=>{
+        // פעולות בתחתית (כאן ימוקם "המשך")
+        const actions = document.createElement('div');
+        actions.className = 'slots-actions';
+
+        // ניצור את כפתור ההמשך אחרי שהטופס נבנה, ונמקם אותו בתחתית
+        const btnContinue = document.createElement('button');
+        btnContinue.className = 'btn primary';
+        btnContinue.textContent = 'המשך';
+        btnContinue.addEventListener('click', ()=>{
           Chat.userBubble('המשך');
 
-          // איסוף הבחירות התקינות
           const rows = Array.from(rowsWrap.children);
           const chosen = [];
           for(const r of rows){
@@ -432,7 +432,6 @@
             if(d && f && t){
               if (toNum(f) >= toNum(t)){
                 Chat.botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err');
-                // לא משביתים את הכפתור — מאפשרים תיקון ולחיצה שוב
                 return;
               }
               chosen.push(`יום ${d} ${f}–${t}`);
@@ -442,15 +441,19 @@
             Chat.botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err');
             return;
           }
-
           Chat.State.data.availability = chosen.join('; ');
           stepNotes();
-        }, 'btn primary');
+        });
 
         addBtn.onclick = ()=> addRow(false, btnContinue);
 
         grid.append(title, rowsWrap, addBtn, preview);
         pickerWrap.appendChild(grid);
+
+        // כפתור ההמשך בתחתית ה-bubble הרחב
+        actions.appendChild(btnContinue);
+        pickerWrap.appendChild(actions);
+
         area.appendChild(pickerWrap);
 
         // שורה ראשונה חובה
@@ -463,7 +466,10 @@
       Chat.clear(); Chat.push(stepNotes);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
-      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 600, true);
+      Chat.typingThen(
+        `<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`,
+        600, true
+      );
 
       setTimeout(()=>{
         const message = Chat.inputRow('הערות (לא חובה)', {
@@ -489,14 +495,12 @@
 
       const card = document.createElement('div'); card.className='bubble bot';
 
-      // צ׳יפים
       const chips = document.createElement('div'); chips.className='summary';
       if (Chat.State.data.subject)   chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
       if (Chat.State.data.grade)     chips.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
       if (Chat.State.data.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
       card.appendChild(chips);
 
-      // דו"ח סיכום בשפה אחידה
       const d = Chat.State.data;
       const details = document.createElement('div'); details.style.lineHeight='1.9';
       const addLine = (label, value)=>{
