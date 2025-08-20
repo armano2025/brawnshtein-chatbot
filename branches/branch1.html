@@ -7,7 +7,16 @@
 
   <link rel="stylesheet" href="../styles.css?v=3" />
   <meta name="theme-color" content="#2563eb" />
-  <style>#area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}</style>
+  <style>
+    #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
+    /* הרחבה עדינה של בועות תוכן רחבות (בעיקר למסך זמינות) */
+    .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
+    .slots-grid { display:grid; gap:8px; }
+    .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; }
+    .slot-preview { margin-top:8px; font-size:.95rem; line-height:1.6; }
+    .slot-preview .chip { margin:4px 6px 0 0; }
+    .muted.small { font-size:.9rem; opacity:.8; }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -25,9 +34,7 @@
 
       <!-- תחתית -->
       <div class="footer">
-        <!-- כפתור חזרה אחד קבוע בתחתית בכל הדפים -->
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <!-- תמיד לבן כמו חזרה -->
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
     </div>
@@ -68,25 +75,69 @@
       return sel;
     }
 
-    // ===== התחלה: ישר לשלב מקצוע עם מלל חדש =====
+    // ===== התחלה: קודם אוספים פרטי קשר =====
     function start(){
       Chat.clear(); Chat.push(start);
-      stepSubject();
+      stepContactFirst();
     }
 
-    // ===== שלב 1: מקצוע =====
+    // ===== שלב 0: פרטי קשר (בהתחלה) =====
+    async function stepContactFirst(){
+      Chat.clear(); Chat.push(stepContactFirst);
+
+      const header = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
+      Chat.scrollStartOf(header);
+
+      await waitP(300);
+      const firstName = Chat.inputRow('שם פרטי', {
+        id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name'
+      });
+
+      await waitP(120);
+      const lastName = Chat.inputRow('שם משפחה', {
+        id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name'
+      });
+
+      await waitP(120);
+      const phone = Chat.inputRow('טלפון לחזרה', {
+        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel'
+      });
+
+      await waitP(120);
+      Chat.button('המשך', ()=>{
+        Chat.userBubble('המשך');
+
+        const fn  = (firstName.value||'').trim();
+        const ln  = (lastName.value||'').trim();
+        const tel = Chat.normalizeILPhone(phone.value||'');
+
+        if(!fn){  Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
+        if(!ln){  Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus(); return; }
+        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
+
+        Chat.State.data.firstName = fn;
+        Chat.State.data.lastName  = ln;
+        Chat.State.data.phone     = tel;
+
+        stepSubject();
+      }, 'btn primary');
+
+      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    }
+
+    // ===== שלב 1: מקצוע (עם פנייה אישית בשם פרטי) =====
     function stepSubject(){
       Chat.clear(); Chat.push(stepSubject);
 
-      // בועה ראשונה לפי הבקשה
+      const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
-        '<strong>מעולה! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br>' +
-        '<strong>איזה מקצוע תרצו?</strong> 📖',
+        `<strong>מעולה${name}! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br>` +
+        `<strong>איזה מקצוע תרצו?</strong> 📖`,
         650, true
       );
 
       setTimeout(()=>{
-        // נבנה רשימת מקצועות מעודכנת: הוספת ביולוגיה + שינוי שם "אנגלית מדוברת"
+        // הוספת ביולוגיה + שינוי ניסוח "אנגלית מדוברת"
         const fromCfg = (Chat.cfg.SUBJECTS || []).map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
         if (!fromCfg.includes('ביולוגיה')) fromCfg.push('ביולוגיה');
 
@@ -102,11 +153,12 @@
       }, 900);
     }
 
-    // ===== שלב 2: כיתה (כרשימה נפתחת) =====
+    // ===== שלב 2: כיתה =====
     function stepGrade(){
       Chat.clear(); Chat.push(stepGrade);
 
-      Chat.typingThen('<strong>באיזו כיתה?</strong> 👨‍🚀', 600, true);
+      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
+      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀<br><span class="muted small">נשתדל להתאים הכי טוב שאפשר${name}</span>`, 600, true);
 
       setTimeout(()=>{
         const grades = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','חינוך ביתי','סטודנט/ית','אחר'];
@@ -148,7 +200,7 @@
       }, 700);
     }
 
-    // ===== שלב 3: מסלול (מחיר) + כלל הסתרת "קבוצה" למתמטיקה י״א/י״ב 5 יח״ל =====
+    // ===== שלב 3: מסלול =====
     function stepPlan(){
       Chat.clear(); Chat.push(stepPlan);
 
@@ -191,96 +243,163 @@
       }, 800);
     }
 
-    // ===== שלב 4: בחירת זמינות "חכמה" (ריבוי מועדים) =====
+    // ===== שלב 4: בחירת זמינות (רחב + פתיחת "הוסף" רק אחרי מילוי קודם) =====
     function stepAvailability(){
       Chat.clear(); Chat.push(stepAvailability);
 
+      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
         '<strong>שעות פתיחה</strong><br>' +
         '<span class="muted">אנחנו פתוחים בימים א׳–ה׳ בין 14:00–21:00.</span><br><br>' +
-        '<strong>בחירת ימים ושעות מועדפים</strong> 👨‍🚀',
+        `<strong>בחירת ימים ושעות מועדפים${name}</strong> 👨‍🚀`,
         650, true
       );
 
       setTimeout(()=>{
-        // מחולל שורה: יום + משעה + עד שעה
         const area = document.getElementById('area');
+
+        // מעטפת רחבה
         const pickerWrap = document.createElement('div');
-        pickerWrap.className = 'bubble bot';
-        pickerWrap.style.display = 'grid';
-        pickerWrap.style.gap = '8px';
+        pickerWrap.className = 'bubble bot wide';
+
+        const grid = document.createElement('div');
+        grid.className = 'slots-grid';
 
         const rowsWrap = document.createElement('div');
-        rowsWrap.style.display = 'grid';
-        rowsWrap.style.gap = '8px';
+        rowsWrap.id = 'rowsWrap';
+        rowsWrap.className = 'slots-grid';
 
-        function timeOptions(){
-          return ['14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
-        }
-        function dayOptions(){
-          return ['א','ב','ג','ד','ה'];
+        // תצוגה מקדימה חיה של המועדים התקינים
+        const preview = document.createElement('div');
+        preview.className = 'slot-preview';
+
+        function toNum(s){ return parseInt(String(s||'').replace(':',''),10) || 0; }
+        const TIMES = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+        const DAYS  = ['','א','ב','ג','ד','ה'];
+
+        function makeSelect(placeholder, values){
+          const sel = document.createElement('select');
+          sel.className = 'input';
+          values.forEach(v=>{
+            const o = document.createElement('option');
+            o.value = v;
+            o.textContent = v ? (placeholder ? `${placeholder} ${v}` : v) : placeholder || 'בחר/י...';
+            sel.appendChild(o);
+          });
+          return sel;
         }
 
-        function addRow(){
+        // הפעלת/כיבוי כפתור הוספה בהתאם למילוי השורה האחרונה
+        function lastRowFilled(){
+          const rows = Array.from(rowsWrap.children);
+          if (!rows.length) return false;
+          const last = rows[rows.length - 1];
+          const [dSel, fSel, tSel] = last.querySelectorAll('select');
+          const d = dSel.value, f = fSel.value, t = tSel.value;
+          if(!(d && f && t)) return false;
+          return toNum(f) < toNum(t);
+        }
+
+        function refreshPreview(){
+          preview.innerHTML = '';
+          const rows = Array.from(rowsWrap.children);
+          const chosen = [];
+          for(const r of rows){
+            const [dSel, fSel, tSel] = r.querySelectorAll('select');
+            const d = dSel.value, f = fSel.value, t = tSel.value;
+            if(d && f && t && toNum(f) < toNum(t)){
+              chosen.push({d,f,t});
+            }
+          }
+          if(!chosen.length){
+            const tip = document.createElement('div');
+            tip.className = 'muted small';
+            tip.textContent = 'נבחרים מוצגים כאן לאחר מילוי תקין של יום/משעה/עד שעה.';
+            preview.appendChild(tip);
+            return;
+          }
+          const chips = document.createElement('div');
+          chosen.forEach(c => chips.appendChild(Chat.chip(`יום ${c.d} ${c.f}–${c.t}`)));
+          preview.appendChild(chips);
+        }
+
+        function wireRow(row){
+          const inputs = row.querySelectorAll('select');
+          inputs.forEach(sel=>{
+            sel.addEventListener('change', ()=>{
+              // סדר זמנים תקין? אם לא – הודעת שגיאה חד־פעמית לשורה
+              const [dSel, fSel, tSel] = row.querySelectorAll('select');
+              const d = dSel.value, f = fSel.value, t = tSel.value;
+              const errPrev = row.querySelector('.row-error');
+              if (errPrev) errPrev.remove();
+
+              if (f && t && toNum(f) >= toNum(t)){
+                const err = document.createElement('div');
+                err.className = 'row-error muted small';
+                err.textContent = '״עד שעה״ חייב להיות אחרי ״משעה״';
+                row.appendChild(err);
+              }
+              addBtn.disabled = !lastRowFilled();
+              refreshPreview();
+            });
+          });
+        }
+
+        function addRow(force=false){
+          // אם לא הכריחו (force=false), מותר להוסיף רק אם השורה האחרונה מלאה
+          if (!force && !lastRowFilled()){
+            Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
+            return;
+          }
           const row = document.createElement('div');
-          row.style.display = 'grid';
-          row.style.gridTemplateColumns = '1fr 1fr 1fr';
-          row.style.gap = '8px';
+          row.className = 'slot-row';
 
-          const daySel = document.createElement('select');
-          daySel.className='input';
-          ['','א','ב','ג','ד','ה'].forEach(v=>{
-            const o=document.createElement('option');
-            o.value=v; o.textContent = v ? `יום ${v}` : 'בחר/י יום';
-            daySel.appendChild(o);
-          });
-
-          const fromSel = document.createElement('select');
-          fromSel.className='input';
-          const toSel = document.createElement('select');
-          toSel.className='input';
-
-          const times = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
-          times.forEach(t=>{
-            const o1=document.createElement('option'); o1.value=t; o1.textContent = t?`משעה ${t}`:'משעה';
-            const o2=document.createElement('option'); o2.value=t; o2.textContent = t?`עד שעה ${t}`:'עד שעה';
-            fromSel.appendChild(o1); toSel.appendChild(o2);
-          });
+          const daySel  = makeSelect('בחר/י יום', DAYS);
+          const fromSel = makeSelect('משעה', TIMES);
+          const toSel   = makeSelect('עד שעה', TIMES);
 
           row.append(daySel, fromSel, toSel);
           rowsWrap.appendChild(row);
+          wireRow(row);
+          addBtn.disabled = true;       // עד שימולא
+          refreshPreview();
+          area.scrollTop = area.scrollHeight;
           return row;
         }
 
         const title = document.createElement('div');
         title.className='muted';
-        title.textContent = 'ניתן להוסיף יותר ממועד אחד:';
+        title.innerHTML = 'ניתן להוסיף יותר ממועד אחד. <span class="small">הוספת מועד נוסף תתאפשר רק לאחר מילוי המועד הנוכחי.</span>';
+
         const addBtn = document.createElement('button');
         addBtn.className='btn';
         addBtn.textContent = '+ הוספת מועד נוסף';
-        addBtn.onclick = ()=>{ addRow(); };
+        addBtn.disabled = true;
+        addBtn.onclick = ()=> addRow(false);
 
-        pickerWrap.appendChild(title);
-        pickerWrap.appendChild(rowsWrap);
-        pickerWrap.appendChild(addBtn);
+        const actions = document.createElement('div');
+        actions.style.display='flex';
+        actions.style.gap='8px';
+        actions.style.marginTop='4px';
+
+        grid.append(title, rowsWrap, addBtn, preview);
+        pickerWrap.appendChild(grid);
         area.appendChild(pickerWrap);
 
-        // ברירת מחדל: שורה אחת
-        addRow();
+        // שורה ראשונה חובה (force=true כדי שתיפתח גם בלי מילוי קודם)
+        addRow(true);
 
-        // כפתור המשך יחיד (אין כפילות "חזרה" בתוך הדף – רק בתחתית)
+        // כפתור המשך
         Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
 
-          // איסוף הבחירות לרשימה קריאה
+          // איסוף הבחירות התקינות
           const rows = Array.from(rowsWrap.children);
           const chosen = [];
           for(const r of rows){
             const [daySel, fromSel, toSel] = r.querySelectorAll('select');
             const d = daySel.value, f = fromSel.value, t = toSel.value;
             if(d && f && t){
-              // בדיקת סדר זמנים בסיסית
-              const toNum = s => parseInt(s.replace(':',''),10);
               if (toNum(f) >= toNum(t)){
                 Chat.botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err');
                 return;
@@ -300,11 +419,12 @@
       }, 900);
     }
 
-    // ===== שלב 5: הערות (אופציונלי) – כפתור אחד בלבד =====
+    // ===== שלב 5: הערות (אופציונלי) =====
     function stepNotes(){
       Chat.clear(); Chat.push(stepNotes);
 
-      Chat.typingThen('<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)</span> 👨‍🚀', 600, true);
+      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
+      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 600, true);
 
       setTimeout(()=>{
         const message = Chat.inputRow('הערות (לא חובה)', {
@@ -314,57 +434,13 @@
         Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
           Chat.State.data.message = (message.value||'').trim();
-          stepContact();
+          stepReview();
         }, 'btn primary');
 
       }, 800);
     }
 
-    // ===== שלב 6: פרטי קשר =====
-    async function stepContact(){
-      Chat.clear(); Chat.push(stepContact);
-
-      const header = Chat.botHTML('<strong>פרטי קשר לתיאום</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
-      Chat.scrollStartOf(header);
-
-      await waitP(300);
-      const firstName = Chat.inputRow('שם פרטי', {
-        id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name'
-      });
-
-      await waitP(120);
-      const lastName = Chat.inputRow('שם משפחה', {
-        id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name'
-      });
-
-      await waitP(120);
-      const phone = Chat.inputRow('טלפון לחזרה', {
-        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel'
-      });
-
-      await waitP(120);
-      Chat.button('המשך לסיכום', ()=>{
-        Chat.userBubble('המשך לסיכום');
-
-        const fn  = (firstName.value||'').trim();
-        const ln  = (lastName.value||'').trim();
-        const tel = Chat.normalizeILPhone(phone.value||'');
-
-        if(!fn){  Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
-        if(!ln){  Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus(); return; }
-        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
-
-        Chat.State.data.firstName = fn;
-        Chat.State.data.lastName  = ln;
-        Chat.State.data.phone     = tel;
-
-        stepReview();
-      }, 'btn primary');
-
-      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
-    }
-
-    // ===== שלב 7: סיכום ושליחה =====
+    // ===== שלב 6: סיכום ושליחה =====
     function stepReview(){
       Chat.clear(); Chat.push(stepReview);
 
