@@ -6,39 +6,163 @@
   <title>שיעור חד פעמי על בסיס מקום פנוי</title>
 
   <link rel="stylesheet" href="../styles.css?v=3" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#5b7cfa" />
+
+  <!-- שדרוג עיצוב נקי ומודרני מעל ה-CSS הקיים -->
   <style>
-    #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
-    .card{position:relative}
-    /* כפתור ראשי עליון-שמאל */
-    .top-left-main{
-      position:absolute; top:8px; left:8px; z-index:10;
+    :root{
+      --bg1:#0f172a;          /* slate-900 */
+      --bg2:#1e293b;          /* slate-800 */
+      --card:#0b1226cc;       /* glass */
+      --border:#243043;
+      --primary:#5b7cfa;      /* אינדיגו-כחול רך */
+      --primary-2:#7c5bfa;    /* אינדיגו-סגלגל למעברי צבע */
+      --text:#e5e7eb;
+      --muted:#9aa6b2;
+      --chip-bg:#18233a;
+      --chip-br:#31425d;
+      --accent-chip:#ffe8a3;
+      --accent-br:#f7c948;
+      --danger:#e11d48;
+      --ok:#16a34a;
+      --radius:16px;
+      --radius-sm:12px;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
     }
 
-    /* הרחבה עדינה למסך זמינות */
+    /* רקע גרדיאנט מודרני */
+    body{
+      background: radial-gradient(1200px 600px at 100% -10%, #1a2a6c 0%, transparent 60%),
+                  radial-gradient(900px 500px at -10% 110%, #2a4858 0%, transparent 60%),
+                  linear-gradient(140deg, var(--bg1), var(--bg2));
+      color: var(--text);
+    }
+
+    /* כרטיס זכוכיתי */
+    .card{
+      position:relative;
+      background: var(--card);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* פס עליון מופרד עם כפתור תפריט */
+    .topbar{
+      display:flex; align-items:center; justify-content:flex-start;
+      padding:10px 12px;
+      background: linear-gradient(90deg, #0b1226 0%, #0f1833 100%);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar .btn{
+      background: transparent;
+      border:1px solid var(--chip-br);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+    }
+    .topbar .btn:hover{ border-color: var(--primary); }
+
+    /* כותרת פנימית שאחרי הטופ-בר – יש ריווח, אין חפיפה */
+    .head{
+      padding-top: 10px;
+      background: linear-gradient(135deg, rgba(91,124,250,.12), rgba(124,91,250,.08));
+      border-bottom:1px solid var(--border);
+    }
+    .brand .logo{
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color:#0b1020;
+      border: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+    }
+    .brand .title{ color:var(--text); }
+
+    /* אזור התוכן */
+    #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
+    .bubble.bot{ background:#0f172acc; border-color:var(--border); }
+    .bubble.user{ background:#101a33; border-color:#223250; }
+    .summary .chip{
+      background: var(--chip-bg) !important;
+      border-color: var(--chip-br) !important;
+      color: var(--text) !important;
+    }
+
+    /* כפתורים */
+    .btn{
+      border-radius: 10px;
+      border:1px solid var(--chip-br);
+      background:#111a31;
+      color:var(--text);
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: var(--primary); }
+    .btn.primary{
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border:none; color:#0b1020; font-weight:600;
+    }
+    .btn.primary:hover{ filter:brightness(1.05); transform: translateY(-1px); }
+
+    /* הרחבה למסך זמינות */
     .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
-    .slots-grid { display:grid; gap:8px; }
-    .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; }
-    .slot-preview { margin-top:8px; font-size:.95rem; line-height:1.6; display:flex; flex-wrap:wrap; gap:6px; }
-    .slot-preview .chip { margin:4px 6px 0 0; }
-    /* שבבי סיכום מודגשים */
-    .chip.emph { background: #fff3cd; border: 1px solid #f7c948; font-weight: 600; }
-    .muted.small { font-size:.9rem; opacity:.8; }
-    /* הודעת שגיאה קטנה לשורה */
-    .row-error { color:#b00020; margin-top:4px; }
+    .slots-grid { display:grid; gap:10px; }
+    .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    .slot-preview {
+      margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;
+      padding-top:4px; border-top:1px dashed var(--border);
+    }
+    /* שבבי סיכום מודגשים + כפתור מחיקה */
+    .chip.emph{
+      background: var(--accent-chip) !important;
+      color:#2f2a00 !important;
+      border:1px solid var(--accent-br) !important;
+      display:inline-flex; align-items:center; gap:6px;
+      padding-inline:10px;
+    }
+    .chip.emph .x{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:20px; height:20px; border-radius:50%;
+      border:1px solid rgba(0,0,0,.25);
+      background:#fff3cd;
+      font-size:14px; line-height:1; cursor:pointer;
+    }
+    .chip.emph .x:hover{ background:#ffe69a; }
+
+    .muted.small { font-size:.9rem; color: var(--muted); }
+    .row-error { color: var(--danger); margin-top:4px; }
 
     /* אזור פעולות בתחתית מסך הזמינות */
     .slots-actions{
       display:flex; gap:8px; align-items:center; justify-content:flex-start;
-      margin-top:12px; padding-top:8px; border-top:1px solid #eee;
+      margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
     }
+
+    /* קלטים */
+    .input, .input-wrap select, .input-wrap textarea{
+      background:#0b142a; color:var(--text); border:1px solid var(--chip-br);
+      border-radius: 10px;
+    }
+    label{ color:var(--muted); }
+
+    /* פוטר */
+    .footer{
+      border-top:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(16,24,48,.3), rgba(16,24,48,.5));
+    }
+
+    /* הודעות ok/err */
+    .bubble.ok{ border-color: rgba(22,163,74,.6); background: rgba(22,163,74,.15); }
+    .bubble.err{ border-color: rgba(225,29,72,.6); background: rgba(225,29,72,.15); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- כפתור קבוע: לתפריט ראשי (עליון-שמאל) -->
-      <button class="btn top-left-main" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      <!-- פס עליון נפרד: כפתור לתפריט -->
+      <div class="topbar">
+        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      </div>
 
       <!-- כותרת -->
       <div class="head">
@@ -54,7 +178,6 @@
       <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <!-- הכפתור 'לתפריט ראשי' הועבר למיקום העליון-שמאל -->
       </div>
     </div>
   </div>
@@ -286,7 +409,7 @@
       }, 800);
     }
 
-    // ===== שלב 4: בחירת זמינות (כפתור ההמשך בתחתית) =====
+    // ===== שלב 4: בחירת זמינות (כפתור ההמשך בתחתית + ✖️ להסרה) =====
     function stepAvailability(){
       Chat.clear(); Chat.push(stepAvailability);
 
@@ -348,13 +471,23 @@
             const [dSel, fSel, tSel] = r.querySelectorAll('select');
             const d = dSel.value, f = fSel.value, t = tSel.value;
             if(d && f && t && toNum(f) < toNum(t)){
-              chosen.push({d,f,t});
+              chosen.push({d,f,t,row:r});
             }
           }
-          // אין טקסט ברירת מחדל; רק שבבים אם יש בחירות
           chosen.forEach(c => {
+            // צ'יפ עם ✖ להסרה
             const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
             chip.classList.add('emph');
+            const x = document.createElement('button');
+            x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד');
+            x.textContent='✖';
+            x.addEventListener('click', ()=>{
+              // הסרה: מוחקים את השורה התואמת, מרעננים תצוגה
+              c.row.remove();
+              addBtn.disabled = !lastRowFilled();
+              refreshPreview();
+            });
+            chip.appendChild(x);
             preview.appendChild(chip);
           });
         }
@@ -377,7 +510,7 @@
               }
 
               addBtn.disabled = !lastRowFilled();
-              btnContinueRef.disabled = false; // לא נתקע – חוזר לפעיל אחרי תיקון
+              btnContinueRef.disabled = false; // חוזר לפעיל אחרי תיקון
               refreshPreview();
             });
           });
@@ -417,7 +550,7 @@
         const actions = document.createElement('div');
         actions.className = 'slots-actions';
 
-        // ניצור את כפתור ההמשך אחרי שהטופס נבנה, ונמקם אותו בתחתית
+        // כפתור המשך בתחתית
         const btnContinue = document.createElement('button');
         btnContinue.className = 'btn primary';
         btnContinue.textContent = 'המשך';
