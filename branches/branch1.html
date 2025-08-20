@@ -9,13 +9,17 @@
   <meta name="theme-color" content="#2563eb" />
   <style>
     #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
-    /* הרחבה עדינה של בועות תוכן רחבות (בעיקר למסך זמינות) */
+    /* הרחבה עדינה למסך זמינות */
     .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
     .slots-grid { display:grid; gap:8px; }
     .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; }
-    .slot-preview { margin-top:8px; font-size:.95rem; line-height:1.6; }
+    .slot-preview { margin-top:8px; font-size:.95rem; line-height:1.6; display:flex; flex-wrap:wrap; gap:6px; }
     .slot-preview .chip { margin:4px 6px 0 0; }
+    /* שבבי סיכום מודגשים */
+    .chip.emph { background: #fff3cd; border: 1px solid #f7c948; font-weight: 600; }
     .muted.small { font-size:.9rem; opacity:.8; }
+    /* הודעת שגיאה קטנה לשורה */
+    .row-error { color:#b00020; margin-top:4px; }
   </style>
 </head>
 <body>
@@ -104,16 +108,18 @@
       });
 
       await waitP(120);
-      Chat.button('המשך', ()=>{
+      // נשמור רפרנס לכפתור ההמשך כדי שנוכל "לשחרר" אותו אחרי תיקון
+      const btnNext = Chat.button('המשך', ()=>{
         Chat.userBubble('המשך');
 
         const fn  = (firstName.value||'').trim();
         const ln  = (lastName.value||'').trim();
         const tel = Chat.normalizeILPhone(phone.value||'');
 
-        if(!fn){  Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
-        if(!ln){  Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus(); return; }
-        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
+        // לא מנטרלים את הכפתור; רק מציגים שגיאה וחוזרים. מאזינים ל-input כדי לנקות שגיאות.
+        if(!fn){  showInlineError('נדרש שם פרטי ✏️', firstName); return; }
+        if(!ln){  showInlineError('נדרש שם משפחה ✏️', lastName); return; }
+        if(!Chat.validILPhone(tel)){ showInlineError('מספר טלפון לא תקין 📞', phone); return; }
 
         Chat.State.data.firstName = fn;
         Chat.State.data.lastName  = ln;
@@ -122,6 +128,28 @@
         stepSubject();
       }, 'btn primary');
 
+      // ניקוי הודעות שגיאה והבטחת זמינות הכפתור אחרי תיקון
+      ;[firstName, lastName, phone].forEach(el=>{
+        el.addEventListener('input', ()=>{
+          removeErrBubblesNear(el);
+          btnNext.disabled = false;
+        });
+      });
+
+      function showInlineError(msg, el){
+        Chat.botText(msg).classList.add('err');
+        el.focus();
+      }
+      function removeErrBubblesNear(){
+        // מסיר רק את הודעות השגיאה האחרונות כדי לא להעמיס
+        const area = document.getElementById('area');
+        [...area.querySelectorAll('.bubble.err, .err')].slice(-1).forEach(e=>{
+          // רק אם זו ההודעה האחרונה ולא הודעת מערכת חשובה
+          if(e.textContent.includes('נדרש') || e.textContent.includes('לא תקין') || e.textContent.includes('חייב')){
+            e.remove();
+          }
+        });
+      }
       function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
@@ -153,18 +181,17 @@
       }, 900);
     }
 
-    // ===== שלב 2: כיתה =====
+    // ===== שלב 2: כיתה (ללא הזכרת שם) =====
     function stepGrade(){
       Chat.clear(); Chat.push(stepGrade);
 
-      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
-      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀<br><span class="muted small">נשתדל להתאים הכי טוב שאפשר${name}</span>`, 600, true);
+      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀`, 600, true);
 
       setTimeout(()=>{
         const grades = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','חינוך ביתי','סטודנט/ית','אחר'];
         const gradeSelect = selectRow('כיתה', grades, 'grade');
 
-        Chat.button('המשך', ()=>{
+        const btnNext = Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
 
           const g = gradeSelect.value;
@@ -177,6 +204,17 @@
           else { stepPlan(); }
         }, 'btn primary');
 
+        gradeSelect.addEventListener('change', ()=>{
+          // מנקה שגיאה ומבטיח שהכפתור פעיל אחרי בחירה
+          removeLastErr();
+          btnNext.disabled = false;
+        });
+
+        function removeLastErr(){
+          const area = document.getElementById('area');
+          const lastErr = [...area.querySelectorAll('.err')].pop();
+          if(lastErr) lastErr.remove();
+        }
       }, 800);
     }
 
@@ -187,8 +225,8 @@
       Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
-        ['3','4','5'].forEach(u => Chat.button(u, ()=>{
-          Chat.userBubble(u);
+        ['3','4','5'].forEach(u => Chat.button(`${u} יחידות`, ()=>{
+          Chat.userBubble(`${u} יחידות`);
           Chat.State.data.units = u;
           stepPlan();
         }));
@@ -238,7 +276,7 @@
 
         const s = document.createElement('div'); s.className='summary';
         if (Chat.State.data.subject) s.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
-        if (Chat.State.data.grade)   s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יח׳`:''}`));
+        if (Chat.State.data.grade)   s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
         document.getElementById('area').appendChild(s);
       }, 800);
     }
@@ -269,7 +307,7 @@
         rowsWrap.id = 'rowsWrap';
         rowsWrap.className = 'slots-grid';
 
-        // תצוגה מקדימה חיה של המועדים התקינים
+        // תצוגה מקדימה חיה
         const preview = document.createElement('div');
         preview.className = 'slot-preview';
 
@@ -318,34 +356,39 @@
             preview.appendChild(tip);
             return;
           }
-          const chips = document.createElement('div');
-          chosen.forEach(c => chips.appendChild(Chat.chip(`יום ${c.d} ${c.f}–${c.t}`)));
-          preview.appendChild(chips);
+          chosen.forEach(c => {
+            const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
+            chip.classList.add('emph'); // בולט
+            preview.appendChild(chip);
+          });
         }
 
-        function wireRow(row){
+        function wireRow(row, btnContinueRef){
           const inputs = row.querySelectorAll('select');
           inputs.forEach(sel=>{
             sel.addEventListener('change', ()=>{
-              // סדר זמנים תקין? אם לא – הודעת שגיאה חד־פעמית לשורה
+              // סדר זמנים תקין? אם לא – הודעת שגיאה לשורה
               const [dSel, fSel, tSel] = row.querySelectorAll('select');
               const d = dSel.value, f = fSel.value, t = tSel.value;
+
               const errPrev = row.querySelector('.row-error');
               if (errPrev) errPrev.remove();
 
               if (f && t && toNum(f) >= toNum(t)){
                 const err = document.createElement('div');
-                err.className = 'row-error muted small';
+                err.className = 'row-error';
                 err.textContent = '״עד שעה״ חייב להיות אחרי ״משעה״';
                 row.appendChild(err);
               }
+
               addBtn.disabled = !lastRowFilled();
+              btnContinueRef.disabled = false; // לוודא שהכפתור חוזר לפעול אחרי תיקון
               refreshPreview();
             });
           });
         }
 
-        function addRow(force=false){
+        function addRow(force=false, btnContinueRef){
           // אם לא הכריחו (force=false), מותר להוסיף רק אם השורה האחרונה מלאה
           if (!force && !lastRowFilled()){
             Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
@@ -360,7 +403,7 @@
 
           row.append(daySel, fromSel, toSel);
           rowsWrap.appendChild(row);
-          wireRow(row);
+          wireRow(row, btnContinueRef);
           addBtn.disabled = true;       // עד שימולא
           refreshPreview();
           area.scrollTop = area.scrollHeight;
@@ -375,22 +418,9 @@
         addBtn.className='btn';
         addBtn.textContent = '+ הוספת מועד נוסף';
         addBtn.disabled = true;
-        addBtn.onclick = ()=> addRow(false);
 
-        const actions = document.createElement('div');
-        actions.style.display='flex';
-        actions.style.gap='8px';
-        actions.style.marginTop='4px';
-
-        grid.append(title, rowsWrap, addBtn, preview);
-        pickerWrap.appendChild(grid);
-        area.appendChild(pickerWrap);
-
-        // שורה ראשונה חובה (force=true כדי שתיפתח גם בלי מילוי קודם)
-        addRow(true);
-
-        // כפתור המשך
-        Chat.button('המשך', ()=>{
+        // כפתור המשך (נחזיק רפרנס עבור enable אחרי תיקון)
+        const btnContinue = Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
 
           // איסוף הבחירות התקינות
@@ -402,6 +432,7 @@
             if(d && f && t){
               if (toNum(f) >= toNum(t)){
                 Chat.botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err');
+                // לא משביתים את הכפתור — מאפשרים תיקון ולחיצה שוב
                 return;
               }
               chosen.push(`יום ${d} ${f}–${t}`);
@@ -416,6 +447,14 @@
           stepNotes();
         }, 'btn primary');
 
+        addBtn.onclick = ()=> addRow(false, btnContinue);
+
+        grid.append(title, rowsWrap, addBtn, preview);
+        pickerWrap.appendChild(grid);
+        area.appendChild(pickerWrap);
+
+        // שורה ראשונה חובה
+        addRow(true, btnContinue);
       }, 900);
     }
 
@@ -431,12 +470,13 @@
           textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב'
         });
 
-        Chat.button('המשך', ()=>{
+        const btnNext = Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
           Chat.State.data.message = (message.value||'').trim();
           stepReview();
         }, 'btn primary');
 
+        message.addEventListener('input', ()=>{ btnNext.disabled = false; });
       }, 800);
     }
 
@@ -452,7 +492,7 @@
       // צ׳יפים
       const chips = document.createElement('div'); chips.className='summary';
       if (Chat.State.data.subject)   chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
-      if (Chat.State.data.grade)     chips.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יח׳`:''}`));
+      if (Chat.State.data.grade)     chips.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
       if (Chat.State.data.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
       card.appendChild(chips);
 
@@ -468,7 +508,7 @@
       addLine('שם:', `${d.firstName||''}`);
       addLine('שם משפחה:', `${d.lastName||''}`);
       addLine('מקצוע:', `${d.subject||''}`);
-      addLine('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יח׳`:''}`);
+      addLine('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יחידות`:''}`);
       addLine('מסלול:', `${(Chat.cfg.PLAN_HE[d.planType]||'')}${d.price?` – ${d.price}₪`:''}`);
       addLine('ימים ושעות מועדפים:', d.availability||'');
       if (d.message) addLine('הערות למזכירות:', d.message);
