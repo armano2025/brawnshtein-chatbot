@@ -5,137 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור חד פעמי על בסיס מקום פנוי</title>
 
-  <link rel="stylesheet" href="../styles.css?v=3" />
+  <!-- נקשר לעיצוב האחיד -->
+  <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
-
-  <!-- שדרוג עיצוב נקי ומודרני מעל ה-CSS הקיים -->
-  <style>
-    :root{
-      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1226cc; --border:#243043;
-      --primary:#5b7cfa; --primary-2:#7c5bfa; --text:#e5e7eb; --muted:#9aa6b2;
-      --chip-bg:#18233a; --chip-br:#31425d; --accent-chip:#ffe8a3; --accent-br:#f7c948;
-      --danger:#e11d48; --ok:#16a34a; --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-
-    /* רקע גרדיאנט מודרני */
-    body{
-      background: radial-gradient(1200px 600px at 100% -10%, #1a2a6c 0%, transparent 60%),
-                  radial-gradient(900px 500px at -10% 110%, #2a4858 0%, transparent 60%),
-                  linear-gradient(140deg, var(--bg1), var(--bg2));
-      color: var(--text);
-    }
-
-    /* כרטיס זכוכיתי */
-    .card{
-      position:relative;
-      background: var(--card);
-      border:1px solid var(--border);
-      backdrop-filter: blur(10px);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    /* פס עליון מופרד עם כפתור תפריט */
-    .topbar{
-      display:flex; align-items:center; justify-content:flex-start;
-      padding:10px 12px;
-      background: linear-gradient(90deg, #0b1226 0%, #0f1833 100%);
-      border-bottom:1px solid var(--border);
-    }
-    .topbar .btn{
-      background: transparent;
-      border:1px solid var(--chip-br);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 6px 12px;
-    }
-    .topbar .btn:hover{ border-color: var(--primary); }
-
-    /* כותרת פנימית שאחרי הטופ-בר – יש ריווח, אין חפיפה */
-    .head{
-      padding-top: 10px;
-      background: linear-gradient(135deg, rgba(91,124,250,.12), rgba(124,91,250,.08));
-      border-bottom:1px solid var(--border);
-    }
-    .brand .logo{
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color:#0b1020; border:none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
-    }
-    .brand .title{ color:var(--text); }
-
-    /* אזור התוכן */
-    #area{overflow-y:auto;max-height:70vh;scroll-behavior:smooth}
-    .bubble.bot{ background:#0f172acc; border-color:var(--border); }
-    .bubble.user{ background:#101a33; border-color:#223250; }
-    .summary .chip{
-      background: var(--chip-bg) !important; border-color: var(--chip-br) !important; color: var(--text) !important;
-    }
-
-    /* כפתורים */
-    .btn{
-      border-radius: 10px; border:1px solid var(--chip-br);
-      background:#111a31; color:var(--text);
-      transition: transform .06s ease, background .2s ease, border-color .2s ease;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: var(--primary); }
-    .btn.primary{
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border:none; color:#0b1020; font-weight:600;
-    }
-    .btn.primary:hover{ filter:brightness(1.05); transform: translateY(-1px); }
-    .btn.ghost{ background: transparent; }
-
-    /* הרחבה למסך זמינות */
-    .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
-    .slots-grid { display:grid; gap:10px; }
-    .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    .slot-preview { margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; border-top:1px dashed var(--border); }
-    /* שבבי סיכום מודגשים + כפתור מחיקה */
-    .chip.emph{
-      background: var(--accent-chip) !important; color:#2f2a00 !important; border:1px solid var(--accent-br) !important;
-      display:inline-flex; align-items:center; gap:6px; padding-inline:10px;
-    }
-    .chip.emph .x{
-      display:inline-flex; align-items:center; justify-content:center;
-      width:20px; height:20px; border-radius:50%; border:1px solid rgba(0,0,0,.25);
-      background:#fff3cd; font-size:14px; line-height:1; cursor:pointer;
-    }
-    .chip.emph .x:hover{ background:#ffe69a; }
-
-    .muted.small { font-size:.9rem; color: var(--muted); }
-    .row-error { color: var(--danger); margin-top:4px; }
-
-    /* אזור פעולות בתחתית מסך הזמינות */
-    .slots-actions{
-      display:flex; gap:8px; align-items:center; justify-content:flex-start;
-      margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
-    }
-
-    /* קלטים */
-    .input, .input-wrap select, .input-wrap textarea{
-      background:#0b142a; color:var(--text); border:1px solid var(--chip-br); border-radius: 10px;
-    }
-    label{ color:var(--muted); }
-
-    /* פוטר */
-    .footer{
-      border-top:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(16,24,48,.3), rgba(16,24,48,.5));
-      display:flex; gap:8px; align-items:center; justify-content:flex-start;
-      padding-top:8px; padding-bottom:8px;
-    }
-    .footer .spacer{ flex:1; }
-
-    /* הודעות ok/err */
-    .bubble.ok{ border-color: rgba(22,163,74,.6); background: rgba(22,163,74,.15); }
-    .bubble.err{ border-color: rgba(225,29,72,.6); background: rgba(225,29,72,.15); }
-  </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- פס עליון נפרד: כפתור לתפריט -->
+      <!-- טופ־בר (מופרד מהכותרת, כפתור תפריט אחיד לכל הדפים) -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
@@ -148,10 +25,10 @@
         </div>
       </div>
 
-      <!-- אזור התוכן -->
+      <!-- אזור התוכן (בועות/כפתורים) -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- תחתית -->
+      <!-- תחתית: חזרה + שאלות (FAQ) -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -165,7 +42,7 @@
   <script src="./js/chat-helpers.js?v=2"></script>
 
   <script>
-    /* ===== עזר קטן לעדכון הקשר הכפתור FAQ ===== */
+    /* ===== קונטקסט לכפתור ה-FAQ לפי שלב ===== */
     function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
@@ -173,7 +50,7 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
-    // ===== עזר קטן ל-select =====
+    /* ===== עזר קטן ל-select (טופס בתוך צ'אט) ===== */
     function selectRow(label, options, id){
       const wrap = document.createElement('div');
       wrap.className = 'input-wrap bubble bot';
@@ -203,13 +80,13 @@
       return sel;
     }
 
-    // ===== התחלה: קודם אוספים פרטי קשר =====
+    /* ===== התחלה ===== */
     function start(){
       Chat.clear(); Chat.push(start);
       stepContactFirst();
     }
 
-    // ===== שלב 0: פרטי קשר (בהתחלה) =====
+    /* ===== שלב 0: פרטי קשר ===== */
     async function stepContactFirst(){
       setHelpContext('contact');
       Chat.clear(); Chat.push(stepContactFirst);
@@ -220,9 +97,9 @@
       await waitP(300);
       const firstName = Chat.inputRow('שם פרטי', { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
       await waitP(120);
-      const lastName = Chat.inputRow('שם משפחה', { id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
+      const lastName  = Chat.inputRow('שם משפחה', { id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
       await waitP(120);
-      const phone = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      const phone     = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
 
       await waitP(120);
       const btnNext = Chat.button('המשך', ()=>{
@@ -243,15 +120,15 @@
         stepSubject();
       }, 'btn primary');
 
-      ;[firstName, lastName, phone].forEach(el=>{
+      [firstName, lastName, phone].forEach(el=>{
         el.addEventListener('input', ()=>{
-          removeErrBubblesNear();
+          removeLastErr();
           btnNext.disabled = false;
         });
       });
 
       function showInlineError(msg, el){ Chat.botText(msg).classList.add('err'); el.focus(); }
-      function removeErrBubblesNear(){
+      function removeLastErr(){
         const area = document.getElementById('area');
         const lastErr = [...area.querySelectorAll('.bubble.err, .err')].pop();
         if(lastErr) lastErr.remove();
@@ -259,15 +136,14 @@
       function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
-    // ===== שלב 1: מקצוע =====
+    /* ===== שלב 1: מקצוע ===== */
     function stepSubject(){
       setHelpContext('subject');
       Chat.clear(); Chat.push(stepSubject);
 
       const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
-        `<strong>מעולה${name}! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br>` +
-        `<strong>איזה מקצוע תרצו?</strong> 📖`,
+        `<strong>מעולה${name}! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
         650, true
       );
 
@@ -287,7 +163,7 @@
       }, 900);
     }
 
-    // ===== שלב 2: כיתה (ללא הזכרת שם) =====
+    /* ===== שלב 2: כיתה ===== */
     function stepGrade(){
       setHelpContext('grade');
       Chat.clear(); Chat.push(stepGrade);
@@ -312,19 +188,15 @@
         }, 'btn primary');
 
         gradeSelect.addEventListener('change', ()=>{
-          removeLastErr();
-          btnNext.disabled = false;
-        });
-
-        function removeLastErr(){
           const area = document.getElementById('area');
           const lastErr = [...area.querySelectorAll('.err')].pop();
           if(lastErr) lastErr.remove();
-        }
+          btnNext.disabled = false;
+        });
       }, 800);
     }
 
-    // ===== שלב 2b: יחידות (לתיכון) =====
+    /* ===== שלב 2b: יחידות ===== */
     function stepUnits(){
       setHelpContext('units');
       Chat.clear(); Chat.push(stepUnits);
@@ -345,7 +217,7 @@
       }, 700);
     }
 
-    // ===== שלב 3: מסלול =====
+    /* ===== שלב 3: מסלול ===== */
     function stepPlan(){
       setHelpContext('plan');
       Chat.clear(); Chat.push(stepPlan);
@@ -389,7 +261,7 @@
       }, 800);
     }
 
-    // ===== שלב 4: בחירת זמינות (כפתור ההמשך בתחתית + ✖️ להסרה) =====
+    /* ===== שלב 4: זמינות (כולל ✖️ להסרה ושמירת כפתור בתחתית) ===== */
     function stepAvailability(){
       setHelpContext('availability');
       Chat.clear(); Chat.push(stepAvailability);
@@ -418,11 +290,11 @@
         const preview = document.createElement('div');
         preview.className = 'slot-preview';
 
-        function toNum(s){ return parseInt(String(s||'').replace(':',''),10) || 0; }
         const TIMES = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
         const DAYS  = ['','א','ב','ג','ד','ה'];
+        const toNum = s => parseInt(String(s||'').replace(':',''),10) || 0;
 
-        function makeSelect(placeholder, values){
+        const makeSelect = (placeholder, values)=>{
           const sel = document.createElement('select');
           sel.className = 'input';
           values.forEach(v=>{
@@ -432,9 +304,9 @@
             sel.appendChild(o);
           });
           return sel;
-        }
+        };
 
-        function lastRowFilled(){
+        const lastRowFilled = ()=>{
           const rows = Array.from(rowsWrap.children);
           if (!rows.length) return false;
           const last = rows[rows.length - 1];
@@ -442,21 +314,18 @@
           const d = dSel.value, f = fSel.value, t = tSel.value;
           if(!(d && f && t)) return false;
           return toNum(f) < toNum(t);
-        }
+        };
 
-        function refreshPreview(){
+        const refreshPreview = ()=>{
           preview.innerHTML = '';
           const rows = Array.from(rowsWrap.children);
           const chosen = [];
           for(const r of rows){
             const [dSel, fSel, tSel] = r.querySelectorAll('select');
             const d = dSel.value, f = fSel.value, t = tSel.value;
-            if(d && f && t && toNum(f) < toNum(t)){
-              chosen.push({d,f,t,row:r});
-            }
+            if(d && f && t && toNum(f) < toNum(t)){ chosen.push({d,f,t,row:r}); }
           }
           chosen.forEach(c => {
-            // צ'יפ עם ✖ להסרה
             const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
             chip.classList.add('emph');
             const x = document.createElement('button');
@@ -470,13 +339,13 @@
             chip.appendChild(x);
             preview.appendChild(chip);
           });
-        }
+        };
 
-        function wireRow(row, btnContinueRef){
+        const wireRow = (row, btnContinueRef)=>{
           const inputs = row.querySelectorAll('select');
           inputs.forEach(sel=>{
             sel.addEventListener('change', ()=>{
-              const [dSel, fSel, tSel] = row.querySelectorAll('select');
+              const [ , fSel, tSel] = row.querySelectorAll('select');
               const f = fSel.value, t = tSel.value;
 
               const errPrev = row.querySelector('.row-error');
@@ -490,13 +359,13 @@
               }
 
               addBtn.disabled = !lastRowFilled();
-              btnContinueRef.disabled = false; // חוזר לפעיל אחרי תיקון
+              btnContinueRef.disabled = false;
               refreshPreview();
             });
           });
-        }
+        };
 
-        function addRow(force=false, btnContinueRef){
+        const addRow = (force=false, btnContinueRef)=>{
           if (!force && !lastRowFilled()){
             Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
             return;
@@ -515,7 +384,7 @@
           refreshPreview();
           area.scrollTop = area.scrollHeight;
           return row;
-        }
+        };
 
         const title = document.createElement('div');
         title.className='muted';
@@ -526,11 +395,9 @@
         addBtn.textContent = '+ הוספת מועד נוסף';
         addBtn.disabled = true;
 
-        // פעולות בתחתית (כאן ימוקם "המשך")
         const actions = document.createElement('div');
         actions.className = 'slots-actions';
 
-        // כפתור המשך בתחתית
         const btnContinue = document.createElement('button');
         btnContinue.className = 'btn primary';
         btnContinue.textContent = 'המשך';
@@ -560,35 +427,29 @@
 
         addBtn.onclick = ()=> addRow(false, btnContinue);
 
-        grid.append(title, rowsWrap, addBtn, preview);
-        pickerWrap.appendChild(grid);
+        const gridHost = grid;
+        gridHost.append(title, rowsWrap, addBtn, preview);
+        pickerWrap.appendChild(gridHost);
 
-        // כפתור ההמשך בתחתית ה-bubble הרחב
         actions.appendChild(btnContinue);
         pickerWrap.appendChild(actions);
 
         area.appendChild(pickerWrap);
 
-        // שורה ראשונה חובה
         addRow(true, btnContinue);
       }, 900);
     }
 
-    // ===== שלב 5: הערות (אופציונלי) =====
+    /* ===== שלב 5: הערות ===== */
     function stepNotes(){
       setHelpContext('notes');
       Chat.clear(); Chat.push(stepNotes);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
-      Chat.typingThen(
-        `<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`,
-        600, true
-      );
+      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 600, true);
 
       setTimeout(()=>{
-        const message = Chat.inputRow('הערות (לא חובה)', {
-          textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב'
-        });
+        const message = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב' });
 
         const btnNext = Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
@@ -600,7 +461,7 @@
       }, 800);
     }
 
-    // ===== שלב 6: סיכום ושליחה =====
+    /* ===== שלב 6: סיכום ===== */
     function stepReview(){
       setHelpContext('review');
       Chat.clear(); Chat.push(stepReview);
@@ -639,7 +500,6 @@
 
       Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
         const stopProcessing = Chat.showProcessing();
-
         const fullName = `${Chat.State.data.firstName||''} ${Chat.State.data.lastName||''}`.trim();
 
         const ok = await Chat.sendLeadToSheet({
