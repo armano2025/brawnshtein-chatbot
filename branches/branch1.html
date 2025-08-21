@@ -11,23 +11,10 @@
   <!-- שדרוג עיצוב נקי ומודרני מעל ה-CSS הקיים -->
   <style>
     :root{
-      --bg1:#0f172a;          /* slate-900 */
-      --bg2:#1e293b;          /* slate-800 */
-      --card:#0b1226cc;       /* glass */
-      --border:#243043;
-      --primary:#5b7cfa;      /* אינדיגו-כחול רך */
-      --primary-2:#7c5bfa;    /* אינדיגו-סגלגל למעברי צבע */
-      --text:#e5e7eb;
-      --muted:#9aa6b2;
-      --chip-bg:#18233a;
-      --chip-br:#31425d;
-      --accent-chip:#ffe8a3;
-      --accent-br:#f7c948;
-      --danger:#e11d48;
-      --ok:#16a34a;
-      --radius:16px;
-      --radius-sm:12px;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1226cc; --border:#243043;
+      --primary:#5b7cfa; --primary-2:#7c5bfa; --text:#e5e7eb; --muted:#9aa6b2;
+      --chip-bg:#18233a; --chip-br:#31425d; --accent-chip:#ffe8a3; --accent-br:#f7c948;
+      --danger:#e11d48; --ok:#16a34a; --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
     }
 
     /* רקע גרדיאנט מודרני */
@@ -73,9 +60,7 @@
     }
     .brand .logo{
       background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color:#0b1020;
-      border: none;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+      color:#0b1020; border:none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
     }
     .brand .title{ color:var(--text); }
 
@@ -84,17 +69,13 @@
     .bubble.bot{ background:#0f172acc; border-color:var(--border); }
     .bubble.user{ background:#101a33; border-color:#223250; }
     .summary .chip{
-      background: var(--chip-bg) !important;
-      border-color: var(--chip-br) !important;
-      color: var(--text) !important;
+      background: var(--chip-bg) !important; border-color: var(--chip-br) !important; color: var(--text) !important;
     }
 
     /* כפתורים */
     .btn{
-      border-radius: 10px;
-      border:1px solid var(--chip-br);
-      background:#111a31;
-      color:var(--text);
+      border-radius: 10px; border:1px solid var(--chip-br);
+      background:#111a31; color:var(--text);
       transition: transform .06s ease, background .2s ease, border-color .2s ease;
     }
     .btn:hover{ transform: translateY(-1px); border-color: var(--primary); }
@@ -103,29 +84,22 @@
       border:none; color:#0b1020; font-weight:600;
     }
     .btn.primary:hover{ filter:brightness(1.05); transform: translateY(-1px); }
+    .btn.ghost{ background: transparent; }
 
     /* הרחבה למסך זמינות */
     .bubble.bot.wide { max-width: 960px; width: 100%; margin-inline: auto; }
     .slots-grid { display:grid; gap:10px; }
     .slot-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    .slot-preview {
-      margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;
-      padding-top:4px; border-top:1px dashed var(--border);
-    }
+    .slot-preview { margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; border-top:1px dashed var(--border); }
     /* שבבי סיכום מודגשים + כפתור מחיקה */
     .chip.emph{
-      background: var(--accent-chip) !important;
-      color:#2f2a00 !important;
-      border:1px solid var(--accent-br) !important;
-      display:inline-flex; align-items:center; gap:6px;
-      padding-inline:10px;
+      background: var(--accent-chip) !important; color:#2f2a00 !important; border:1px solid var(--accent-br) !important;
+      display:inline-flex; align-items:center; gap:6px; padding-inline:10px;
     }
     .chip.emph .x{
       display:inline-flex; align-items:center; justify-content:center;
-      width:20px; height:20px; border-radius:50%;
-      border:1px solid rgba(0,0,0,.25);
-      background:#fff3cd;
-      font-size:14px; line-height:1; cursor:pointer;
+      width:20px; height:20px; border-radius:50%; border:1px solid rgba(0,0,0,.25);
+      background:#fff3cd; font-size:14px; line-height:1; cursor:pointer;
     }
     .chip.emph .x:hover{ background:#ffe69a; }
 
@@ -140,8 +114,7 @@
 
     /* קלטים */
     .input, .input-wrap select, .input-wrap textarea{
-      background:#0b142a; color:var(--text); border:1px solid var(--chip-br);
-      border-radius: 10px;
+      background:#0b142a; color:var(--text); border:1px solid var(--chip-br); border-radius: 10px;
     }
     label{ color:var(--muted); }
 
@@ -149,7 +122,10 @@
     .footer{
       border-top:1px solid var(--border);
       background: linear-gradient(180deg, rgba(16,24,48,.3), rgba(16,24,48,.5));
+      display:flex; gap:8px; align-items:center; justify-content:flex-start;
+      padding-top:8px; padding-bottom:8px;
     }
+    .footer .spacer{ flex:1; }
 
     /* הודעות ok/err */
     .bubble.ok{ border-color: rgba(22,163,74,.6); background: rgba(22,163,74,.15); }
@@ -178,6 +154,8 @@
       <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
+        <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        <span class="spacer"></span>
       </div>
     </div>
   </div>
@@ -187,6 +165,14 @@
   <script src="./js/chat-helpers.js?v=2"></script>
 
   <script>
+    /* ===== עזר קטן לעדכון הקשר הכפתור FAQ ===== */
+    function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base = '../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    }
+
     // ===== עזר קטן ל-select =====
     function selectRow(label, options, id){
       const wrap = document.createElement('div');
@@ -225,25 +211,18 @@
 
     // ===== שלב 0: פרטי קשר (בהתחלה) =====
     async function stepContactFirst(){
+      setHelpContext('contact');
       Chat.clear(); Chat.push(stepContactFirst);
 
       const header = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
       Chat.scrollStartOf(header);
 
       await waitP(300);
-      const firstName = Chat.inputRow('שם פרטי', {
-        id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name'
-      });
-
+      const firstName = Chat.inputRow('שם פרטי', { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
       await waitP(120);
-      const lastName = Chat.inputRow('שם משפחה', {
-        id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name'
-      });
-
+      const lastName = Chat.inputRow('שם משפחה', { id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
       await waitP(120);
-      const phone = Chat.inputRow('טלפון לחזרה', {
-        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel'
-      });
+      const phone = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
 
       await waitP(120);
       const btnNext = Chat.button('המשך', ()=>{
@@ -271,10 +250,7 @@
         });
       });
 
-      function showInlineError(msg, el){
-        Chat.botText(msg).classList.add('err');
-        el.focus();
-      }
+      function showInlineError(msg, el){ Chat.botText(msg).classList.add('err'); el.focus(); }
       function removeErrBubblesNear(){
         const area = document.getElementById('area');
         const lastErr = [...area.querySelectorAll('.bubble.err, .err')].pop();
@@ -283,8 +259,9 @@
       function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
-    // ===== שלב 1: מקצוע (עם פנייה אישית בשם פרטי) =====
+    // ===== שלב 1: מקצוע =====
     function stepSubject(){
+      setHelpContext('subject');
       Chat.clear(); Chat.push(stepSubject);
 
       const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
@@ -312,6 +289,7 @@
 
     // ===== שלב 2: כיתה (ללא הזכרת שם) =====
     function stepGrade(){
+      setHelpContext('grade');
       Chat.clear(); Chat.push(stepGrade);
 
       Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀`, 600, true);
@@ -348,6 +326,7 @@
 
     // ===== שלב 2b: יחידות (לתיכון) =====
     function stepUnits(){
+      setHelpContext('units');
       Chat.clear(); Chat.push(stepUnits);
 
       Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 600, true);
@@ -368,6 +347,7 @@
 
     // ===== שלב 3: מסלול =====
     function stepPlan(){
+      setHelpContext('plan');
       Chat.clear(); Chat.push(stepPlan);
 
       const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
@@ -411,6 +391,7 @@
 
     // ===== שלב 4: בחירת זמינות (כפתור ההמשך בתחתית + ✖️ להסרה) =====
     function stepAvailability(){
+      setHelpContext('availability');
       Chat.clear(); Chat.push(stepAvailability);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
@@ -482,7 +463,6 @@
             x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד');
             x.textContent='✖';
             x.addEventListener('click', ()=>{
-              // הסרה: מוחקים את השורה התואמת, מרעננים תצוגה
               c.row.remove();
               addBtn.disabled = !lastRowFilled();
               refreshPreview();
@@ -596,6 +576,7 @@
 
     // ===== שלב 5: הערות (אופציונלי) =====
     function stepNotes(){
+      setHelpContext('notes');
       Chat.clear(); Chat.push(stepNotes);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
@@ -621,6 +602,7 @@
 
     // ===== שלב 6: סיכום ושליחה =====
     function stepReview(){
+      setHelpContext('review');
       Chat.clear(); Chat.push(stepReview);
 
       const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
