@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מרכז העזרה (FAQ) – שיעור על בסיס מקום פנוי</title>
+  <meta name="theme-color" content="#5b7cfa" />
+  <style>
+    :root{
+      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1226cc; --border:#243043;
+      --primary:#5b7cfa; --primary-2:#7c5bfa; --text:#e5e7eb; --muted:#9aa6b2;
+      --chip-bg:#18233a; --chip-br:#31425d;
+      --radius:16px; --radius-sm:12px; --shadow:0 10px 30px rgba(0,0,0,.35);
+      --section-br:#2a3a57; --section-bg:#0f172acc; --highlight:#ffe8a3; --highlight-br:#f7c948;
+    }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 100% -10%, #1a2a6c 0%, transparent 60%),
+                  radial-gradient(900px 500px at -10% 110%, #2a4858 0%, transparent 60%),
+                  linear-gradient(140deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", "Noto Sans Hebrew", "Arimo", Arial, sans-serif;
+    }
+    .wrap{ max-width: 1100px; margin: 24px auto 40px; padding: 0 16px; }
+
+    /* טופ-בר */
+    .topbar{
+      position: sticky; top:0; z-index: 5;
+      display:flex; gap:8px; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      background: linear-gradient(90deg, #0b1226 0%, #0f1833 100%);
+      border-bottom:1px solid var(--border);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color:#0b1020; font-weight:800; display:grid; place-items:center;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+    }
+    .title{ font-weight:700; }
+
+    /* כפתורים */
+    .btn{
+      border-radius: 999px; border:1px solid var(--chip-br);
+      background:#111a31; color:var(--text);
+      padding:8px 14px; cursor:pointer;
+      transition: transform .06s ease, border-color .2s ease, filter .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: var(--primary); }
+    .btn.primary{ background: linear-gradient(135deg, var(--primary), var(--primary-2)); border:none; color:#0b1020; font-weight:700; }
+    .btn.ghost{ background: transparent; }
+    .btn-link{
+      display:inline-flex; align-items:center; gap:8px;
+      text-decoration:none; border:1px solid var(--chip-br);
+      padding:10px 14px; border-radius:12px; background:#111a31; color:var(--text);
+    }
+    .btn-link:hover{ border-color: var(--primary); transform: translateY(-1px); }
+
+    /* חיפוש + טאבים */
+    .search-bar{ margin: 18px 0 8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .search{
+      flex:1 1 320px; min-width: 220px;
+      background:#0b142a; color:var(--text); border:1px solid var(--chip-br);
+      border-radius: 999px; padding:10px 14px; outline: none;
+    }
+    .hint{ color:var(--muted); font-size:.9rem; }
+
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0 16px; }
+    .tab{
+      border-radius: 999px; border:1px solid var(--chip-br); background:#101a33; color:var(--text);
+      padding:6px 12px; cursor:pointer; user-select:none; font-size:.95rem;
+    }
+    .tab.active{ background: linear-gradient(135deg, var(--primary), var(--primary-2)); color:#0b1020; border:none; font-weight:700; }
+
+    /* כרטיסי פרקים */
+    .section{
+      background: var(--section-bg);
+      border:1px solid var(--section-br);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .section-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid var(--section-br); background: rgba(91,124,250,.10);
+    }
+    .section-title{ font-weight:800; }
+    .section-body{ padding: 10px 12px; display:grid; gap:10px; }
+
+    /* אקורדיון */
+    .faq-item{ border:1px solid var(--chip-br); border-radius:12px; overflow:hidden; background:#0f172acc; }
+    .faq-q{
+      width:100%; text-align:inherit; padding:12px 14px; background:transparent; color:var(--text); border:none; font-weight:700;
+      display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    }
+    .faq-q:hover{ background:#0f1b36; }
+    .faq-a{ padding:0 14px 12px 14px; color:var(--muted); display:none; line-height:1.65; }
+    .faq-item.open .faq-a{ display:block; }
+    .faq-item.open .faq-q{ border-bottom:1px solid var(--chip-br); }
+
+    /* היילייט לפרק פתוח מהקשר */
+    .section.highlight{
+      box-shadow: 0 0 0 2px var(--highlight-br), 0 10px 30px rgba(0,0,0,.35);
+      outline: 2px solid var(--highlight-br);
+      scroll-margin-top: 84px;
+    }
+
+    .links-grid{ display:flex; gap:8px; flex-wrap:wrap; }
+    footer{ text-align:center; color:var(--muted); font-size:.9rem; padding: 22px 0 10px; }
+    a, a:visited{ color: #9fb6ff; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">HB</div>
+      <div class="title">מרכז העזרה (FAQ)</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn ghost" onclick="history.back()">חזרה</button>
+      <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="search-bar">
+      <input id="search" class="search" type="search" placeholder="חיפוש שאלה או מילת מפתח (לדוגמה: רישום, תקנון, מסלול, תשלום)..." aria-label="חיפוש שאלות"/>
+      <div class="hint">טיפ: אפשר לפתוח פרק לפי הקשר בעזרת <code>?ctx=availability</code>.</div>
+    </div>
+
+    <div id="tabs" class="tabs" role="tablist" aria-label="קטגוריות עזרה"></div>
+    <div id="sections"></div>
+
+    <footer>
+      צריך להוסיף/לעדכן שאלה? ערכו את הנתונים בחלק ה־JS למטה — זה הכל.
+    </footer>
+  </div>
+
+  <script>
+    /* ===== קישורים חשובים — עדכון במקום אחד ===== */
+    const REG_LINK   = 'https://bit.ly/3XmQeeV';
+    const TERMS_LINK = 'https://forms.gle/orUvvLrrSuCGAPVVA';
+
+    /* ===== מקור הנתונים ===== */
+    const FAQ_DATA = {
+      links: {
+        title: 'קישורים חשובים',
+        items: [
+          { q: 'טופס רישום', a: `להרשמה מהירה למסלולים — <a class="btn-link" target="_blank" rel="noopener" href="${REG_LINK}">פתח/י את טופס הרישום</a>` },
+          { q: 'תקנון בראונשטיין', a: `מומלץ לעיין בפרטים המלאים: <a class="btn-link" target="_blank" rel="noopener" href="${TERMS_LINK}">לצפייה בתקנון</a>` },
+        ]
+      },
+      contact: {
+        title: 'פרטי קשר',
+        items: [
+          { q: 'מי חוזר אליי?', a: 'אחרי מילוי הטופס, נטע תחזור אלייך להמשך התהליך ופרטים נוספים.' },
+          { q: 'למה צריך טלפון?', a: 'כדי שנוכל לחזור במהירות עם מקום פנוי/תיאום. המספר לשימוש פנימי בלבד.' },
+          { q: 'אפשר וואטסאפ?', a: 'כן. ניצור קשר בוואטסאפ למספר שסיפקת בטופס.' },
+        ]
+      },
+      subject: {
+        title: 'בחירת מקצוע',
+        items: [
+          { q: 'לא מצאתי מקצוע ברשימה', a: 'בחר/י “אחר” ופרט/י בהערות. ננסה לאתר מורה מתאים.' },
+          { q: 'מה זה “אנגלית מדוברת לקטנטנים”?', a: 'מסלול מותאם לילדים צעירים, דגש על דיבור, אוצר מילים והגייה.' },
+        ]
+      },
+      grade: {
+        title: 'בחירת כיתה',
+        items: [
+          { q: 'לא בטוח/ה באיזו כיתה', a: 'בחר/י את הקרובה ביותר; אפשר לציין בהערות מצב מיוחד (חינוך ביתי/כיתה משולבת).' },
+        ]
+      },
+      units: {
+        title: 'יחידות בגרות',
+        items: [
+          { q: 'לא יודע/ת כמה יחידות', a: 'בחר/י הערכה. אם יש ספק — כתבו בהערות ונבדוק יחד.' },
+          { q: '3/4/5 יחידות — מה ההבדל?', a: 'לרוב לפי רמת הלימוד בתיכון. לא בטוחים? נבהיר מולכם בהמשך.' },
+        ]
+      },
+      plan: {
+        title: 'מסלולים ומחירים',
+        items: [
+          { q: 'מהם המסלולים הקבועים ביומן?', a: `<strong>קבוצתי:</strong> שיעור קבוע אחד בשבוע, עד 5 תלמידים — <strong>295₪ לחודש</strong>.<br/><strong>טריפל:</strong> שיעור קבוע אחד בשבוע, עד 3 תלמידים — <strong>385₪ לחודש</strong>.<br/>התשלום במסלולים הקבועים: הוראת קבע באשראי.` },
+          { q: 'מה זה “על בסיס מקום פנוי”?', a: 'לתלמידים שאינם ביומנים הקבועים. תיאום לפי התפנות. מחירים: קבוצתי 80₪ לשיעור, טריפל 100₪ לשיעור.' },
+          { q: 'אפשר לשנות מסלול בהמשך?', a: 'כן. ניתן לעדכן לפני קביעת השיעור בפועל מול המזכירות.' },
+        ]
+      },
+      availability: {
+        title: 'בחירת זמינות',
+        items: [
+          { q: 'אין שעה מדויקת?', a: 'נאתר חלון קרוב לזמנים שסימנת. מומלץ לסמן כמה חלונות זמן.' },
+          { q: 'איך מוסיפים כמה מועדים?', a: 'אפשר להוסיף יותר ממועד אחד; הוספת מועד מתאפשרת אחרי מילוי תקין של המועד האחרון.' },
+          { q: 'איך מוחקים מועד?', a: 'בסיכום המועדים — לחיצה על ✖️ תסיר את המועד. אפשר גם לנקות את שדות השורה.' },
+        ]
+      },
+      notes: {
+        title: 'הערות',
+        items: [
+          { q: 'מה כדאי לכתוב?', a: 'לדוגמה: רענון לקראת מבחן, העדפה לשעת ערב, קושי מסוים, העדפה למורה/ה.' },
+        ]
+      },
+      review: {
+        title: 'סיכום ושליחה',
+        items: [
+          { q: 'איך נרשמים בפועל?', a: `פותחים את הטופס: <a target="_blank" rel="noopener" href="${REG_LINK}">${REG_LINK}</a>. לאחר מילוי — נטע תחזור אלייך.` },
+          { q: 'אפשר לערוך לאחר שליחה?', a: 'כן. כתבו לנו בוואטסאפ/טלפון ונעדכן לפני התיאום.' },
+          { q: 'יש תקנון מחייב?', a: `כן. כללי המדיניות בתקנון: <a target="_blank" rel="noopener" href="${TERMS_LINK}">לצפייה בתקנון</a>.` },
+        ]
+      }
+    };
+
+    /* סדר תצוגה */
+    const ORDER = ['links','contact','subject','grade','units','plan','availability','notes','review'];
+
+    /* DOM */
+    const sectionsEl = document.getElementById('sections');
+    const tabsEl = document.getElementById('tabs');
+    const searchEl = document.getElementById('search');
+
+    /* בנייה */
+    function createTab(key, title){
+      const b = document.createElement('button');
+      b.className = 'tab'; b.type='button'; b.textContent = title;
+      b.onclick = () => {
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        b.classList.add('active');
+        const sec = document.getElementById('sec-'+key);
+        if(sec){ sec.scrollIntoView({behavior:'smooth', block:'start'}); }
+      };
+      b.setAttribute('role','tab');
+      b.setAttribute('aria-controls','sec-'+key);
+      return b;
+    }
+
+    function createFAQItem(item){
+      const wrap = document.createElement('div'); wrap.className='faq-item';
+      const q = document.createElement('button'); q.className='faq-q'; q.type='button';
+      q.innerHTML = `<span>${item.q}</span><span aria-hidden="true">▼</span>`;
+      q.setAttribute('aria-expanded','false');
+
+      const a = document.createElement('div'); a.className='faq-a'; a.innerHTML = item.a;
+
+      q.addEventListener('click', ()=>{
+        const isOpen = wrap.classList.toggle('open');
+        q.setAttribute('aria-expanded', String(isOpen));
+        // אקורדיון בסגנון "אחד פתוח בכל פעם" בתוך אותו פרק:
+        if(isOpen){
+          const siblings = wrap.parentElement.querySelectorAll('.faq-item');
+          siblings.forEach(s=>{ if(s!==wrap) s.classList.remove('open'); s.querySelector('.faq-q')?.setAttribute('aria-expanded','false'); });
+        }
+      });
+
+      wrap.append(q, a);
+      return wrap;
+    }
+
+    function build(){
+      // tabs
+      tabsEl.innerHTML = '';
+      ORDER.forEach(key=>{
+        const sec = FAQ_DATA[key];
+        if(!sec) return;
+        tabsEl.appendChild(createTab(key, sec.title));
+      });
+
+      // sections
+      sectionsEl.innerHTML = '';
+      ORDER.forEach(key=>{
+        const sec = FAQ_DATA[key]; if(!sec) return;
+        const card = document.createElement('section');
+        card.className = 'section';
+        card.id = 'sec-'+key;
+
+        const head = document.createElement('div'); head.className='section-header';
+        head.innerHTML = `<div class="section-title">${sec.title}</div>
+                          <div class="muted" style="color:var(--muted); font-size:.9rem;">${sec.items.length} שאלות</div>`;
+        const body = document.createElement('div'); body.className='section-body';
+
+        if(key === 'links'){
+          const grid = document.createElement('div'); grid.className='links-grid';
+          sec.items.forEach(it=>{
+            const div = document.createElement('div'); div.className='faq-item'; div.style.padding='10px 12px';
+            div.innerHTML = `<div style="font-weight:700; margin-bottom:6px;">${it.q}</div><div>${it.a}</div>`;
+            grid.appendChild(div);
+          });
+          body.appendChild(grid);
+        }else{
+          sec.items.forEach(it=> body.appendChild(createFAQItem(it)));
+        }
+
+        card.append(head, body);
+        sectionsEl.appendChild(card);
+      });
+    }
+
+    /* חיפוש חי */
+    function applySearch(){
+      const term = (searchEl.value || '').trim().toLowerCase();
+      const sections = sectionsEl.querySelectorAll('.section');
+
+      sections.forEach(sec=>{
+        if(sec.id === 'sec-links'){ sec.style.display = ''; return; } // קישורים תמיד מוצגים
+        let anyVisible = false;
+        sec.classList.remove('highlight');
+        sec.querySelectorAll('.faq-item').forEach(item=>{
+          const q = item.querySelector('.faq-q')?.innerText?.toLowerCase() || '';
+          const a = item.querySelector('.faq-a')?.innerText?.toLowerCase() || '';
+          const show = !term || q.includes(term) || a.includes(term);
+          item.style.display = show ? '' : 'none';
+          anyVisible = anyVisible || show;
+          if(term && show) item.classList.add('open'), item.querySelector('.faq-q')?.setAttribute('aria-expanded','true');
+          else item.classList.remove('open'), item.querySelector('.faq-q')?.setAttribute('aria-expanded','false');
+        });
+        sec.style.display = anyVisible ? '' : 'none';
+      });
+    }
+    searchEl.addEventListener('input', applySearch);
+
+    /* מיקוד לפי הקשר (?ctx=) */
+    function getCtx(){
+      const m = new URLSearchParams(location.search).get('ctx');
+      return ORDER.includes(m) ? m : null;
+    }
+    function focusContext(){
+      const ctx = getCtx();
+      const allTabs = [...document.querySelectorAll('.tab')];
+      if(ctx){
+        const targetSec = document.getElementById('sec-'+ctx);
+        const targetTab = allTabs[ORDER.indexOf(ctx)];
+        if(targetTab){ allTabs.forEach(t=>t.classList.remove('active')); targetTab.classList.add('active'); }
+        if(targetSec){
+          targetSec.classList.add('highlight');
+          targetSec.scrollIntoView({behavior:'smooth', block:'start'});
+          setTimeout(()=> targetSec.classList.remove('highlight'), 2200);
+        }
+      }else{
+        allTabs[0]?.classList.add('active');
+      }
+    }
+
+    /* אתחול */
+    build();
+    focusContext();
+  </script>
+</body>
+</html>
