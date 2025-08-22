@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
-  <!-- שדרוג תצוגת הכפתורים (פסטלים רכים + גריד) -->
+  <!-- עיצוב כרטיסי הבחירה (אחיד עם הסגנון הרך של הענפים) -->
   <style>
     .choices{
       display:grid; gap:12px; margin-top:8px;
@@ -18,7 +18,6 @@
     @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
     @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
 
-    /* בסיס להגדלת כפתורי הבחירה */
     .btn.choice{
       display:flex; align-items:center; justify-content:space-between;
       font-weight:700; padding:14px 16px; border-radius:14px;
@@ -26,22 +25,16 @@
       transition: transform var(--speed), border-color var(--speed), box-shadow var(--speed), filter var(--speed);
     }
     .btn.choice:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,23,42,0.10) }
+    .btn.choice:focus-visible{ outline: 2px solid var(--primary); outline-offset: 2px }
 
-    /* שלושה גוונים בהירים נפרדים */
-    .soft-aqua{
-      background:#eef6ff; border:1px solid #cfe3ff; color: var(--text);
-    }
+    /* שלושה גוונים בהירים */
+    .soft-aqua{  background:#eef6ff; border:1px solid #cfe3ff; color: var(--text) }
     .soft-aqua:hover{ border-color:#9ec5ff }
-    .soft-mint{
-      background:#ecfdf5; border:1px solid #c7f2e1; color: var(--text);
-    }
+    .soft-mint{  background:#ecfdf5; border:1px solid #c7f2e1; color: var(--text) }
     .soft-mint:hover{ border-color:#97e6cf }
-    .soft-rose{
-      background:#fff1f2; border:1px solid #ffd7dc; color: var(--text);
-    }
+    .soft-rose{  background:#fff1f2; border:1px solid #ffd7dc; color: var(--text) }
     .soft-rose:hover{ border-color:#ffb8c1 }
 
-    /* איקון קטן מימין (אופציונלי) */
     .btn.choice .emoji{ opacity:.9; font-size:18px; margin-inline-start:8px }
   </style>
 </head>
@@ -52,7 +45,7 @@
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
-          <div class="logo">HB</div>
+          <div class="logo" aria-hidden="true">HB</div>
           <div class="title">יוסטון – צ׳טבוט</div>
         </div>
       </div>
@@ -62,7 +55,7 @@
 
       <!-- תחתית -->
       <div class="footer">
-        <button class="btn" onclick="location.reload()">ריענון</button>
+        <button class="btn" id="refreshBtn" type="button">ריענון</button>
         <a class="btn ghost" href="faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         <span class="spacer"></span>
       </div>
@@ -71,85 +64,94 @@
   </div>
 
   <script>
-    const area = document.getElementById('area');
-    function autoscroll(){ area.scrollTop = area.scrollHeight; }
+    (function(){
+      const area = document.getElementById('area');
+      const refreshBtn = document.getElementById('refreshBtn');
 
-    function bot(html){
-      const d=document.createElement('div');
-      d.className='bubble bot';
-      d.innerHTML=html;
-      area.appendChild(d);
-      autoscroll();
-      return d;
-    }
-    function user(text){
-      const d=document.createElement('div');
-      d.className='bubble user';
-      d.textContent=text;
-      area.appendChild(d);
-      autoscroll();
-      return d;
-    }
-    // תומך בהעברת הורה ייעודי
-    function actionBtn(text, onClick, cls='btn', parent=area){
-      const b=document.createElement('button');
-      b.className=cls;
-      b.textContent=text;
-      b.onclick=()=>{ b.disabled = true; onClick(); };
-      parent.appendChild(b);
-      autoscroll();
-      return b;
-    }
-    function typingThen(text, delay=650){
-      const t=document.createElement('div');
-      t.className='typing-indicator';
-      t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t);
-      autoscroll();
-      setTimeout(()=>{ t.remove(); bot(text); }, delay);
-    }
+      function autoscroll(){ area.scrollTop = area.scrollHeight; }
+      function bot(html){
+        const d=document.createElement('div');
+        d.className='bubble bot';
+        d.innerHTML=html;
+        area.appendChild(d);
+        autoscroll();
+        return d;
+      }
+      function user(text){
+        const d=document.createElement('div');
+        d.className='bubble user';
+        d.textContent=text;
+        area.appendChild(d);
+        autoscroll();
+        return d;
+      }
+      // כפתור פעולה; once-guard נגד דאבל קליק
+      function actionBtn(text, onClick, cls='btn', parent=area){
+        const b=document.createElement('button');
+        b.className=cls; b.type='button'; b.textContent=text;
+        let used=false;
+        b.addEventListener('click', ()=>{
+          if(used) return; used=true; b.disabled = true; onClick();
+        });
+        parent.appendChild(b);
+        autoscroll();
+        return b;
+      }
+      function typingThen(text, delay=650){
+        const t=document.createElement('div');
+        t.className='typing-indicator';
+        t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+        area.appendChild(t);
+        autoscroll();
+        setTimeout(()=>{ t.remove(); bot(text); }, delay);
+      }
 
-    function start(){
-      area.innerHTML = '';
+      function start(){
+        area.innerHTML = '';
 
-      typingThen(
-        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
-        'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
-        'אפשר לקבוע שיעור, לבדוק פרטים על מנוי, או לבצע פעולות למנויה קיימת.',
-        600
-      );
+        const h = bot(
+          '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
+          'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
+          'אפשר לקבוע שיעור, לקבל פרטים על מנוי, או לבצע פעולות למנוי קיים.'
+        );
+        // מוודאים שהפתיח יופיע בראש
+        h.scrollIntoView({ block:'start', behavior:'smooth' });
 
-      setTimeout(()=>{
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
-      }, 900);
+        setTimeout(()=> typingThen('<strong>בחרו את האפשרות המתאימה 👇</strong>', 500), 900);
 
-      setTimeout(()=>{
-        // עוטף כפתורים לגריד יפה
-        const choices = document.createElement('div');
-        choices.className = 'choices';
-        area.appendChild(choices);
+        setTimeout(()=>{
+          const choices = document.createElement('div');
+          choices.className = 'choices';
+          choices.setAttribute('role','group');
+          choices.setAttribute('aria-label','בחירת מסלול פעולה');
+          area.appendChild(choices);
 
-        // ענף 1 — אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)
-        actionBtn('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)', ()=>{
-          user('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)');
-          setTimeout(()=> location.href='branches/branch1.html', 150); // תוקן הנתיב
-        }, 'btn choice soft-aqua', choices);
+          // שיעור חד-פעמי
+          actionBtn('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)', ()=>{
+            user('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)');
+            // ניווט
+            setTimeout(()=> location.href='branches/branch1.html', 120);
+          }, 'btn choice soft-aqua', choices).setAttribute('aria-describedby','desc-once');
 
-        // ענף 2 — ברשותי מנוי חודשי (פעולות למנויה קיימת)
-        actionBtn('ברשותי מנוי חודשי', ()=>{
-          user('ברשותי מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch3.html', 150);
-        }, 'btn choice soft-mint', choices);
+          // מנוי חודשי – פעולות
+          actionBtn('ברשותי מנוי חודשי', ()=>{
+            user('ברשותי מנוי חודשי');
+            setTimeout(()=> location.href='branches/branch3.html', 120);
+          }, 'btn choice soft-mint', choices);
 
-        // ענף 3 — אני רוצה פרטים על מנוי חודשי (מידע)
-        actionBtn('אני רוצה פרטים על מנוי חודשי', ()=>{
-          user('אני רוצה פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2.html', 150);
-        }, 'btn choice soft-rose', choices);
-      }, 1600);
-    }
+          // פרטים על מנוי חודשי
+          actionBtn('אני רוצה פרטים על מנוי חודשי', ()=>{
+            user('אני רוצה פרטים על מנוי חודשי');
+            setTimeout(()=> location.href='branches/branch2.html', 120);
+          }, 'btn choice soft-rose', choices);
 
-    start();
+          autoscroll();
+        }, 1600);
+      }
+
+      refreshBtn.addEventListener('click', start);
+      start();
+    })();
   </script>
 </body>
 </html>
