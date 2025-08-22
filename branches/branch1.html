@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור חד פעמי על בסיס מקום פנוי</title>
 
+  <!-- נקשר לעיצוב האחיד -->
   <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <!-- טופ־בר (מופרד מהכותרת, כפתור תפריט אחיד לכל הדפים) -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
 
+      <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
@@ -22,8 +25,10 @@
         </div>
       </div>
 
+      <!-- אזור התוכן (בועות/כפתורים) -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
+      <!-- תחתית: חזרה + שאלות (FAQ) -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -32,12 +37,12 @@
     </div>
   </div>
 
-  <!-- סקריפטים: נתיבים מוחלטים + cache-bust + defer -->
-  <script defer src="/branches/js/config.js?v=3"></script>
-  <script defer src="/branches/js/chat-helpers.js?v=3"></script>
+  <!-- סקריפטים משותפים -->
+  <script src="./js/config.js?v=2"></script>
+  <script src="./js/chat-helpers.js?v=2"></script>
 
   <script>
-    /* ===== קונטקסט לכפתור ה‑FAQ ===== */
+    /* ===== קונטקסט לכפתור ה-FAQ לפי שלב ===== */
     function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
@@ -45,11 +50,10 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
-    /* ===== עזר ל‑select תוך כדי צ'אט ===== */
+    /* ===== עזר קטן ל-select (טופס בתוך צ'אט) ===== */
     function selectRow(label, options, id){
       const wrap = document.createElement('div');
       wrap.className = 'input-wrap bubble bot';
-
       const l = document.createElement('label');
       l.textContent = label;
       if(id) l.htmlFor = id;
@@ -72,32 +76,42 @@
 
       wrap.append(l, sel);
       document.getElementById('area').appendChild(wrap);
-      document.getElementById('area').scrollTop = document.getElementById('area').scrollHeight;
+      const a=document.getElementById('area'); a.scrollTop = a.scrollHeight;
       return sel;
     }
 
-    /* ===== זרימה ===== */
+    /* ===== התחלה ===== */
+    function start(){
+      Chat.clear(); Chat.push(start);
+      stepContactFirst();
+    }
+
+    /* ===== שלב 0: פרטי קשר ===== */
     async function stepContactFirst(){
       setHelpContext('contact');
       Chat.clear(); Chat.push(stepContactFirst);
 
-      const h = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
-      Chat.scrollStartOf(h);
+      const header = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
+      Chat.scrollStartOf(header);
 
-      const firstName = Chat.inputRow('שם פרטי',   { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
-      const lastName  = Chat.inputRow('שם משפחה',  { id:'lastName',  placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
+      await waitP(300);
+      const firstName = Chat.inputRow('שם פרטי', { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
+      await waitP(120);
+      const lastName  = Chat.inputRow('שם משפחה', { id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
+      await waitP(120);
       const phone     = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
 
-      Chat.button('המשך', ()=>{
+      await waitP(120);
+      const btnNext = Chat.button('המשך', ()=>{
         Chat.userBubble('המשך');
 
         const fn  = (firstName.value||'').trim();
         const ln  = (lastName.value||'').trim();
         const tel = Chat.normalizeILPhone(phone.value||'');
 
-        if(!fn){  Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
-        if(!ln){  Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus(); return; }
-        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
+        if(!fn){  showInlineError('נדרש שם פרטי ✏️', firstName); return; }
+        if(!ln){  showInlineError('נדרש שם משפחה ✏️', lastName); return; }
+        if(!Chat.validILPhone(tel)){ showInlineError('מספר טלפון לא תקין 📞', phone); return; }
 
         Chat.State.data.firstName = fn;
         Chat.State.data.lastName  = ln;
@@ -105,23 +119,39 @@
 
         stepSubject();
       }, 'btn primary');
+
+      [firstName, lastName, phone].forEach(el=>{
+        el.addEventListener('input', ()=>{
+          removeLastErr();
+          btnNext.disabled = false;
+        });
+      });
+
+      function showInlineError(msg, el){ Chat.botText(msg).classList.add('err'); el.focus(); }
+      function removeLastErr(){
+        const area = document.getElementById('area');
+        const lastErr = [...area.querySelectorAll('.bubble.err, .err')].pop();
+        if(lastErr) lastErr.remove();
+      }
+      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
+    /* ===== שלב 1: מקצוע ===== */
     function stepSubject(){
       setHelpContext('subject');
       Chat.clear(); Chat.push(stepSubject);
 
       const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
-        `<strong>מעולה${name}! נתאם שיעור חד־פעמי על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
-        500, true
+        `<strong>מעולה${name}! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
+        650, true
       );
 
       setTimeout(()=>{
-        const subjects = (Chat.cfg.SUBJECTS || []).map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
-        if (!subjects.includes('ביולוגיה')) subjects.push('ביולוגיה');
+        const fromCfg = (Chat.cfg.SUBJECTS || []).map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
+        if (!fromCfg.includes('ביולוגיה')) fromCfg.push('ביולוגיה');
 
-        subjects.forEach(s => Chat.button(s, ()=>{
+        fromCfg.forEach(s => Chat.button(s, ()=>{
           Chat.userBubble(s);
           Chat.State.data.subject = s;
           stepGrade();
@@ -130,14 +160,15 @@
         const s = document.createElement('div'); s.className='summary';
         s.appendChild(Chat.chip('שיעור חד־פעמי'));
         document.getElementById('area').appendChild(s);
-      }, 650);
+      }, 900);
     }
 
+    /* ===== שלב 2: כיתה ===== */
     function stepGrade(){
       setHelpContext('grade');
       Chat.clear(); Chat.push(stepGrade);
 
-      Chat.typingThen('<strong>באיזו כיתה?</strong> 👨‍🚀', 450, true);
+      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀`, 600, true);
 
       setTimeout(()=>{
         const grades = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','חינוך ביתי','סטודנט/ית','אחר'];
@@ -145,22 +176,32 @@
 
         const btnNext = Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
+
           const g = gradeSelect.value;
-          if(!g){ Chat.botText('נדרש לבחור כיתה ✏️').classList.add('err'); gradeSelect.focus(); return; }
+          if(!g){
+            Chat.botText('נדרש לבחור כיתה ✏️').classList.add('err');
+            gradeSelect.focus(); return;
+          }
           Chat.State.data.grade = g;
-          if (['י','יא','יב'].includes(g)) stepUnits();
-          else stepPlan();
+          if (['י','יא','יב'].includes(g)) { stepUnits(); }
+          else { stepPlan(); }
         }, 'btn primary');
 
-        gradeSelect.addEventListener('change', ()=>{ btnNext.disabled = false; });
-      }, 500);
+        gradeSelect.addEventListener('change', ()=>{
+          const area = document.getElementById('area');
+          const lastErr = [...area.querySelectorAll('.err')].pop();
+          if(lastErr) lastErr.remove();
+          btnNext.disabled = false;
+        });
+      }, 800);
     }
 
+    /* ===== שלב 2b: יחידות ===== */
     function stepUnits(){
       setHelpContext('units');
       Chat.clear(); Chat.push(stepUnits);
 
-      Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 450, true);
+      Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
         ['3','4','5'].forEach(u => Chat.button(`${u} יחידות`, ()=>{
@@ -173,15 +214,16 @@
         s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}`));
         if (Chat.State.data.subject) s.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
         document.getElementById('area').appendChild(s);
-      }, 450);
+      }, 700);
     }
 
+    /* ===== שלב 3: מסלול ===== */
     function stepPlan(){
       setHelpContext('plan');
       Chat.clear(); Chat.push(stepPlan);
 
-      const P = Chat.cfg.PRICES;
-      Chat.typingThen('<strong>בחירת מסלול</strong><br><span class="muted">בחרו מסלול מתאים:</span> 👨‍🚀', 450, true);
+      const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
+      Chat.typingThen('<strong>בחירת מסלול</strong><br><span class="muted">נא לבחור מסלול מתאים:</span> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
         const isMath = (Chat.State.data.subject || '').trim() === 'מתמטיקה';
@@ -192,27 +234,34 @@
         if (allowGroup){
           Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
             Chat.userBubble(`קבוצה – עד 5 תלמידים – ${P.group}₪`);
-            Chat.State.data.planType='group'; Chat.State.data.price=P.group; stepAvailability();
+            Chat.State.data.planType='group';
+            Chat.State.data.price=P.group;
+            stepAvailability();
           }, 'btn primary');
         }
 
         Chat.button(`טריפל – עד 3 תלמידים – ${P.triple}₪`, ()=>{
           Chat.userBubble(`טריפל – עד 3 תלמידים – ${P.triple}₪`);
-          Chat.State.data.planType='triple'; Chat.State.data.price=P.triple; stepAvailability();
+          Chat.State.data.planType='triple';
+          Chat.State.data.price=P.triple;
+          stepAvailability();
         });
 
         Chat.button(`פרטי – ${P.private}₪`, ()=>{
           Chat.userBubble(`פרטי – ${P.private}₪`);
-          Chat.State.data.planType='private'; Chat.State.data.price=P.private; stepAvailability();
+          Chat.State.data.planType='private';
+          Chat.State.data.price=P.private;
+          stepAvailability();
         });
 
         const s = document.createElement('div'); s.className='summary';
         if (Chat.State.data.subject) s.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
         if (Chat.State.data.grade)   s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
         document.getElementById('area').appendChild(s);
-      }, 450);
+      }, 800);
     }
 
+    /* ===== שלב 4: זמינות (כולל ✖️ להסרה ושמירת כפתור בתחתית) ===== */
     function stepAvailability(){
       setHelpContext('availability');
       Chat.clear(); Chat.push(stepAvailability);
@@ -220,120 +269,177 @@
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
         '<strong>שעות פתיחה</strong><br>' +
-        '<span class="muted">א׳–ה׳ 14:00–21:00.</span><br><br>' +
+        '<span class="muted">אנחנו פתוחים בימים א׳–ה׳ בין 14:00–21:00.</span><br><br>' +
         `<strong>בחירת ימים ושעות מועדפים${name}</strong> 👨‍🚀`,
-        450, true
+        650, true
       );
 
-      // שימוש ברכיב ה‑picker המשופר מתוך chat-helpers
-      setTimeout(async ()=>{
-        const chosen = await Chat.pickAvailability({
-          tipText: 'בחרו כמה שיותר אפשרויות שנוחות לכם',
-          continueText: 'המשך'
-        });
-        if(!chosen) return; // חזרו אחורה
-        Chat.State.data.availability = chosen.join('; ');
-        stepNotes();
-      }, 550);
-    }
-
-    function stepNotes(){
-      setHelpContext('notes');
-      Chat.clear(); Chat.push(stepNotes);
-
-      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
-      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 450, true);
-
       setTimeout(()=>{
-        const message = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב' });
-        const btnNext = Chat.button('המשך', ()=>{
+        const area = document.getElementById('area');
+
+        const pickerWrap = document.createElement('div');
+        pickerWrap.className = 'bubble bot wide';
+
+        const grid = document.createElement('div');
+        grid.className = 'slots-grid';
+
+        const rowsWrap = document.createElement('div');
+        rowsWrap.id = 'rowsWrap';
+        rowsWrap.className = 'slots-grid';
+
+        const preview = document.createElement('div');
+        preview.className = 'slot-preview';
+
+        const TIMES = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+        const DAYS  = ['','א','ב','ג','ד','ה'];
+        const toNum = s => parseInt(String(s||'').replace(':',''),10) || 0;
+
+        const makeSelect = (placeholder, values)=>{
+          const sel = document.createElement('select');
+          sel.className = 'input';
+          values.forEach(v=>{
+            const o = document.createElement('option');
+            o.value = v;
+            o.textContent = v ? (placeholder ? `${placeholder} ${v}` : v) : placeholder || 'בחר/י...';
+            sel.appendChild(o);
+          });
+          return sel;
+        };
+
+        const lastRowFilled = ()=>{
+          const rows = Array.from(rowsWrap.children);
+          if (!rows.length) return false;
+          const last = rows[rows.length - 1];
+          const [dSel, fSel, tSel] = last.querySelectorAll('select');
+          const d = dSel.value, f = fSel.value, t = tSel.value;
+          if(!(d && f && t)) return false;
+          return toNum(f) < toNum(t);
+        };
+
+        const refreshPreview = ()=>{
+          preview.innerHTML = '';
+          const rows = Array.from(rowsWrap.children);
+          const chosen = [];
+          for(const r of rows){
+            const [dSel, fSel, tSel] = r.querySelectorAll('select');
+            const d = dSel.value, f = fSel.value, t = tSel.value;
+            if(d && f && t && toNum(f) < toNum(t)){ chosen.push({d,f,t,row:r}); }
+          }
+          chosen.forEach(c => {
+            const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
+            chip.classList.add('emph');
+            const x = document.createElement('button');
+            x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד');
+            x.textContent='✖';
+            x.addEventListener('click', ()=>{
+              c.row.remove();
+              addBtn.disabled = !lastRowFilled();
+              refreshPreview();
+            });
+            chip.appendChild(x);
+            preview.appendChild(chip);
+          });
+        };
+
+        const wireRow = (row, btnContinueRef)=>{
+          const inputs = row.querySelectorAll('select');
+          inputs.forEach(sel=>{
+            sel.addEventListener('change', ()=>{
+              const [ , fSel, tSel] = row.querySelectorAll('select');
+              const f = fSel.value, t = tSel.value;
+
+              const errPrev = row.querySelector('.row-error');
+              if (errPrev) errPrev.remove();
+
+              if (f && t && toNum(f) >= toNum(t)){
+                const err = document.createElement('div');
+                err.className = 'row-error';
+                err.textContent = '״עד שעה״ חייב להיות אחרי ״משעה״';
+                row.appendChild(err);
+              }
+
+              addBtn.disabled = !lastRowFilled();
+              btnContinueRef.disabled = false;
+              refreshPreview();
+            });
+          });
+        };
+
+        const addRow = (force=false, btnContinueRef)=>{
+          if (!force && !lastRowFilled()){
+            Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
+            return;
+          }
+          const row = document.createElement('div');
+          row.className = 'slot-row';
+
+          const daySel  = makeSelect('בחר/י יום', DAYS);
+          const fromSel = makeSelect('משעה', TIMES);
+          const toSel   = makeSelect('עד שעה', TIMES);
+
+          row.append(daySel, fromSel, toSel);
+          rowsWrap.appendChild(row);
+          wireRow(row, btnContinue);
+          addBtn.disabled = true;
+          refreshPreview();
+          area.scrollTop = area.scrollHeight;
+          return row;
+        };
+
+        const title = document.createElement('div');
+        title.className='muted';
+        title.textContent = 'ניתן להוסיף יותר ממועד אחד';
+
+        const addBtn = document.createElement('button');
+        addBtn.className='btn';
+        addBtn.textContent = '+ הוספת מועד נוסף';
+        addBtn.disabled = true;
+
+        const actions = document.createElement('div');
+        actions.className = 'slots-actions';
+
+        const btnContinue = document.createElement('button');
+        btnContinue.className = 'btn primary';
+        btnContinue.textContent = 'המשך';
+        btnContinue.addEventListener('click', ()=>{
           Chat.userBubble('המשך');
-          Chat.State.data.message = (message.value||'').trim();
-          stepReview();
-        }, 'btn primary');
-        message.addEventListener('input', ()=>{ btnNext.disabled = false; });
-      }, 450);
-    }
 
-    function stepReview(){
-      setHelpContext('review');
-      Chat.clear(); Chat.push(stepReview);
-
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
-      Chat.scrollStartOf(h);
-
-      const chips = document.createElement('div'); chips.className='summary';
-      const d = Chat.State.data;
-      if (d.subject) chips.appendChild(Chat.chip(`מקצוע: ${d.subject}`));
-      if (d.grade)   chips.appendChild(Chat.chip(`כיתה: ${d.grade}${d.units?` • ${d.units} יחידות`:''}`));
-      if (d.planType) chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[d.planType]} (${d.price}₪)`));
-      const card = document.createElement('div'); card.className='bubble bot'; card.appendChild(chips);
-
-      const details = document.createElement('div'); details.style.lineHeight='1.9';
-      const add = (k,v)=>{ if(!v) return; const row=document.createElement('div'); const b=document.createElement('strong'); b.textContent=k+' '; const s=document.createElement('span'); s.textContent=v; row.append(b,s); details.appendChild(row); };
-      add('שם:', d.firstName||'');
-      add('שם משפחה:', d.lastName||'');
-      add('מקצוע:', d.subject||'');
-      add('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יחידות`:''}`);
-      add('מסלול:', `${(Chat.cfg.PLAN_HE[d.planType]||'')}${d.price?` – ${d.price}₪`:''}`);
-      add('ימים ושעות מועדפים:', d.availability||'');
-      if (d.message) add('הערות למזכירות:', d.message);
-      add('טלפון לחזרה:', d.phone||'');
-      card.appendChild(details);
-      document.getElementById('area').appendChild(card);
-      document.getElementById('area').scrollTop = document.getElementById('area').scrollHeight;
-
-      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
-        const stop = Chat.showProcessing();
-        const ok = await Chat.sendLeadToSheet({
-          path: 'שיעור על בסיס מקום פנוי',
-          planType: Chat.cfg.PLAN_HE[d.planType],
-          price: `${d.price}₪`,
-          subject: d.subject,
-          grade: d.grade,
-          units: d.units || '',
-          availability: d.availability,
-          message: d.message || '',
-          extraNotes: '',
-          fullName: `${d.firstName||''} ${d.lastName||''}`.trim(),
-          firstName: d.firstName,
-          lastName:  d.lastName,
-          phone: d.phone,
-          cta: 'שיעור חד־פעמי',
-          source: 'יוסטון – אתר',
-          status: 'לטיפול',
-          createdAt: new Date().toISOString()
+          const rows = Array.from(rowsWrap.children);
+          const chosen = [];
+          for(const r of rows){
+            const [daySel, fromSel, toSel] = r.querySelectorAll('select');
+            const d = daySel.value, f = fromSel.value, t = toSel.value;
+            if(d && f && t){
+              if (toNum(f) >= toNum(t)){
+                Chat.botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err');
+                return;
+              }
+              chosen.push(`יום ${d} ${f}–${t}`);
+            }
+          }
+          if (!chosen.length){
+            Chat.botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err');
+            return;
+          }
+          Chat.State.data.availability = chosen.join('; ');
+          stepNotes();
         });
-        stop(); Chat.clear();
 
-        if(ok){
-          Chat.botText('המידע נשלח למזכירות ✅ ניצור קשר בהקדם בוואטסאפ לתיאום שיעור על בסיס מקום פנוי 👨‍🚀').classList.add('ok');
-        }else{
-          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
-        }
-        const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
-        home.focus();
-      }, 'btn primary');
+        addBtn.onclick = ()=> addRow(false, btnContinue);
+
+        const gridHost = grid;
+        gridHost.append(title, rowsWrap, addBtn, preview);
+        pickerWrap.appendChild(gridHost);
+
+        actions.appendChild(btnContinue);
+        pickerWrap.appendChild(actions);
+
+        area.appendChild(pickerWrap);
+
+        addRow(true, btnContinue);
+      }, 900);
     }
 
-    function start(){
-      // אם chat-helpers לא נטען — הודעת fallback ברורה
-      if(!window.Chat){
-        const a = document.getElementById('area');
-        a.innerHTML = '';
-        const d = document.createElement('div');
-        d.className = 'bubble bot';
-        d.textContent =
-          'שגיאה: רכיבי הצ׳אט לא נטענו. בדקו את הנתיבים /branches/js/config.js ו‑/branches/js/chat-helpers.js';
-        a.appendChild(d);
-        return;
-      }
-      Chat.clear(); Chat.push(start);
-      stepContactFirst();
-    }
-
-    // להריץ אחרי שהכול נטען (כולל סקריפטים עם defer)
-    window.addEventListener('load', start);
-  </script>
-</body>
-</html>
+    /* ===== שלב 5: הערות ===== */
+    function stepNotes(){
+      setHelpContext
