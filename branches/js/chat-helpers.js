@@ -1,4 +1,3 @@
-<script>
 // /branches/js/chat-helpers.js
 (function () {
   const cfg = window.APP_CONFIG || {};
@@ -53,7 +52,6 @@
   }
   function chip(text){
     const c=document.createElement('div'); c.className='chip'; c.textContent=text;
-    // קצת פחות עגול כדי לשפר קריאות
     c.style.borderRadius = '10px';
     return c;
   }
@@ -140,10 +138,6 @@
   }
 
   // ====== Reusable: askContact ======
-  /**
-   * טופס קשר אחיד: שם פרטי, שם משפחה, טלפון.
-   * מחזיר Promise עם { firstName, lastName, phone } בעת "המשך".
-   */
   function askContact(opts={}){
     const {
       titleHtml = '<strong>פרטי קשר</strong><br><span class="muted">נשמור שם וטלפון לחזרה</span>',
@@ -185,19 +179,7 @@
     });
   }
 
-  // ====== Reusable: pickAvailability (שופר לפי הדרישות) ======
-  /**
-   * בוחר ימים/שעות (גדול, אנכי, עם צ'יפים להסרה).
-   * מחזיר Promise עם מערך בחירות ['יום א 16:00–18:00', ...].
-   *
-   * Options:
-   *  - titleHtml: כותרת
-   *  - tipText: שורת עזרה
-   *  - times: ['','14:00',...]
-   *  - days:  ['','א','ב',...]
-   *  - continueText: טקסט כפתור המשך
-   *  - allowBack: להציג כפתור חזרה
-   */
+  // ====== Reusable: pickAvailability ======
   function pickAvailability(opts={}){
     const {
       titleHtml     = '<strong>בחירת ימים ושעות</strong>',
@@ -211,7 +193,6 @@
     botHTML(`${titleHtml}<br><span class="muted">${tipText}</span>`);
 
     return new Promise(resolve=>{
-      // מיכל גדול וברור
       const wrap = document.createElement('div'); wrap.className='bubble bot wide';
       wrap.style.padding = '16px';
       wrap.style.maxWidth = '720px';
@@ -238,7 +219,6 @@
       const makeSel = (placeholder, values)=>{
         const sel = document.createElement('select');
         sel.className='input';
-        // גדול וברור + "ריבועי יותר"
         sel.style.width = '100%';
         sel.style.fontSize = '1.05rem';
         sel.style.padding = '12px 14px';
@@ -292,7 +272,6 @@
       let btnContinue, addBtn;
 
       const wireRow = (row)=>{
-        // פריסה אנכית — אחד מתחת לשני
         row.style.display = 'grid';
         row.style.gridTemplateColumns = '1fr';
         row.style.gap = '8px';
@@ -329,28 +308,21 @@
       };
 
       const ensureEditableTail = ()=>{
-        // אם אין שורות — נוסיף שורה חדשה.
         if(rowsWrap.children.length === 0){
           addRow(true);
           return;
         }
-        // אם השורה האחרונה מלאה, נוסיף שורה ריקה נוספת כדי לאפשר בחירה מיידית.
         if(lastRowFilled()){
           addRow(true);
         }
       };
 
       const updateUI = ()=>{
-        // כפתור "הוסף" זמין רק כשהשורה האחרונה תקינה
         if(addBtn) addBtn.disabled = !lastRowFilled();
-        // כפתור המשך זמין רק אם יש לפחות בחירה אחת תקפה
         if(btnContinue) btnContinue.disabled = (countValidRows() === 0);
         refreshPreview();
       };
 
-      // —— Header tip (לא חוזר פעמיים, מוצג כבר בכותרת העליונה) —— //
-
-      // כפתור הוספת שורה
       addBtn = document.createElement('button');
       addBtn.className='btn';
       addBtn.textContent='+ הוספת מועד נוסף';
@@ -360,7 +332,6 @@
       grid.append(rowsWrap, addBtn, preview);
       wrap.appendChild(grid);
 
-      // Actions
       const actions = document.createElement('div');
       actions.className='slots-actions';
       actions.style.display = 'flex';
@@ -393,13 +364,11 @@
         const backB = document.createElement('button');
         backB.className='btn';
         backB.textContent='חזרה';
-        backB.onclick = ()=>{ goBack(); resolve(null); };
+        backB.onclick = ()=>{ goBack(); resolve(null);};
         actions.appendChild(backB);
       }
 
       wrap.appendChild(actions);
-
-      // init — יצירת שורה ראשונה ותזמון מצב
       addRow(true);
     });
   }
@@ -414,4 +383,3 @@
     askContact, pickAvailability
   };
 })();
-</script>
