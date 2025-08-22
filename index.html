@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
-  <!-- עיצוב כרטיסי הבחירה (אחיד עם הסגנון הרך של הענפים) -->
+  <!-- עיצוב כרטיסי הבחירה (אחיד עם הענפים) -->
   <style>
     .choices{
       display:grid; gap:12px; margin-top:8px;
@@ -25,14 +25,13 @@
       transition: transform var(--speed), border-color var(--speed), box-shadow var(--speed), filter var(--speed);
     }
     .btn.choice:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,23,42,0.10) }
-    .btn.choice:focus-visible{ outline: 2px solid var(--primary); outline-offset: 2px }
+    .btn.choice:focus-visible{ outline:2px solid var(--primary); outline-offset:2px }
 
-    /* שלושה גוונים בהירים */
-    .soft-aqua{  background:#eef6ff; border:1px solid #cfe3ff; color: var(--text) }
+    .soft-aqua{ background:#eef6ff; border:1px solid #cfe3ff; color:var(--text) }
     .soft-aqua:hover{ border-color:#9ec5ff }
-    .soft-mint{  background:#ecfdf5; border:1px solid #c7f2e1; color: var(--text) }
+    .soft-mint{ background:#ecfdf5; border:1px solid #c7f2e1; color:var(--text) }
     .soft-mint:hover{ border-color:#97e6cf }
-    .soft-rose{  background:#fff1f2; border:1px solid #ffd7dc; color: var(--text) }
+    .soft-rose{ background:#fff1f2; border:1px solid #ffd7dc; color:var(--text) }
     .soft-rose:hover{ border-color:#ffb8c1 }
 
     .btn.choice .emoji{ opacity:.9; font-size:18px; margin-inline-start:8px }
@@ -41,7 +40,6 @@
 <body>
   <div class="wrap">
     <div class="card">
-
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
@@ -59,12 +57,18 @@
         <a class="btn ghost" href="faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         <span class="spacer"></span>
       </div>
-
     </div>
   </div>
 
   <script>
     (function(){
+      // —— מפת מסלולים (וודא שקבצים קיימים בדיוק בשמות האלה) —— //
+      const ROUTES = {
+        freeLesson: 'branches/branch1.html', // שיעור חד-פעמי
+        wantPlan:   'branches/branch2.html', // פרטים על מנוי חודשי
+        havePlan:   'branches/branch3.html', // מנוי חודשי קיים – פעולות
+      };
+
       const area = document.getElementById('area');
       const refreshBtn = document.getElementById('refreshBtn');
 
@@ -73,37 +77,43 @@
         const d=document.createElement('div');
         d.className='bubble bot';
         d.innerHTML=html;
-        area.appendChild(d);
-        autoscroll();
-        return d;
+        area.appendChild(d); autoscroll(); return d;
       }
       function user(text){
         const d=document.createElement('div');
         d.className='bubble user';
         d.textContent=text;
-        area.appendChild(d);
-        autoscroll();
-        return d;
-      }
-      // כפתור פעולה; once-guard נגד דאבל קליק
-      function actionBtn(text, onClick, cls='btn', parent=area){
-        const b=document.createElement('button');
-        b.className=cls; b.type='button'; b.textContent=text;
-        let used=false;
-        b.addEventListener('click', ()=>{
-          if(used) return; used=true; b.disabled = true; onClick();
-        });
-        parent.appendChild(b);
-        autoscroll();
-        return b;
+        area.appendChild(d); autoscroll(); return d;
       }
       function typingThen(text, delay=650){
         const t=document.createElement('div');
         t.className='typing-indicator';
         t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-        area.appendChild(t);
-        autoscroll();
+        area.appendChild(t); autoscroll();
         setTimeout(()=>{ t.remove(); bot(text); }, delay);
+      }
+      // כפתור פעולה עם once-guard
+      function actionBtn(text, onClick, cls='btn', parent=area){
+        const b=document.createElement('button');
+        b.className=cls; b.type='button'; b.textContent=text;
+        let used=false;
+        b.addEventListener('click', ()=>{
+          if(used) return; used=true; b.disabled = true;
+          Promise.resolve(onClick()).catch((e)=>{ console.error('[Houston] nav handler error:', e); b.disabled=false; used=false; });
+        });
+        parent.appendChild(b); autoscroll(); return b;
+      }
+
+      // ניווט חסין: מנסה HEAD (ללוג בלבד) ותמיד מנווט
+      async function go(path){
+        try{
+          // אם האתר רץ מקבצי file:// זה ייכשל – זה בסדר, נמשיך לנווט.
+          const res = await fetch(path, { method:'HEAD' });
+          if(!res.ok) console.warn('[Houston] HEAD not OK for', path, res.status);
+        }catch(err){
+          console.warn('[Houston] HEAD failed (likely file:// or CORS). Navigating anyway →', path);
+        }
+        location.href = path;
       }
 
       function start(){
@@ -114,7 +124,7 @@
           'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
           'אפשר לקבוע שיעור, לקבל פרטים על מנוי, או לבצע פעולות למנוי קיים.'
         );
-        // מוודאים שהפתיח יופיע בראש
+        // מבטיחים שהפתיח יישב למעלה
         h.scrollIntoView({ block:'start', behavior:'smooth' });
 
         setTimeout(()=> typingThen('<strong>בחרו את האפשרות המתאימה 👇</strong>', 500), 900);
@@ -126,23 +136,22 @@
           choices.setAttribute('aria-label','בחירת מסלול פעולה');
           area.appendChild(choices);
 
-          // שיעור חד-פעמי
-          actionBtn('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)', ()=>{
+          // 1) שיעור חד-פעמי
+          actionBtn('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)', async ()=>{
             user('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)');
-            // ניווט
-            setTimeout(()=> location.href='branches/branch1.html', 120);
-          }, 'btn choice soft-aqua', choices).setAttribute('aria-describedby','desc-once');
+            await go(ROUTES.freeLesson);
+          }, 'btn choice soft-aqua', choices);
 
-          // מנוי חודשי – פעולות
-          actionBtn('ברשותי מנוי חודשי', ()=>{
+          // 2) מנוי חודשי – פעולות
+          actionBtn('ברשותי מנוי חודשי', async ()=>{
             user('ברשותי מנוי חודשי');
-            setTimeout(()=> location.href='branches/branch3.html', 120);
+            await go(ROUTES.havePlan);
           }, 'btn choice soft-mint', choices);
 
-          // פרטים על מנוי חודשי
-          actionBtn('אני רוצה פרטים על מנוי חודשי', ()=>{
+          // 3) פרטים על מנוי חודשי
+          actionBtn('אני רוצה פרטים על מנוי חודשי', async ()=>{
             user('אני רוצה פרטים על מנוי חודשי');
-            setTimeout(()=> location.href='branches/branch2.html', 120);
+            await go(ROUTES.wantPlan);
           }, 'btn choice soft-rose', choices);
 
           autoscroll();
@@ -151,6 +160,12 @@
 
       refreshBtn.addEventListener('click', start);
       start();
+
+      // עוזר דיבוג קטן: אם אחד הקבצים חסר, נזרוק אזהרה בזמן טעינת העמוד.
+      (function sanityCheck(){
+        const missing = Object.values(ROUTES).filter(Boolean).filter(p=>!p.match(/^branches\/branch[123]\.html$/));
+        if(missing.length){ console.warn('[Houston] ROUTES sanity warning:', missing); }
+      })();
     })();
   </script>
 </body>
