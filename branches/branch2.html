@@ -30,7 +30,7 @@
     .subject-emoji{ font-size:18px; }
     .subject-title{ font-weight:700; }
 
-    /* מודאל מידע מקצוע: קליל ושקוף */
+    /* מודאל מידע מקצוע */
     .modal{
       position:fixed; inset:0; z-index:50;
       background: rgba(0,0,0,.35);
@@ -78,7 +78,7 @@
       <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- תחתית: חזרה + שאלות (FAQ) -->
+      <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -88,9 +88,9 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים (כמו בענף 1) -->
-  <script src="./js/config.js?v=2"></script>
-  <script src="./js/chat-helpers.js?v=2"></script>
+  <!-- קבצי העזר – נתיב נכון יחסית ל־/branches -->
+  <script src="js/config.js?v=2"></script>
+  <script src="js/chat-helpers.js?v=2"></script>
 
   <script>
     /* ===== התאמת כפתור ה‑FAQ לפי הקשר ===== */
@@ -100,34 +100,6 @@
       const base = '../faq.html';
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
-
-    /* ===== קישורים מתצורה (עם fallback) ===== */
-    const REG_LINK   = (window.Chat?.cfg?.REG_LINK)   || 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
-    const TERMS_LINK = (window.Chat?.cfg?.TERMS_LINK) || 'https://forms.gle/orUvvLrrSuCGAPVVA';
-
-    /* ===== תוכן מקצועות ותיאורים ===== */
-    const SUBJECTS = (Chat?.cfg?.SUBJECTS && Chat.cfg.SUBJECTS.length)
-      ? Chat.cfg.SUBJECTS
-      : ['מתמטיקה','אנגלית','אנגלית מדוברת לקטנטנים','לשון','ספרות','היסטוריה','תנ"ך','פיזיקה','כימיה','ביולוגיה','מדעי המחשב'];
-
-    const SUBJECT_INFO = {
-      'מתמטיקה': 'יישור קו בחומר הכיתתי, חיזוק יסודות, אסטרטגיות פתרון ותרגול ממוקד — עם דגש על ביטחון והכנה למבחנים.',
-      'אנגלית': 'שפה חיה: אוצר מילים, דקדוק שימושי, קריאה, כתיבה ודיבור — בקצב אישי ותיקון טעויות עדין.',
-      'אנגלית מדוברת לקטנטנים': 'מסלול משחקי וחווייתי: צלילים, מילים ראשונות, שירים ומשחקי דיבור להטמעה טבעית מגיל צעיר.',
-      'לשון': 'הבנה והבעה, תחביר, ניתוח טקסטים ודיוק — כדי לכתוב ולנסח בביטחון.',
-      'ספרות': 'קריאה מונחית, פירוק שכבות בטקסט, כלים לניתוח וכתיבת תשובות מלאות.',
-      'היסטוריה': 'צירי זמן, הקשרים ואירועים — איך מספרים סיפור ברור ועונים תשובה שמקבלת נקודות.',
-      'תנ"ך': 'קריאה מונחית, מושגים והבנת פרקים — עם טכניקות זיכרון וקישוריות.',
-      'פיזיקה': 'עקרונות, פירוק בעיות שלב־שלב, תרגול שיטתי והכנה לבחינות.',
-      'כימיה': 'מולקולות, תגובות, חישובים — פישוט נושאים מאתגרים ומיומנויות פתרון.',
-      'ביולוגיה': 'מערכות גוף, תאים ותהליכים — לימוד בהיר עם דוגמאות ותרגול למבחנים.',
-      'מדעי המחשב': 'לוגיקה, יסודות תכנות ותרגול מעשי — בהתאם לרמה ולסילבוס.'
-    };
-
-    const SUBJECT_EMOJI = {
-      'מתמטיקה':'🧮','אנגלית':'🗣️','אנגלית מדוברת לקטנטנים':'🎈','לשון':'✍️','ספרות':'📖',
-      'היסטוריה':'🗺️','תנ"ך':'📜','פיזיקה':'⚛️','כימיה':'🧪','ביולוגיה':'🧬','מדעי המחשב':'💻'
-    };
 
     /* ===== מודאל מידע קצר ===== */
     function openSubjectModal(title, html){
@@ -165,21 +137,33 @@
       closeBtn.focus();
     }
 
-    /* ===== התחלה ===== */
+    /* ===== זרימה ===== */
+
     function start(){
+      // אם helpers לא נטענו – מסר ברור
+      if(!window.Chat){
+        const a = document.getElementById('area');
+        a.innerHTML = '';
+        const d = document.createElement('div');
+        d.className = 'bubble bot';
+        d.textContent = 'שגיאה: רכיבי הצ׳אט לא נטענו. בדקו את הנתיבים /branches/js/config.js ו‑/branches/js/chat-helpers.js';
+        a.appendChild(d);
+        return;
+      }
+
       setHelpContext('contact');
       Chat.clear(); Chat.push(start);
 
       Chat.typingThen(
         '<strong>היי! מנוי חודשי במרכז בראונשטיין 👨‍🚀</strong><br>' +
         'נעבור שלושה צעדים קלים ונחזור אליך להמשך.',
-        650, true
+        600, true
       );
 
-      setTimeout(stepContact, 800);
+      setTimeout(stepContact, 750);
     }
 
-    /* ===== שלב 1: פרטי קשר (AskContact מתוך helpers) ===== */
+    /* 1) פרטי קשר – שימוש ב‑askContact */
     async function stepContact(){
       setHelpContext('contact');
       Chat.clear(); Chat.push(stepContact);
@@ -197,7 +181,7 @@
       Chat.State.data.fullName  = `${contact.firstName} ${contact.lastName}`.trim();
       Chat.State.data.phone     = contact.phone;
 
-      // שמירה קצרה למזכירות
+      // שמירה קצרה למזכירות (non-blocking UX עם חיווי)
       const stop = Chat.showProcessing('שומר למזכירות…');
       const ok = await Chat.sendLeadToSheet({
         path: 'מנוי חודשי – התעניינות',
@@ -220,7 +204,7 @@
       stepSubjects();
     }
 
-    /* ===== שלב 2: מקצועות (גריד + מודאלים) ===== */
+    /* 2) מקצועות (גריד + מודאלים) */
     function stepSubjects(){
       setHelpContext('subject');
       Chat.clear(); Chat.push(stepSubjects);
@@ -236,10 +220,34 @@
         const host = document.createElement('div'); host.className='bubble bot';
         const grid = document.createElement('div'); grid.className='subjects-grid';
 
-        // רישום לחיצות (אופציונלי)
+        // מקור רשימת המקצועות – מהקונפיג (עם fallback)
+        const subjects = (Chat.cfg?.SUBJECTS && Chat.cfg.SUBJECTS.length)
+          ? Chat.cfg.SUBJECTS.slice()
+          : ['מתמטיקה','אנגלית','אנגלית מדוברת לקטנטנים','לשון','ספרות','היסטוריה','תנ"ך','פיזיקה','כימיה','ביולוגיה','מדעי המחשב'];
+
+        const SUBJECT_INFO = {
+          'מתמטיקה': 'יישור קו בחומר הכיתתי, חיזוק יסודות, אסטרטגיות פתרון ותרגול ממוקד — עם דגש על ביטחון והכנה למבחנים.',
+          'אנגלית': 'שפה חיה: אוצר מילים, דקדוק שימושי, קריאה, כתיבה ודיבור — בקצב אישי ותיקון טעויות עדין.',
+          'אנגלית מדוברת לקטנטנים': 'מסלול משחקי וחווייתי: צלילים, מילים ראשונות, שירים ומשחקי דיבור להטמעה טבעית מגיל צעיר.',
+          'לשון': 'הבנה והבעה, תחביר, ניתוח טקסטים ודיוק — כדי לכתוב ולנסח בביטחון.',
+          'ספרות': 'קריאה מונחית, פירוק שכבות בטקסט, כלים לניתוח וכתיבת תשובות מלאות.',
+          'היסטוריה': 'צירי זמן, הקשרים ואירועים — איך מספרים סיפור ברור ועונים תשובה שמקבלת נקודות.',
+          'תנ"ך': 'קריאה מונחית, מושגים והבנת פרקים — עם טכניקות זיכרון וקישוריות.',
+          'פיזיקה': 'עקרונות, פירוק בעיות שלב־שלב, תרגול שיטתי והכנה לבחינות.',
+          'כימיה': 'מולקולות, תגובות, חישובים — פישוט נושאים מאתגרים ומיומנויות פתרון.',
+          'ביולוגיה': 'מערכות גוף, תאים ותהליכים — לימוד בהיר עם דוגמאות ותרגול למבחנים.',
+          'מדעי המחשב': 'לוגיקה, יסודות תכנות ותרגול מעשי — בהתאם לרמה ולסילבוס.'
+        };
+
+        const SUBJECT_EMOJI = {
+          'מתמטיקה':'🧮','אנגלית':'🗣️','אנגלית מדוברת לקטנטנים':'🎈','לשון':'✍️','ספרות':'📖',
+          'היסטוריה':'🗺️','תנ"ך':'📜','פיזיקה':'⚛️','כימיה':'🧪','ביולוגיה':'🧬','מדעי המחשב':'💻'
+        };
+
+        // רישום מקצועות שנצפו (אופציונלי)
         const viewed = new Set();
 
-        SUBJECTS.forEach(title=>{
+        subjects.forEach(title=>{
           const card = document.createElement('button');
           card.type = 'button';
           card.className = 'subject-card';
@@ -265,20 +273,20 @@
           stepRegistration();
         }, 'btn primary');
 
-        // תזכורת קטנה/סיכום
+        // סיכום קצר
         const s = document.createElement('div'); s.className='summary';
         s.appendChild(Chat.chip('מנוי חודשי'));
-        if (Chat.State.data.subjectsViewed?.length){
-          s.appendChild(Chat.chip(`נפתחו: ${Chat.State.data.subjectsViewed.length} מקצועות`));
-        }
         document.getElementById('area').appendChild(s);
       }, 700);
     }
 
-    /* ===== שלב 3: קישור להמשך (הפניה לטופס המדויק) ===== */
+    /* 3) קישור להמשך (הפניה לטופס) */
     function stepRegistration(){
       setHelpContext('review');
       Chat.clear(); Chat.push(stepRegistration);
+
+      // קישורים מהקונפיג אם קיימים (עם fallback)
+      const REG_LINK   = (Chat.cfg && Chat.cfg.REG_LINK)   || 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
 
       Chat.botHTML(
         '<strong>דיוק הצרכים והרצונות</strong><br>' +
@@ -305,7 +313,7 @@
         Chat.typingThen('סגור 🙂 שמרתי את הפרטים וניצור קשר בקרוב לעזרה בהשלמת ההרשמה.', 600, true);
       });
 
-      // סיום יפה ונעים
+      // סיום יפה
       const wrap = document.createElement('div'); wrap.className='bubble bot';
       const fn = Chat.State.data.firstName || '';
       wrap.innerHTML =
@@ -315,15 +323,15 @@
            <span class="chip">התאמה אישית</span>
          </div>
          <div class="muted">היי${fn ? ' ' + fn : ''}, כאן יוסטון 👨‍🚀 אני אדאג שיחזרו אלייך בהקדם.
-         ובינתיים — אם משהו לא ברור, ה־<a href="../faq.html" target="_blank" rel="noopener">שאלות ותשובות</a> תמיד כאן.</div>`;
+         ובינתיים — אם משהו לא ברור, ה‑<a href="../faq.html" target="_blank" rel="noopener">שאלות ותשובות</a> תמיד כאן.</div>`;
       document.getElementById('area').appendChild(wrap);
       (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
 
       Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html');
     }
 
-    // הפעלה
-    start();
+    // הפעלה בטוחה
+    window.addEventListener('DOMContentLoaded', start);
   </script>
 </body>
 </html>
