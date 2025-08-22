@@ -5,291 +5,198 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מנוי חודשי – פרטים והרשמה</title>
 
-  <link rel="stylesheet" href="../styles.css?v=3" />
-  <meta name="theme-color" content="#2563eb" />
-  <style>
-    /* מבטיח גלילה בפועל לאזור השיחה */
-    #area { overflow-y:auto; max-height:70vh; scroll-behavior:smooth; }
-  </style>
+  <!-- עיצוב גלובלי בהיר ואחיד -->
+  <link rel="stylesheet" href="../styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+
+      <!-- טופ־בר יוניפייד -->
+      <div class="topbar">
+        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      </div>
+
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
-          <div class="title">מנוי חודשי – פרטים</div>
+          <div class="title">מנוי חודשי – פרטים והרשמה</div>
         </div>
       </div>
 
       <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- כפתורי ניווט תחתונים -->
+      <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <button id="homeBtn" class="btn primary" onclick="location.href='../index.html'">לתפריט ראשי</button>
+        <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        <span class="spacer"></span>
       </div>
+
     </div>
   </div>
 
+  <!-- סקריפטים משותפים (כמו בענף 1) -->
+  <script src="./js/config.js?v=2"></script>
+  <script src="./js/chat-helpers.js?v=2"></script>
+
   <script>
-    /* ===== קונפיג ===== */
-    const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwnNKY0BeO5N2O9oWmr8ltCHr9fVdDdrXsL_3erastx4qdEqhCz1mYAhkvZETF-86CGnw/exec';
-    const ORIGAMI_URL = 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
-
-    /* ===== DOM/State ===== */
-    const area    = document.getElementById('area');
-    const backBtn = document.getElementById('backBtn');
-
-    const state = {
-      history: [],
-      lead: { fullName: null, phone: null, message: '' }
-    };
-
-    // ביטול טיימרים זומבים + שליטה בגלילה
-    let runToken = 0;
-    let autoScrollEnabled = true;
-    const enableAutoScroll  = () => (autoScrollEnabled = true);
-    const disableAutoScroll = () => (autoScrollEnabled = false);
-
-    const last = () => state.history[state.history.length - 1];
-    const push = fn => { state.history.push(fn); updateBack(); };
-    const goBack = () => {
-      if (state.history.length > 1) {
-        state.history.pop();
-        updateBack();
-        runToken++;     // מבטל timeouts של מסכים קודמים
-        last()();
-      }
-    };
-    backBtn.onclick = goBack;
-    function updateBack(){ backBtn.disabled = state.history.length <= 1; }
-
-    /* ===== UI helpers ===== */
-    const clear       = () => { runToken++; area.innerHTML = ''; };
-    const autoscroll  = () => { if (autoScrollEnabled) area.scrollTop = area.scrollHeight; };
-    const scrollStart = el => el?.scrollIntoView({ block:'start', behavior:'smooth' });
-    const waitP       = ms => new Promise(r=>setTimeout(r, ms));
-
-    // הודעות בוט אמינות (HTML שלנו) מול טקסט בטוח
-    function botHTML(html){
-      const d=document.createElement('div'); d.className='bubble bot';
-      d.innerHTML=html; area.appendChild(d); autoscroll(); return d;
-    }
-    function botText(text){
-      const d=document.createElement('div'); d.className='bubble bot';
-      d.textContent=text; area.appendChild(d); autoscroll(); return d;
-    }
-    function userText(text){
-      const d=document.createElement('div'); d.className='bubble user';
-      d.textContent=text; area.appendChild(d); autoscroll(); return d;
+    /* ===== התאמת כפתור ה‑FAQ לפי הקשר ===== */
+    function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base = '../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
-    function button(text, onClick, cls='btn'){
-      const b=document.createElement('button');
-      b.className=cls; b.textContent=text;
-      b.onclick=()=>{ b.disabled=true; onClick(); };   // מונע דאבל-קליק ליחיד
-      area.appendChild(b); autoscroll(); return b;
-    }
-
-    function inputRow(label, {type='text', id, placeholder='', required=false, autocomplete, inputmode} = {}){
-      const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
-      const l=document.createElement('label'); l.textContent=label; if(id) l.htmlFor=id;
-      const el=document.createElement('input');
-      el.type=type; el.className='input'; el.id=id; el.placeholder=placeholder; el.dir='rtl';
-      if(required) el.required=true;
-      if(autocomplete) el.autocomplete=autocomplete;
-      if(inputmode) el.setAttribute('inputmode', inputmode);
-      wrap.append(l, el); area.appendChild(wrap); autoscroll(); return el;
-    }
-    function textareaRow(label, {id, placeholder=''} = {}){
-      const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
-      const l=document.createElement('label'); l.textContent=label; if(id) l.htmlFor=id;
-      const el=document.createElement('textarea'); el.className='textarea'; el.id=id; el.placeholder=placeholder; el.dir='rtl';
-      wrap.append(l, el); area.appendChild(wrap); autoscroll(); return el;
-    }
-
-    // typing -> הודעת בוט (מכבד ביטולים)
-    function typingThenP(html, delay=800, trusted=true){
-      const myToken = runToken;
-      return new Promise(resolve=>{
-        const t=document.createElement('div');
-        t.className='typing-indicator';
-        t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-        area.appendChild(t); autoscroll();
-        setTimeout(()=>{
-          if(myToken!==runToken) return resolve();
-          t.remove();
-          trusted ? botHTML(html) : botText(html);
-          resolve();
-        }, delay);
-      });
-    }
-
-    // “שומר…” עם פס התקדמות
-    function showProcessing(text='שומר למזכירות…'){
-      const d=document.createElement('div'); d.className='bubble bot processing';
-      d.innerHTML=`<strong>${text}</strong><div class="progress"><div class="progress-bar"></div></div>`;
-      area.appendChild(d); autoscroll(); return ()=>d.remove();
-    }
-
-    /* ===== Utils ===== */
-    const normalizeILPhone = raw => {
-      let p=(raw||'').toString().trim().replace(/[^\d+]/g,'');
-      if(p.startsWith('+972')) p='0'+p.slice(4);
-      if(p.startsWith('972'))  p='0'+p.slice(3);
-      return p;
-    };
-    const validILPhone = p => /^0\d{8,9}$/.test(p||'');
-
-    async function sendToSheet(payload){
-      const ctrl=new AbortController();
-      const timer=setTimeout(()=>ctrl.abort(),10000);
-      try{
-        const res=await fetch(SHEETS_WEBAPP_URL,{
-          method:'POST',
-          headers:{'Content-Type':'text/plain'}, // simple request (בלי preflight)
-          body:JSON.stringify(payload),
-          signal:ctrl.signal
-        });
-        let ok=false;
-        try{ const j=await res.json(); ok = j?.ok===true; } catch{ ok = res.ok; }
-        return ok;
-      }catch(e){
-        console.error('Sheets error', e);
-        return false;
-      }finally{
-        clearTimeout(timer);
-      }
-    }
+    /* ===== קישורים ותלויות (נשתמש בקונפיג אם קיים, אחרת fallback) ===== */
+    const REG_LINK   = (window.Chat?.cfg?.REG_LINK)   || 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
+    const TERMS_LINK = (window.Chat?.cfg?.TERMS_LINK) || 'https://forms.gle/orUvvLrrSuCGAPVVA';
 
     /* ===== זרימה ===== */
+    function start(){
+      setHelpContext('plan');    // עזרה כללית על מסלולים/מנוי
+      Chat.clear(); Chat.push(start);
 
-    // שלב 0 – פתיחה + טופס קצר (שם+טלפון+הערות רשות)
-    async function start(){
-      clear(); push(start);
-
-      await typingThenP(
-        'מעולה! אשמח לעזור לך להקים מנוי במרכז הלמידה של חן בראונשטיין 👨‍🚀<br>' +
-        'לפני שנתחיל – אשמור פרטי קשר כדי שנוכל לחזור אלייך:',
-        800, /* trusted */ true
+      Chat.typingThen(
+        '<strong>היי! מנוי חודשי במרכז בראונשטיין 👨‍🚀</strong><br>' +
+        'כמה פרטים מהירים כדי שנוכל לחזור אלייך, ואז נסביר איך זה עובד.',
+        700, true
       );
 
-      // אנטי-קפיצה: נציג כותרת/הנחיה, נגלול לראש, ואז נבנה את השדות בהדרגה
-      disableAutoScroll();
-      const anchor = botHTML('<span class="muted">פרטי קשר</span>');
-      scrollStart(anchor);
-      setTimeout(()=> enableAutoScroll(), 450);
+      setTimeout(stepLead, 900);
+    }
 
-      await waitP(250);
-      const name  = inputRow('שם מלא',      { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
-      await waitP(150);
-      const phone = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
-      await waitP(150);
-      const notes = textareaRow('הערות (רשות)', { id:'lead_notes', placeholder:'כל דבר שחשוב שנדע' });
+    // שלב 1 — פרטי קשר (שם מלא, טלפון, הערות רשות)
+    function stepLead(){
+      setHelpContext('contact');
+      Chat.clear(); Chat.push(stepLead);
 
-      // פוקוס בלי לגלול
-      name.focus({ preventScroll:true });
+      const anchor = Chat.botHTML('<span class="muted">פרטי קשר</span>');
+      Chat.scrollStartOf(anchor);
 
-      await waitP(120);
-      const nextBtn = button('המשך', async ()=>{
-        userText('המשך');
+      const fullName = Chat.inputRow('שם מלא', {
+        id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name'
+      });
+      const phone = Chat.inputRow('טלפון לחזרה', {
+        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel'
+      });
+      const notes = Chat.inputRow('הערות (לא חובה)', {
+        textarea:true, id:'lead_notes', placeholder:'כל דבר שחשוב שנדע'
+      });
 
-        const fullName  = (name.value||'').trim();
-        const phoneNorm = normalizeILPhone((phone.value||'').trim());
-        const message   = (notes.value||'').trim();
+      const next = Chat.button('המשך', async ()=>{
+        Chat.userBubble('המשך');
 
-        if(!fullName){ botText('יש להזין שם מלא ✏️').classList.add('err'); return; }
-        if(!validILPhone(phoneNorm)){ botText('מספר טלפון לא תקין 📞 (למשל 0501234567)').classList.add('err'); return; }
+        const fn  = (fullName.value||'').trim();
+        const tel = Chat.normalizeILPhone(phone.value||'');
 
-        state.lead.fullName = fullName;
-        state.lead.phone    = phoneNorm;
-        state.lead.message  = message;
+        if(!fn){  Chat.botText('יש להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
+        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
 
-        nextBtn.disabled = true;
-        const stopProcessing = showProcessing();
+        const stop = Chat.showProcessing('שומר למזכירות…');
 
-        const ok = await sendToSheet({
+        const ok = await Chat.sendLeadToSheet({
           path: 'מנוי חודשי – התעניינות',
-          fullName: state.lead.fullName,
-          phone: state.lead.phone,
-          message: state.lead.message,   // <<< ייכנס לעמודת message
-          extraNotes: '',                // עקביות עמודות
+          fullName: fn,
+          phone: tel,
+          message: (notes.value||'').trim(),
+          extraNotes: '',
           cta: 'התעניינות במנוי חודשי',
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         });
 
-        stopProcessing();
-
+        stop();
         if(ok){
-          botText('הפרטים נשמרו בהצלחה ✅');
-          setTimeout(()=> stepAbout(), 600);
+          Chat.botText('הפרטים נשמרו בהצלחה ✅').classList.add('ok');
+          setTimeout(stepAbout, 500);
         }else{
-          botText('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050-9570866.').classList.add('err');
-          nextBtn.disabled = false;
+          Chat.botText('לא הצלחנו לשמור את הפרטים ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
+          next.disabled = false;
         }
       }, 'btn primary');
 
-      button('חזרה', goBack);
+      // הפעלה מחדש של הכפתור אחרי תיקון קלט
+      ;[fullName, phone, notes].forEach(el=>{
+        el.addEventListener('input', ()=>{ next.disabled = false; });
+      });
     }
 
-    // שלב 1 – איך עובדים
+    // שלב 2 — איך עובדים
     function stepAbout(){
-      clear(); push(stepAbout);
+      setHelpContext('plan');
+      Chat.clear(); Chat.push(stepAbout);
 
-      botHTML(
-        '<strong>כמה מילים על איך אנחנו עובדים:</strong><br>' +
+      Chat.botHTML(
+        '<strong>איך זה עובד אצלנו?</strong><br>' +
         '• כל שיעור נמשך <strong>50 דקות</strong> ומתחיל בשעה עגולה.<br>' +
-        '• לומדים את חומר הכיתה, משלימים פערים, עוזרים בשיעורי בית, מכינים למבחנים,<br>' +
-        '  בונים ביטחון — ואפילו מתקדמים בחומר מעבר לכיתה 🎯'
+        '• משלבים חיזוק חומר כיתתי, שיעורי בית, הכנה למבחנים ובניית ביטחון.<br>' +
+        '• אפשר להתקדם בקצב האישי, ואנו מתאימים את הרמה לכל תלמיד/ה 🎯'
       );
 
-      button('המשך', stepPrices, 'btn primary');
-      button('חזרה', goBack);
+      Chat.button('המשך', stepPrices, 'btn primary');
+      Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
     }
 
-    // שלב 2 – מסלולים ומחירים
+    // שלב 3 — מסלולים ומחירים (נמשך מהקונפיג אם קיים)
     function stepPrices(){
-      clear(); push(stepPrices);
+      setHelpContext('plan');
+      Chat.clear(); Chat.push(stepPrices);
 
-      botHTML(
+      const P = Chat.cfg?.PRICES || { group: 295, triple: 385, private: 0 };
+
+      Chat.botHTML(
         '<strong>מסלולים ומחירים</strong><br>' +
-        '• קבוצתי (עד 5 תלמידים): <strong>295 ₪ / חודש</strong><br>' +
-        '• טריפל (עד 3 תלמידים): <strong>385 ₪ / חודש</strong><br><br>' +
-        'ואם תרצי להתחיל בקטן – <strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי:<br>' +
-        '80 ₪ (קבוצתי) / 100 ₪ (טריפל)'
+        `• קבוצתי (עד 5 תלמידים): <strong>${P.group} ₪ / חודש</strong><br>` +
+        `• טריפל (עד 3 תלמידים): <strong>${P.triple} ₪ / חודש</strong><br><br>` +
+        'רוצה לטעום לפני שמתחייבים?<br>' +
+        '<strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי: 80 ₪ (קבוצתי) / 100 ₪ (טריפל).'
       );
 
-      button('המשך', stepRegister, 'btn primary');
-      button('חזרה', goBack);
+      Chat.button('המשך', stepRegister, 'btn primary');
+      Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
     }
 
-    // שלב 3 – קישור לטופס הרשמה + חלופות
+    // שלב 4 — הרשמה / חלופות
     function stepRegister(){
-      clear(); push(stepRegister);
+      setHelpContext('review');   // ב‑FAQ יש גם פרק Review/הרשמה
+      Chat.clear(); Chat.push(stepRegister);
 
-      botText('כדי להיכנס לרשימת ההמתנה ולשריין מקום, נשמח שתמלאי את טופס הרישום:');
+      Chat.botText('להצטרפות מהירה למנוי – פתחי את טופס הרישום (למילוי קצר):');
 
-      button('פתחי את טופס ההרשמה 📝', ()=>{
-        userText('פתחתי את טופס ההרשמה');
-        window.open(ORIGAMI_URL, '_blank', 'noopener,noreferrer');
+      Chat.button('פתח/י את טופס הרישום 📝', ()=>{
+        Chat.userBubble('פתח/י את טופס הרישום');
+        window.open(REG_LINK, '_blank', 'noopener,noreferrer');
       }, 'btn primary');
 
-      button('אשלים את הטופס מאוחר יותר ⏳', ()=>{
-        userText('אשלים את הטופס מאוחר יותר');
-        typingThenP('סגור 🙂 כבר שמרתי את הפרטים שלך וניצור קשר בהקדם.', 700, true);
+      Chat.button('אשלים/ה את הטופס מאוחר יותר ⏳', ()=>{
+        Chat.userBubble('אשלים/ה מאוחר יותר');
+        Chat.typingThen('סגור 🙂 שמרתי את הפרטים ונחזור אלייך בהקדם.', 650, true);
       });
 
-      button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
-        userText('שיעור חד־פעמי עכשיו');
+      Chat.button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
+        Chat.userBubble('שיעור חד־פעמי');
         setTimeout(()=> location.href='./branch1.html', 200);
       });
 
-      button('חזרה', goBack);
+      // קישור לתקנון – אופציונלי
+      const s = document.createElement('div'); s.className='summary';
+      s.appendChild(Chat.chip('קישור לתקנון'));
+      const a = document.createElement('a');
+      a.href = TERMS_LINK; a.target='_blank'; a.rel='noopener';
+      a.textContent = 'תנאי התקנון';
+      a.style.marginInlineStart = '6px';
+      const wrap = document.createElement('div'); wrap.className='bubble bot'; wrap.appendChild(a);
+      document.getElementById('area').appendChild(s);
+      document.getElementById('area').appendChild(wrap);
+      (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
+
+      Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
     }
 
     // הפעלה
