@@ -5,12 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יוסטון – צ׳טבוט</title>
 
-  <!-- פונט Rubik (לא חובה, אבל נראה מצוין) -->
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
-
-  <!-- מעבר לעיצוב הבהיר האחיד -->
   <link rel="stylesheet" href="styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
+
+  <!-- שדרוג תצוגת הכפתורים (פסטלים רכים + גריד) -->
+  <style>
+    .choices{
+      display:grid; gap:12px; margin-top:8px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
+    @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
+
+    /* בסיס להגדלת כפתורי הבחירה */
+    .btn.choice{
+      display:flex; align-items:center; justify-content:space-between;
+      font-weight:700; padding:14px 16px; border-radius:14px;
+      box-shadow: 0 6px 14px rgba(15,23,42,0.06);
+      transition: transform var(--speed), border-color var(--speed), box-shadow var(--speed), filter var(--speed);
+    }
+    .btn.choice:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,23,42,0.10) }
+
+    /* שלושה גוונים בהירים נפרדים */
+    .soft-aqua{
+      background:#eef6ff; border:1px solid #cfe3ff; color: var(--text);
+    }
+    .soft-aqua:hover{ border-color:#9ec5ff }
+    .soft-mint{
+      background:#ecfdf5; border:1px solid #c7f2e1; color: var(--text);
+    }
+    .soft-mint:hover{ border-color:#97e6cf }
+    .soft-rose{
+      background:#fff1f2; border:1px solid #ffd7dc; color: var(--text);
+    }
+    .soft-rose:hover{ border-color:#ffb8c1 }
+
+    /* איקון קטן מימין (אופציונלי) */
+    .btn.choice .emoji{ opacity:.9; font-size:18px; margin-inline-start:8px }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -24,7 +57,7 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (עם aria-live ל־SR וגלילה תקינה) -->
+      <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
       <!-- תחתית -->
@@ -57,15 +90,13 @@
       autoscroll();
       return d;
     }
-    function actionBtn(text, onClick, cls='btn'){
+    // תומך בהעברת הורה ייעודי
+    function actionBtn(text, onClick, cls='btn', parent=area){
       const b=document.createElement('button');
       b.className=cls;
       b.textContent=text;
-      b.onclick=()=>{
-        b.disabled = true;
-        onClick();
-      };
-      area.appendChild(b);
+      b.onclick=()=>{ b.disabled = true; onClick(); };
+      parent.appendChild(b);
       autoscroll();
       return b;
     }
@@ -93,23 +124,28 @@
       }, 900);
 
       setTimeout(()=>{
-        // ענף 1 — עדכון לשם הקובץ החדש (branch.html)
-        actionBtn('שיעור על בסיס מקום פנוי', ()=>{
-          user('שיעור על בסיס מקום פנוי');
+        // עוטף כפתורים לגריד יפה
+        const choices = document.createElement('div');
+        choices.className = 'choices';
+        area.appendChild(choices);
+
+        // ענף 1 — שיעור חד פעמי (על בסיס מקום פנוי)
+        actionBtn('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)', ()=>{
+          user('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)');
           setTimeout(()=> location.href='branches/branch.html', 150);
-        }, 'btn primary');
+        }, 'btn choice soft-aqua', choices);
 
-        // ענף 2
-        actionBtn('פרטים על מנוי חודשי', ()=>{
-          user('פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2.html', 150);
-        });
-
-        // ענף 3
-        actionBtn('מנויה קיימת – פעולות', ()=>{
-          user('מנויה קיימת – פעולות');
+        // ענף 2 — ברשותי מנוי חודשי (פעולות למנויה קיימת)
+        actionBtn('ברשותי מנוי חודשי', ()=>{
+          user('ברשותי מנוי חודשי');
           setTimeout(()=> location.href='branches/branch3.html', 150);
-        });
+        }, 'btn choice soft-mint', choices);
+
+        // ענף 3 — אני רוצה פרטים על מנוי חודשי (מידע)
+        actionBtn('אני רוצה פרטים על מנוי חודשי', ()=>{
+          user('אני רוצה פרטים על מנוי חודשי');
+          setTimeout(()=> location.href='branches/branch2.html', 150);
+        }, 'btn choice soft-rose', choices);
       }, 1600);
     }
 
