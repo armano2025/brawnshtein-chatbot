@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור חד פעמי על בסיס מקום פנוי</title>
 
+  <!-- עיצוב אחיד של הפרויקט -->
   <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <!-- טופ־בר -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
 
+      <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
@@ -22,8 +25,10 @@
         </div>
       </div>
 
+      <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
+      <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -32,12 +37,12 @@
     </div>
   </div>
 
-  <!-- חיבור נכון לסקריפטים מתוך /branches/ -->
+  <!-- חיבור נכון לסקריפטים מתוך /branches/js -->
   <script src="js/config.js?v=2"></script>
   <script src="js/chat-helpers.js?v=2"></script>
 
   <script>
-    /* ===== קונטקסט לכפתור ה‑FAQ ===== */
+    /* ===== קונטקסט ל‑FAQ ===== */
     function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
@@ -45,7 +50,7 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
-    /* ===== עזר ל‑select תוך כדי צ'אט ===== */
+    /* עזר קטן ל־select בתוך בועה */
     function selectRow(label, options, id){
       const wrap = document.createElement('div');
       wrap.className = 'input-wrap bubble bot';
@@ -71,54 +76,51 @@
       });
 
       wrap.append(l, sel);
-      document.getElementById('area').appendChild(wrap);
-      document.getElementById('area').scrollTop = document.getElementById('area').scrollHeight;
+      const area = document.getElementById('area');
+      area.appendChild(wrap);
+      area.scrollTop = area.scrollHeight;
       return sel;
     }
 
     /* ===== זרימה ===== */
+
+    // 0) פרטי קשר – משתמש ברכיב askContact המשותף
     async function stepContactFirst(){
       setHelpContext('contact');
       Chat.clear(); Chat.push(stepContactFirst);
 
-      const h = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
-      Chat.scrollStartOf(h);
+      const title =
+        '<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br>' +
+        '<span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀';
 
-      const firstName = Chat.inputRow('שם פרטי',   { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
-      const lastName  = Chat.inputRow('שם משפחה',  { id:'lastName',  placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
-      const phone     = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      const { firstName, lastName, phone } = await Chat.askContact({
+        titleHtml: title,
+        nextText: 'המשך'
+      });
 
-      Chat.button('המשך', ()=>{
-        Chat.userBubble('המשך');
+      // נשמר ל‑State
+      Chat.State.data.firstName = firstName;
+      Chat.State.data.lastName  = lastName;
+      Chat.State.data.phone     = phone;
 
-        const fn  = (firstName.value||'').trim();
-        const ln  = (lastName.value||'').trim();
-        const tel = Chat.normalizeILPhone(phone.value||'');
-
-        if(!fn){  Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
-        if(!ln){  Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus(); return; }
-        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
-
-        Chat.State.data.firstName = fn;
-        Chat.State.data.lastName  = ln;
-        Chat.State.data.phone     = tel;
-
-        stepSubject();
-      }, 'btn primary');
+      stepSubject();
     }
 
+    // 1) מקצוע
     function stepSubject(){
       setHelpContext('subject');
       Chat.clear(); Chat.push(stepSubject);
 
       const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
-        `<strong>מעולה${name}! נתאם שיעור חד־פעמי על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
+        `<strong>מעולה${name}! נתאם שיעור חד־פעמי על בסיס מקום פנוי 👨‍🚀</strong><br>` +
+        `<strong>איזה מקצוע תרצו?</strong> 📖`,
         500, true
       );
 
       setTimeout(()=>{
-        const subjects = (Chat.cfg.SUBJECTS || []).map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
+        const subjects = (Chat.cfg.SUBJECTS || [])
+          .map(s => s === 'אנגלית מדוברת' ? 'אנגלית מדוברת לקטנטנים' : s);
         if (!subjects.includes('ביולוגיה')) subjects.push('ביולוגיה');
 
         subjects.forEach(s => Chat.button(s, ()=>{
@@ -133,6 +135,7 @@
       }, 650);
     }
 
+    // 2) כיתה (ואם צריך – יחידות)
     function stepGrade(){
       setHelpContext('grade');
       Chat.clear(); Chat.push(stepGrade);
@@ -176,6 +179,7 @@
       }, 450);
     }
 
+    // 3) מסלול
     function stepPlan(){
       setHelpContext('plan');
       Chat.clear(); Chat.push(stepPlan);
@@ -213,6 +217,7 @@
       }, 450);
     }
 
+    // 4) בחירת זמינות — משתמש ברכיב pickAvailability (גדול/אנכי/✖)
     function stepAvailability(){
       setHelpContext('availability');
       Chat.clear(); Chat.push(stepAvailability);
@@ -225,18 +230,18 @@
         450, true
       );
 
-      // שימוש ברכיב ה־picker המשופר מתוך chat-helpers
       setTimeout(async ()=>{
         const chosen = await Chat.pickAvailability({
           tipText: 'בחרו כמה שיותר אפשרויות שנוחות לכם',
           continueText: 'המשך'
         });
-        if(!chosen) return; // חזרו אחורה
+        if(!chosen) return; // חזרה
         Chat.State.data.availability = chosen.join('; ');
         stepNotes();
       }, 550);
     }
 
+    // 5) הערות
     function stepNotes(){
       setHelpContext('notes');
       Chat.clear(); Chat.push(stepNotes);
@@ -255,6 +260,7 @@
       }, 450);
     }
 
+    // 6) סיכום ושליחה
     function stepReview(){
       setHelpContext('review');
       Chat.clear(); Chat.push(stepReview);
@@ -316,8 +322,8 @@
       }, 'btn primary');
     }
 
+    // ===== הפעלה בטוחה =====
     function start(){
-      // אם chat-helpers לא נטען — הודעה ברורה במקום מסך ריק
       if(!window.Chat){
         const a = document.getElementById('area');
         a.innerHTML = '';
@@ -330,8 +336,6 @@
       Chat.clear(); Chat.push(start);
       stepContactFirst();
     }
-
-    // להריץ רק כשה‑DOM מוכן
     window.addEventListener('DOMContentLoaded', start);
   </script>
 </body>
