@@ -1,3 +1,4 @@
+<script>
 // /branches/js/chat-helpers.js
 (function () {
   const cfg = window.APP_CONFIG || {};
@@ -14,7 +15,7 @@
     if (State.history.length > 1) {
       State.history.pop();
       updateBack();
-      State.token++;
+      State.token++;         // מבטל timeouts ישנים
       last()();
     }
   };
@@ -51,7 +52,10 @@
     area.appendChild(b); autoscroll(); return b;
   }
   function chip(text){
-    const c=document.createElement('div'); c.className='chip'; c.textContent=text; return c;
+    const c=document.createElement('div'); c.className='chip'; c.textContent=text;
+    // קצת פחות עגול כדי לשפר קריאות
+    c.style.borderRadius = '10px';
+    return c;
   }
   function inputRow(label, {type='text', id, textarea=false, placeholder='', required=false, autocomplete, inputmode}={}){
     const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
@@ -116,13 +120,13 @@
     finally{ clearTimeout(timeout); }
   }
 
-  // ===== One-time click wrapper (prevents double-submit on external handlers) =====
+  // ===== One-time click wrapper =====
   function once(fn){
     let used=false;
     return (...args)=>{ if(used) return; used=true; return fn(...args); };
   }
 
-  // ===== Summary card (key: value safe rendering) =====
+  // ===== Summary card =====
   function summaryCard(pairs){
     const card = document.createElement('div'); card.className='bubble bot';
     for(const [k,v] of pairs){
@@ -137,13 +141,8 @@
 
   // ====== Reusable: askContact ======
   /**
-   * Render a standard contact mini-form (firstName, lastName, phone).
-   * Returns a Promise that resolves to { firstName, lastName, phone } when user clicks "next".
-   * Options:
-   *  - titleHtml: header (HTML) above the form
-   *  - nextText: button text (default: 'המשך')
-   *  - requireLast: boolean (default true)
-   *  - showBack: boolean (default true)
+   * טופס קשר אחיד: שם פרטי, שם משפחה, טלפון.
+   * מחזיר Promise עם { firstName, lastName, phone } בעת "המשך".
    */
   function askContact(opts={}){
     const {
@@ -186,42 +185,65 @@
     });
   }
 
-  // ====== Reusable: pickAvailability ======
+  // ====== Reusable: pickAvailability (שופר לפי הדרישות) ======
   /**
-   * Render the "slots picker" like branch #1.
-   * Returns a Promise that resolves to an array of selections (e.g. ['יום א 16:00–18:00', ...])
+   * בוחר ימים/שעות (גדול, אנכי, עם צ'יפים להסרה).
+   * מחזיר Promise עם מערך בחירות ['יום א 16:00–18:00', ...].
+   *
    * Options:
-   *  - titleHtml: header HTML
-   *  - tipText: muted line (default aligns with new copy)
-   *  - times: array of times (first empty item allowed)
-   *  - days: array of day labels (first empty item allowed)
-   *  - continueText: (default 'המשך')
-   *  - allowBack: (default true)
+   *  - titleHtml: כותרת
+   *  - tipText: שורת עזרה
+   *  - times: ['','14:00',...]
+   *  - days:  ['','א','ב',...]
+   *  - continueText: טקסט כפתור המשך
+   *  - allowBack: להציג כפתור חזרה
    */
   function pickAvailability(opts={}){
     const {
-      titleHtml = '<strong>בחירת ימים ושעות</strong>',
-      tipText   = 'בחרו כמה שיותר אפשרויות שנוחות לכם',
-      times     = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-      days      = ['','א','ב','ג','ד','ה'],
-      continueText = 'המשך',
-      allowBack    = true,
+      titleHtml     = '<strong>בחירת ימים ושעות</strong>',
+      tipText       = 'בחרו כמה שיותר אפשרויות שנוחות לכם',
+      times         = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+      days          = ['','א','ב','ג','ד','ה'],
+      continueText  = 'המשך',
+      allowBack     = true,
     } = opts;
 
     botHTML(`${titleHtml}<br><span class="muted">${tipText}</span>`);
 
     return new Promise(resolve=>{
-      // container
+      // מיכל גדול וברור
       const wrap = document.createElement('div'); wrap.className='bubble bot wide';
+      wrap.style.padding = '16px';
+      wrap.style.maxWidth = '720px';
+      wrap.style.marginInline = 'auto';
+
       const grid = document.createElement('div'); grid.className='slots-grid';
+      grid.style.display = 'grid';
+      grid.style.gap = '12px';
+
       const rowsWrap = document.createElement('div'); rowsWrap.className='slots-grid';
+      rowsWrap.style.display = 'grid';
+      rowsWrap.style.gap = '12px';
+
       const preview = document.createElement('div'); preview.className='slot-preview';
+      preview.style.display = 'flex';
+      preview.style.flexWrap = 'wrap';
+      preview.style.gap = '8px';
+      preview.style.marginTop = '4px';
+
       area.appendChild(wrap);
 
       const toNum = s => parseInt(String(s||'').replace(':',''),10) || 0;
 
       const makeSel = (placeholder, values)=>{
-        const sel = document.createElement('select'); sel.className='input';
+        const sel = document.createElement('select');
+        sel.className='input';
+        // גדול וברור + "ריבועי יותר"
+        sel.style.width = '100%';
+        sel.style.fontSize = '1.05rem';
+        sel.style.padding = '12px 14px';
+        sel.style.borderRadius = '10px';
+
         values.forEach(v=>{
           const o=document.createElement('option');
           o.value=v; o.textContent = v ? `${placeholder} ${v}` : placeholder;
@@ -230,11 +252,20 @@
         return sel;
       };
 
+      const isRowValid = (row)=>{
+        const [dSel,fSel,tSel]=row.querySelectorAll('select');
+        return dSel?.value && fSel?.value && tSel?.value && toNum(fSel.value) < toNum(tSel.value);
+      };
+
+      const countValidRows = ()=>{
+        const rows=[...rowsWrap.children];
+        return rows.reduce((acc,r)=> acc + (isRowValid(r)?1:0), 0);
+      };
+
       const lastRowFilled = ()=>{
         const rows=[...rowsWrap.children];
         if(!rows.length) return false;
-        const [dSel,fSel,tSel]=rows.at(-1).querySelectorAll('select');
-        return dSel?.value && fSel?.value && tSel?.value && toNum(fSel.value) < toNum(tSel.value);
+        return isRowValid(rows.at(-1));
       };
 
       const refreshPreview = ()=>{
@@ -243,29 +274,42 @@
         rows.forEach(r=>{
           const [dSel,fSel,tSel]=r.querySelectorAll('select');
           const d=dSel.value, f=fSel.value, t=tSel.value;
-          if(d && f && t && toNum(f) < toNum(t)){
+          if(isRowValid(r)){
             const c = chip(`יום ${d} ${f}–${t}`); c.classList.add('emph');
-            const x = document.createElement('button'); x.type='button'; x.className='x'; x.title='הסר'; x.textContent='✖';
-            x.onclick=()=>{ r.remove(); addBtn.disabled=!lastRowFilled(); refreshPreview(); };
+            const x = document.createElement('button');
+            x.type='button'; x.className='x'; x.title='הסר'; x.setAttribute('aria-label','הסר מועד'); x.textContent='✖';
+            x.onclick=()=>{
+              r.remove();
+              ensureEditableTail();
+              updateUI();
+            };
             c.appendChild(x);
             preview.appendChild(c);
           }
         });
       };
 
-      let btnContinue;
+      let btnContinue, addBtn;
+
       const wireRow = (row)=>{
+        // פריסה אנכית — אחד מתחת לשני
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = '1fr';
+        row.style.gap = '8px';
+
         row.querySelectorAll('select').forEach(sel=>{
           sel.addEventListener('change', ()=>{
             row.querySelector('.row-error')?.remove();
             const [ , fSel, tSel] = row.querySelectorAll('select');
             if(fSel.value && tSel.value && toNum(fSel.value) >= toNum(tSel.value)){
               const err=document.createElement('div'); err.className='row-error';
-              err.textContent='״עד שעה״ חייב להיות אחרי ״משעה״'; row.appendChild(err);
+              err.style.color = '#b91c1c';
+              err.style.fontSize = '.9rem';
+              err.style.marginTop = '2px';
+              err.textContent='״עד שעה״ חייב להיות אחרי ״משעה״';
+              row.appendChild(err);
             }
-            addBtn.disabled = !lastRowFilled();
-            if(btnContinue) btnContinue.disabled = false;
-            refreshPreview();
+            updateUI();
           });
         });
       };
@@ -275,50 +319,87 @@
           botText('ניתן להוסיף מועד נוסף רק לאחר שמילאתם את המועד הקודם.').classList.add('err');
           return;
         }
-        const row=document.createElement('div'); row.className='slot-row';
+        const row=document.createElement('div');
         row.append(makeSel('בחר/י יום',days), makeSel('משעה',times), makeSel('עד שעה',times));
         rowsWrap.appendChild(row);
         wireRow(row);
-        addBtn.disabled=true;
-        refreshPreview();
+        updateUI();
         autoscroll();
         return row;
       };
 
-      const title = document.createElement('div'); title.className='muted'; title.textContent=tipText;
-      const addBtn = document.createElement('button'); addBtn.className='btn'; addBtn.textContent='+ הוספת מועד נוסף'; addBtn.disabled=true;
+      const ensureEditableTail = ()=>{
+        // אם אין שורות — נוסיף שורה חדשה.
+        if(rowsWrap.children.length === 0){
+          addRow(true);
+          return;
+        }
+        // אם השורה האחרונה מלאה, נוסיף שורה ריקה נוספת כדי לאפשר בחירה מיידית.
+        if(lastRowFilled()){
+          addRow(true);
+        }
+      };
+
+      const updateUI = ()=>{
+        // כפתור "הוסף" זמין רק כשהשורה האחרונה תקינה
+        if(addBtn) addBtn.disabled = !lastRowFilled();
+        // כפתור המשך זמין רק אם יש לפחות בחירה אחת תקפה
+        if(btnContinue) btnContinue.disabled = (countValidRows() === 0);
+        refreshPreview();
+      };
+
+      // —— Header tip (לא חוזר פעמיים, מוצג כבר בכותרת העליונה) —— //
+
+      // כפתור הוספת שורה
+      addBtn = document.createElement('button');
+      addBtn.className='btn';
+      addBtn.textContent='+ הוספת מועד נוסף';
+      addBtn.disabled = true;
       addBtn.onclick = ()=> addRow(false);
 
-      grid.append(title, rowsWrap, addBtn, preview);
+      grid.append(rowsWrap, addBtn, preview);
       wrap.appendChild(grid);
 
-      const actions = document.createElement('div'); actions.className='slots-actions';
-      btnContinue = document.createElement('button'); btnContinue.className='btn primary'; btnContinue.textContent=continueText;
+      // Actions
+      const actions = document.createElement('div');
+      actions.className='slots-actions';
+      actions.style.display = 'flex';
+      actions.style.gap = '8px';
+      actions.style.justifyContent = 'flex-end';
+      actions.style.marginTop = '10px';
+
+      btnContinue = document.createElement('button');
+      btnContinue.className='btn primary';
+      btnContinue.textContent=continueText;
+      btnContinue.disabled = true;
       btnContinue.onclick = ()=>{
         userBubble(continueText);
         const rows=[...rowsWrap.children]; const chosen=[];
         for(const r of rows){
-          const [dSel,fSel,tSel]=r.querySelectorAll('select');
-          const d=dSel.value, f=fSel.value, t=tSel.value;
-          if(d && f && t){
-            if(toNum(f) >= toNum(t)){ botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err'); return; }
-            chosen.push(`יום ${d} ${f}–${t}`);
+          if(isRowValid(r)){
+            const [dSel,fSel,tSel]=r.querySelectorAll('select');
+            chosen.push(`יום ${dSel.value} ${fSel.value}–${tSel.value}`);
           }
         }
-        if(!chosen.length){ botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err'); return; }
+        if(!chosen.length){
+          botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err');
+          return;
+        }
         resolve(chosen);
       };
       actions.appendChild(btnContinue);
 
       if(allowBack){
-        const backB = document.createElement('button'); backB.className='btn'; backB.textContent='חזרה';
+        const backB = document.createElement('button');
+        backB.className='btn';
+        backB.textContent='חזרה';
         backB.onclick = ()=>{ goBack(); resolve(null); };
         actions.appendChild(backB);
       }
 
       wrap.appendChild(actions);
 
-      // initialize
+      // init — יצירת שורה ראשונה ותזמון מצב
       addRow(true);
     });
   }
@@ -333,3 +414,4 @@
     askContact, pickAvailability
   };
 })();
+</script>
