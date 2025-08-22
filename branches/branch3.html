@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#5b7cfa" />
 
   <style>
-    /* חיזוק מקומי: גלילה אמיתית לאזור השיחה */
+    /* גלילה אמיתית לאזור השיחה */
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
 
-    /* רכיבי בוחר המועדים – זהים לענף 1 */
+    /* בוחר מועדים – כמו בענף 1, עם התאמות טקסט וצורה */
     .slots-grid{ display:grid; gap:8px }
     .slot-row{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px }
     .slot-preview{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px }
@@ -21,6 +21,14 @@
     .chip.emph{ font-weight:700 }
     .x{ margin-inline-start:6px; border:none; background:transparent; cursor:pointer; font-size:14px }
     .row-error{ color:#b91c1c; font-size:.88rem; margin-top:4px }
+
+    /* לשוניות/שדות בחירה יותר "ריבועיות" ונקיות לקריאה */
+    .input{ border-radius:10px !important; min-height:42px }
+    .btn{ border-radius:12px } /* כפתורים מעט פחות עגולים */
+    select.input{ padding-inline:10px }
+
+    /* כפתור "המשך →" */
+    .btn.next-arrow::after{ content:" →"; font-weight:700; }
   </style>
 </head>
 <body>
@@ -70,31 +78,66 @@
     const backBtn = document.getElementById('backBtn');
     backBtn.onclick = ()=> Chat.goBack?.();
 
-    /* ===== בית – בחירת פעולה ===== */
+    /* ===== בית – בחירת פעולה (לשון כללית + בראש המסך) ===== */
     function stepHome(){
       setHelpContext('review');
       Chat.clear(); Chat.push(stepHome);
 
-      Chat.typingThen(
+      // מציגים מיד למעלה בלי טיפינג ועם גלילה לראש
+      const header = Chat.botHTML(
         '<strong>היי 👋</strong><br>' +
-        'אם את כבר מנויה, אפשר לבצע כאן פעולות בחשבון. מה תרצי לעשות?',
-        600, true
+        'אם אתם כבר מנויים/ות, תוכלו לבצע כאן פעולות בחשבון. במה נוכל לעזור?'
       );
+      Chat.scrollStartOf(header);
 
-      Chat.button('שינוי יום/שעה קבועה של שיעור', stepReschedule, 'btn primary');
+      Chat.button('שינוי יום/שעה קבועה של שיעור', stepRescheduleContactFirst, 'btn primary');
       Chat.button('ביטול שיעור עתידי', stepCancel);
       Chat.button('עדכון פרטי תשלום', stepBilling);
       Chat.button('שליחת הודעה למזכירות', stepMessage);
     }
 
-    /* ===== שינוי יום/שעה — בוחר מועדים כמו בענף 1 ===== */
+    /* ===== שינוי יום/שעה – שלב 1: פרטי קשר (שם פרטי/משפחה/טלפון) ===== */
+    function stepRescheduleContactFirst(){
+      setHelpContext('contact');
+      Chat.clear(); Chat.push(stepRescheduleContactFirst);
+
+      const h = Chat.botHTML('<strong>כמעט שם 🙂</strong><br><span class="muted">נשמור פרטי קשר כדי לאשר את השינוי.</span>');
+      Chat.scrollStartOf(h);
+
+      const firstName = Chat.inputRow('שם פרטי',   { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
+      const lastName  = Chat.inputRow('שם משפחה',  { id:'lastName',  placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
+      const phone     = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+
+      Chat.button('המשך', ()=>{
+        Chat.userBubble('המשך');
+
+        const fn  = (firstName.value||'').trim();
+        const ln  = (lastName.value||'').trim();
+        const tel = Chat.normalizeILPhone(phone.value||'');
+
+        if(!fn){ Chat.botText('נדרש שם פרטי ✏️').classList.add('err'); firstName.focus(); return; }
+        if(!ln){ Chat.botText('נדרש שם משפחה ✏️').classList.add('err'); lastName.focus();  return; }
+        if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
+
+        // נשמור ל-State כדי להשתמש בסוף (פנייה בשם פרטי) וכדי לצרף לשליחה
+        Chat.State.data.firstName = fn;
+        Chat.State.data.lastName  = ln;
+        Chat.State.data.phone     = tel;
+
+        stepReschedule(); // עכשיו בוחרים ימים ושעות
+      }, 'btn primary next-arrow');
+
+      Chat.button('חזרה', ()=> Chat.goBack());
+    }
+
+    /* ===== שינוי יום/שעה – שלב 2: בחירת מועדים (כמו בענף 1, עם טקסט מעודכן) ===== */
     function stepReschedule(){
       setHelpContext('availability');
       Chat.clear(); Chat.push(stepReschedule);
 
       Chat.typingThen(
         '<strong>שינוי יום/שעה קבועה</strong><br>' +
-        '<span class="muted">בחרי ימים ושעות מועדפים. אפשר להוסיף כמה מועדים.</span>',
+        '<span class="muted">בחרו כמה שיותר אפשרויות שנוחות לכם.</span>',
         600, true
       );
 
@@ -162,7 +205,7 @@
 
         const addRow = (force=false)=>{
           if(!force && !lastRowFilled()){
-            Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
+            Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאתם את המועד הקודם.').classList.add('err');
             return;
           }
           const row=document.createElement('div'); row.className='slot-row';
@@ -175,7 +218,7 @@
           return row;
         };
 
-        const title = document.createElement('div'); title.className='muted'; title.textContent='ניתן להוסיף יותר ממועד אחד';
+        const title = document.createElement('div'); title.className='muted'; title.textContent='בחרו כמה שיותר אפשרויות שנוחות לכם';
         const addBtn = document.createElement('button'); addBtn.className='btn'; addBtn.textContent='+ הוספת מועד נוסף'; addBtn.disabled=true;
         addBtn.onclick = ()=> addRow(false);
 
@@ -193,7 +236,7 @@
             }
           }
           if(!chosen.length){ Chat.botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err'); return; }
-          stepRescheduleContact(chosen.join('; '));
+          stepRescheduleReview(chosen.join('; '));
         };
 
         grid.append(title, rowsWrap, addBtn, preview);
@@ -206,32 +249,60 @@
       }, 700);
     }
 
-    function stepRescheduleContact(availabilitySummary){
-      setHelpContext('contact');
-      Chat.clear(); Chat.push(()=>stepRescheduleContact(availabilitySummary));
+    /* ===== שינוי יום/שעה – שלב 3: סיכום ושליחה (משתמש בשם פרטי לסיום יפה) ===== */
+    function stepRescheduleReview(availabilitySummary){
+      setHelpContext('review');
+      Chat.clear(); Chat.push(()=>stepRescheduleReview(availabilitySummary));
 
-      Chat.typingThen('<strong>כמעט סיימנו</strong><br><span class="muted">נוסיף שם מלא וטלפון לאישור השינוי.</span>', 550, true);
+      const h = Chat.botHTML('<strong>סיכום בקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
+      Chat.scrollStartOf(h);
 
-      const name = Chat.inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
-      const tel  = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      const d = Chat.State.data;
+      const card = document.createElement('div'); card.className='bubble bot';
+      const addLine = (label, value)=>{ if(!value) return; const row=document.createElement('div'); const b=document.createElement('strong'); b.textContent=label+' '; const s=document.createElement('span'); s.textContent=value; row.append(b,s); card.appendChild(row); };
 
-      Chat.button('המשך לסיכום', ()=>{
+      addLine('שם פרטי:', d.firstName);
+      addLine('שם משפחה:', d.lastName);
+      addLine('טלפון לחזרה:', d.phone);
+      addLine('ימים ושעות מועדפים:', availabilitySummary);
+      document.getElementById('area').appendChild(card);
+      (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
+
+      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
+        const stop = Chat.showProcessing();
+
         const payload = {
           path: 'מנויה קיימת – פעולות',
           cta: 'שינוי יום/שעה קבועה',
           availability: availabilitySummary,
           message: '',
           extraNotes: '',
-          fullName: (name.value||'').trim(),
-          phone: Chat.normalizeILPhone(tel.value||''),
+          fullName: `${d.firstName||''} ${d.lastName||''}`.trim(),
+          phone: d.phone || '',
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
-        stepReview(payload, {required:['availability','fullName','phone']});
+
+        const ok = await Chat.sendLeadToSheet(payload);
+
+        stop();
+        Chat.clear();
+
+        const fname = (d.firstName||'').trim();
+        if(ok){
+          Chat.botText(`היי ${fname || 'שם פרטי'}, הבקשה נקלטה והועברה למזכירות להמשך טיפול.\nאני אדאג שיחזרו אלייך 👨‍🚀`).classList.add('ok');
+          const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
+          home.focus();
+        }else{
+          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
+          Chat.button('לנסות שוב', ()=> stepRescheduleReview(availabilitySummary), 'btn primary');
+          Chat.button('עריכה', ()=> Chat.goBack?.());
+          Chat.button('לתפריט הראשי', ()=> location.href='../index.html');
+        }
       }, 'btn primary');
 
-      Chat.button('חזרה', ()=> Chat.goBack());
+      Chat.button('עריכה', ()=> Chat.goBack?.());
     }
 
     /* ===== ביטול שיעור ===== */
@@ -239,12 +310,13 @@
       setHelpContext('review');
       Chat.clear(); Chat.push(stepCancel);
 
-      Chat.botHTML('מה התאריך של השיעור שתרצי לבטל? 📅');
+      Chat.botHTML('מה התאריך של השיעור שתרצו לבטל? 📅');
 
       const date   = Chat.inputRow('תאריך/שעה של השיעור', { id:'date', placeholder:'לדוגמה: 21/09 18:00' });
       const reason = Chat.inputRow('סיבת ביטול (רשות)',  { textarea:true, id:'reason', placeholder:'הסבר קצר (אופציונלי)' });
-      const name   = Chat.inputRow('שם מלא',             { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
-      const tel    = Chat.inputRow('טלפון לחזרה',        { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
+      const first  = Chat.inputRow('שם פרטי',   { id:'fullName_first', placeholder:'לדוגמה: דנה' });
+      const last   = Chat.inputRow('שם משפחה',  { id:'fullName_last',  placeholder:'לדוגמה: לוי' });
+      const tel    = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       Chat.button('המשך לסיכום', ()=>{
         const payload = {
@@ -253,13 +325,13 @@
           lessonDate: (date.value||'').trim(),
           message: (reason.value||'').trim(),
           extraNotes: '',
-          fullName: (name.value||'').trim(),
+          fullName: `${(first.value||'').trim()} ${(last.value||'').trim()}`.trim(),
           phone: Chat.normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
-        stepReview(payload, {required:['lessonDate','fullName','phone']});
+        stepReviewGeneric(payload, {required:['lessonDate','fullName','phone']});
       }, 'btn primary');
 
       Chat.button('חזרה', ()=> Chat.goBack());
@@ -270,10 +342,11 @@
       setHelpContext('review');
       Chat.clear(); Chat.push(stepBilling);
 
-      Chat.typingThen('כדי לעדכן פרטי תשלום — נשמור פרטי קשר ונחזור אלייך להמשך טיפול אישי 🙏', 550, true);
+      Chat.typingThen('כדי לעדכן פרטי תשלום — נשמור פרטי קשר ונחזור אליכם/ן להמשך טיפול אישי 🙏', 550, true);
 
-      const notes = Chat.inputRow('פרטים שתרצי שנדע (רשות)', { textarea:true, id:'bill_notes', placeholder:'למשל: החלפת כרטיס, שינוי אמצעי חיוב וכו׳' });
-      const name  = Chat.inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const notes = Chat.inputRow('פרטים שכדאי לדעת (רשות)', { textarea:true, id:'bill_notes', placeholder:'למשל: החלפת כרטיס, שינוי אמצעי חיוב וכו׳' });
+      const first = Chat.inputRow('שם פרטי',   { id:'fullName_first', placeholder:'לדוגמה: דנה' });
+      const last  = Chat.inputRow('שם משפחה',  { id:'fullName_last',  placeholder:'לדוגמה: לוי' });
       const tel   = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       Chat.button('המשך לסיכום', ()=>{
@@ -282,13 +355,13 @@
           cta: 'עדכון פרטי תשלום',
           message: (notes.value||'').trim(),
           extraNotes: '',
-          fullName: (name.value||'').trim(),
+          fullName: `${(first.value||'').trim()} ${(last.value||'').trim()}`.trim(),
           phone: Chat.normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
-        stepReview(payload, {required:['fullName','phone']});
+        stepReviewGeneric(payload, {required:['fullName','phone']});
       }, 'btn primary');
 
       Chat.button('חזרה', ()=> Chat.goBack());
@@ -299,11 +372,12 @@
       setHelpContext('review');
       Chat.clear(); Chat.push(stepMessage);
 
-      Chat.typingThen('מה תרצי לכתוב למזכירות שלנו? ✍️', 550, true);
+      Chat.typingThen('מה תרצו לכתוב למזכירות שלנו? ✍️', 550, true);
 
-      const msg   = Chat.inputRow('הודעה', { textarea:true, id:'msg', placeholder:'כתבי כאן כל דבר שתרצי' });
+      const msg   = Chat.inputRow('הודעה', { textarea:true, id:'msg', placeholder:'כתבו כאן כל דבר שתרצו' });
       const notes = Chat.inputRow('פרטים נוספים (רשות)', { textarea:true, id:'msg_notes', placeholder:'אם יש עוד פרטים חשובים' });
-      const name  = Chat.inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי' });
+      const first = Chat.inputRow('שם פרטי',   { id:'fullName_first', placeholder:'לדוגמה: דנה' });
+      const last  = Chat.inputRow('שם משפחה',  { id:'fullName_last',  placeholder:'לדוגמה: לוי' });
       const tel   = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567' });
 
       Chat.button('המשך לסיכום', ()=>{
@@ -312,20 +386,20 @@
           cta: 'פנייה למזכירות',
           message: (msg.value||'').trim(),
           extraNotes: (notes.value||'').trim(),
-          fullName: (name.value||'').trim(),
+          fullName: `${(first.value||'').trim()} ${(last.value||'').trim()}`.trim(),
           phone: Chat.normalizeILPhone(tel.value||''),
           source: 'יוסטון – אתר',
           status: 'לטיפול',
           createdAt: new Date().toISOString()
         };
-        stepReview(payload, {required:['message','fullName','phone']});
+        stepReviewGeneric(payload, {required:['message','fullName','phone']});
       }, 'btn primary');
 
       Chat.button('חזרה', ()=> Chat.goBack());
     }
 
-    /* ===== סיכום ושליחה (דרך Chat.sendLeadToSheet) ===== */
-    function stepReview(payload, rules){
+    /* ===== סיכום/שליחה כללי לשאר הפעולות (לא שינוי קבוע) ===== */
+    function stepReviewGeneric(payload, rules){
       const errs=[];
       (rules.required||[]).forEach(k=>{
         if(!payload[k] || (typeof payload[k]==='string' && !payload[k].trim())) errs.push(k);
@@ -337,20 +411,19 @@
         if(e==='phone' || e==='phone_invalid'){
           Chat.botText('מספר טלפון לא תקין 📞 (למשל 0501234567)').classList.add('err');
         }else{
-          Chat.botText('חסר שדה נדרש. אנא מלאי ונסי שוב.').classList.add('err');
+          Chat.botText('חסר שדה נדרש. אנא מלאו ונסו שוב.').classList.add('err');
         }
         return;
       }
 
-      Chat.clear(); Chat.push(()=>stepReview(payload, rules));
+      Chat.clear(); Chat.push(()=>stepReviewGeneric(payload, rules));
 
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקי שהכול נכון לפני שליחה.</span>');
+      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
       Chat.scrollStartOf(h);
 
       const card = document.createElement('div'); card.className='bubble bot';
       const row = (label, val)=>{ if(!val) return; const d=document.createElement('div'); const b=document.createElement('strong'); b.textContent=label+' '; const s=document.createElement('span'); s.textContent=val; d.append(b,s); card.appendChild(d); };
       row('פעולה:', payload.cta);
-      row('יום/שעה מבוקשים:', payload.availability);
       row('תאריך/שעה לביטול:', payload.lessonDate);
       row('הודעה:', payload.message);
       row('פרטים נוספים:', payload.extraNotes);
@@ -361,19 +434,20 @@
 
       Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
         const stop = Chat.showProcessing();
-
         const ok = await Chat.sendLeadToSheet(payload);
-
         stop();
         Chat.clear();
 
+        // ניסיון לחלץ שם פרטי להודעת סיום יפה
+        const fname = (payload.fullName||'').trim().split(' ')[0] || 'שם פרטי';
+
         if(ok){
-          Chat.botText('הבקשה נקלטה והועברה למזכירות ✅ נחזור אלייך בהקדם.').classList.add('ok');
+          Chat.botText(`היי ${fname}, הבקשה נקלטה והועברה למזכירות להמשך טיפול.\nאני אדאג שיחזרו אלייך 👨‍🚀`).classList.add('ok');
           const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
           home.focus();
         }else{
-          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ אפשר לנסות שוב או לפנות אלינו בוואטסאפ 050‑9570866.').classList.add('err');
-          Chat.button('לנסות שוב', ()=> stepReview(payload, rules), 'btn primary');
+          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
+          Chat.button('לנסות שוב', ()=> stepReviewGeneric(payload, rules), 'btn primary');
           Chat.button('עריכה', ()=> Chat.goBack?.());
           Chat.button('לתפריט הראשי', ()=> location.href='../index.html');
         }
