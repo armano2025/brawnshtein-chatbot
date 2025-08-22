@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יוסטון – צ׳טבוט</title>
 
-  <!-- פונט Rubik (אופציונלי אך מומלץ) -->
+  <!-- פונט Rubik (לא חובה, אבל נראה מצוין) -->
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="theme-color" content="#2563eb" />
+  <!-- מעבר לעיצוב הבהיר האחיד -->
+  <link rel="stylesheet" href="styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
 </head>
 <body>
   <div class="wrap">
@@ -29,6 +30,8 @@
       <!-- תחתית -->
       <div class="footer">
         <button class="btn" onclick="location.reload()">ריענון</button>
+        <a class="btn ghost" href="faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        <span class="spacer"></span>
       </div>
 
     </div>
@@ -36,7 +39,6 @@
 
   <script>
     const area = document.getElementById('area');
-
     function autoscroll(){ area.scrollTop = area.scrollHeight; }
 
     function bot(html){
@@ -48,7 +50,6 @@
       return d;
     }
     function user(text){
-      // בטוח ל-XSS: לא מזריקים HTML
       const d=document.createElement('div');
       d.className='bubble user';
       d.textContent=text;
@@ -61,7 +62,6 @@
       b.className=cls;
       b.textContent=text;
       b.onclick=()=>{
-        // מניעת הקלקה כפולה רק לעצם שלחצנו
         b.disabled = true;
         onClick();
       };
@@ -81,7 +81,6 @@
     function start(){
       area.innerHTML = '';
 
-      // הודעת פתיחה (קצרה ועניינית)
       typingThen(
         '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
         'העוזר הדיגיטלי של מרכז בראונשטיין 📚<br>' +
@@ -89,17 +88,15 @@
         600
       );
 
-      // הנחיה
       setTimeout(()=>{
         typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
       }, 900);
 
-      // כפתורים (שלושת הענפים פעילים)
       setTimeout(()=>{
-        // ענף 1
+        // ענף 1 — עדכון לשם הקובץ החדש (branch.html)
         actionBtn('שיעור על בסיס מקום פנוי', ()=>{
           user('שיעור על בסיס מקום פנוי');
-          setTimeout(()=> location.href='branches/branch1.html', 150);
+          setTimeout(()=> location.href='branches/branch.html', 150);
         }, 'btn primary');
 
         // ענף 2
