@@ -13,7 +13,7 @@
   <div class="wrap">
     <div class="card">
 
-      <!-- טופ־בר יוניפייד -->
+      <!-- טופ־בר (כמו בענף 1) -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
@@ -29,7 +29,7 @@
       <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- תחתית -->
+      <!-- תחתית: חזרה + שאלות (FAQ) -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -52,25 +52,25 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
-    /* ===== קישורים ותלויות (נשתמש בקונפיג אם קיים, אחרת fallback) ===== */
+    /* ===== קישורים מתצורה (עם fallback) ===== */
     const REG_LINK   = (window.Chat?.cfg?.REG_LINK)   || 'https://wordpress-1184560-4777160.cloudwaysapps.com/';
     const TERMS_LINK = (window.Chat?.cfg?.TERMS_LINK) || 'https://forms.gle/orUvvLrrSuCGAPVVA';
 
-    /* ===== זרימה ===== */
+    /* ===== התחלה ===== */
     function start(){
-      setHelpContext('plan');    // עזרה כללית על מסלולים/מנוי
+      setHelpContext('plan');
       Chat.clear(); Chat.push(start);
 
       Chat.typingThen(
         '<strong>היי! מנוי חודשי במרכז בראונשטיין 👨‍🚀</strong><br>' +
-        'כמה פרטים מהירים כדי שנוכל לחזור אלייך, ואז נסביר איך זה עובד.',
-        700, true
+        'נעבור יחד כמה שלבים קצרים ונחזור אליך להשלמת ההצטרפות.',
+        650, true
       );
 
-      setTimeout(stepLead, 900);
+      setTimeout(stepLead, 850);
     }
 
-    // שלב 1 — פרטי קשר (שם מלא, טלפון, הערות רשות)
+    /* ===== שלב 1: פרטי קשר ===== */
     function stepLead(){
       setHelpContext('contact');
       Chat.clear(); Chat.push(stepLead);
@@ -78,15 +78,9 @@
       const anchor = Chat.botHTML('<span class="muted">פרטי קשר</span>');
       Chat.scrollStartOf(anchor);
 
-      const fullName = Chat.inputRow('שם מלא', {
-        id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name'
-      });
-      const phone = Chat.inputRow('טלפון לחזרה', {
-        type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel'
-      });
-      const notes = Chat.inputRow('הערות (לא חובה)', {
-        textarea:true, id:'lead_notes', placeholder:'כל דבר שחשוב שנדע'
-      });
+      const fullName = Chat.inputRow('שם מלא', { id:'fullName', placeholder:'לדוגמה: דנה לוי', required:true, autocomplete:'name' });
+      const phone    = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
+      const notes    = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'lead_notes', placeholder:'כל דבר שחשוב שנדע' });
 
       const next = Chat.button('המשך', async ()=>{
         Chat.userBubble('המשך');
@@ -97,13 +91,17 @@
         if(!fn){  Chat.botText('יש להזין שם מלא ✏️').classList.add('err'); fullName.focus(); return; }
         if(!Chat.validILPhone(tel)){ Chat.botText('מספר טלפון לא תקין 📞').classList.add('err'); phone.focus(); return; }
 
+        Chat.State.data.fullName = fn;
+        Chat.State.data.phone    = tel;
+        Chat.State.data.message  = (notes.value||'').trim();
+
         const stop = Chat.showProcessing('שומר למזכירות…');
 
         const ok = await Chat.sendLeadToSheet({
           path: 'מנוי חודשי – התעניינות',
           fullName: fn,
           phone: tel,
-          message: (notes.value||'').trim(),
+          message: Chat.State.data.message,
           extraNotes: '',
           cta: 'התעניינות במנוי חודשי',
           source: 'יוסטון – אתר',
@@ -121,13 +119,12 @@
         }
       }, 'btn primary');
 
-      // הפעלה מחדש של הכפתור אחרי תיקון קלט
-      ;[fullName, phone, notes].forEach(el=>{
+      [fullName, phone, notes].forEach(el=>{
         el.addEventListener('input', ()=>{ next.disabled = false; });
       });
     }
 
-    // שלב 2 — איך עובדים
+    /* ===== שלב 2: איך עובדים ===== */
     function stepAbout(){
       setHelpContext('plan');
       Chat.clear(); Chat.push(stepAbout);
@@ -136,67 +133,340 @@
         '<strong>איך זה עובד אצלנו?</strong><br>' +
         '• כל שיעור נמשך <strong>50 דקות</strong> ומתחיל בשעה עגולה.<br>' +
         '• משלבים חיזוק חומר כיתתי, שיעורי בית, הכנה למבחנים ובניית ביטחון.<br>' +
-        '• אפשר להתקדם בקצב האישי, ואנו מתאימים את הרמה לכל תלמיד/ה 🎯'
+        '• התאמה אישית לכל תלמיד/ה, ובניית שגרה יציבה לאורך החודש 🎯'
       );
 
-      Chat.button('המשך', stepPrices, 'btn primary');
+      Chat.button('המשך', stepChoosePlan, 'btn primary');
       Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
     }
 
-    // שלב 3 — מסלולים ומחירים (נמשך מהקונפיג אם קיים)
-    function stepPrices(){
+    /* ===== שלב 3: בחירת מסלול מועדף (אופציונלי אך מומלץ) ===== */
+    function stepChoosePlan(){
       setHelpContext('plan');
-      Chat.clear(); Chat.push(stepPrices);
+      Chat.clear(); Chat.push(stepChoosePlan);
 
       const P = Chat.cfg?.PRICES || { group: 295, triple: 385, private: 0 };
+      const H = Chat.cfg?.PLAN_HE || { group:'קבוצה', triple:'טריפל', private:'פרטי' };
 
-      Chat.botHTML(
-        '<strong>מסלולים ומחירים</strong><br>' +
-        `• קבוצתי (עד 5 תלמידים): <strong>${P.group} ₪ / חודש</strong><br>` +
-        `• טריפל (עד 3 תלמידים): <strong>${P.triple} ₪ / חודש</strong><br><br>` +
-        'רוצה לטעום לפני שמתחייבים?<br>' +
-        '<strong>שיעור חד־פעמי</strong> על בסיס מקום פנוי: 80 ₪ (קבוצתי) / 100 ₪ (טריפל).'
-      );
+      Chat.typingThen('<strong>איזה מסלול מועדף עליך?</strong> 👇', 500, true);
 
-      Chat.button('המשך', stepRegister, 'btn primary');
-      Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
+      setTimeout(()=>{
+        Chat.button(`${H.group} – עד 5 תלמידים – ${P.group}₪`, ()=>{
+          Chat.userBubble(`${H.group} – ${P.group}₪`);
+          Chat.State.data.planType='group';
+          Chat.State.data.price=P.group;
+          stepAvailability();
+        }, 'btn primary');
+
+        Chat.button(`${H.triple} – עד 3 תלמידים – ${P.triple}₪`, ()=>{
+          Chat.userBubble(`${H.triple} – ${P.triple}₪`);
+          Chat.State.data.planType='triple';
+          Chat.State.data.price=P.triple;
+          stepAvailability();
+        });
+
+        Chat.button(`${H.private} – ${P.private}₪`, ()=>{
+          Chat.userBubble(`${H.private} – ${P.private}₪`);
+          Chat.State.data.planType='private';
+          Chat.State.data.price=P.private;
+          stepAvailability();
+        });
+
+        // אפשר גם "לא בטוח/ה עדיין"
+        Chat.button('לא בטוח/ה עדיין', ()=>{
+          Chat.userBubble('לא בטוח/ה עדיין');
+          Chat.State.data.planType = undefined;
+          Chat.State.data.price    = undefined;
+          stepAvailability();
+        });
+
+        // סיכום קטן
+        const s = document.createElement('div'); s.className='summary';
+        s.appendChild(Chat.chip('מנוי חודשי'));
+        document.getElementById('area').appendChild(s);
+      }, 700);
     }
 
-    // שלב 4 — הרשמה / חלופות
-    function stepRegister(){
-      setHelpContext('review');   // ב‑FAQ יש גם פרק Review/הרשמה
-      Chat.clear(); Chat.push(stepRegister);
+    /* ===== שלב 4: זמינות – זהה לאופן של ענף 1 ===== */
+    function stepAvailability(){
+      setHelpContext('availability');
+      Chat.clear(); Chat.push(stepAvailability);
 
-      Chat.botText('להצטרפות מהירה למנוי – פתחי את טופס הרישום (למילוי קצר):');
+      Chat.typingThen(
+        '<strong>שעות פתיחה</strong><br>' +
+        '<span class="muted">א׳–ה׳ 14:00–21:00.</span><br><br>' +
+        '<strong>בחירת ימים ושעות מועדפים</strong> 👨‍🚀',
+        650, true
+      );
 
-      Chat.button('פתח/י את טופס הרישום 📝', ()=>{
-        Chat.userBubble('פתח/י את טופס הרישום');
-        window.open(REG_LINK, '_blank', 'noopener,noreferrer');
-      }, 'btn primary');
+      setTimeout(()=>{
+        const area = document.getElementById('area');
 
-      Chat.button('אשלים/ה את הטופס מאוחר יותר ⏳', ()=>{
-        Chat.userBubble('אשלים/ה מאוחר יותר');
-        Chat.typingThen('סגור 🙂 שמרתי את הפרטים ונחזור אלייך בהקדם.', 650, true);
-      });
+        const pickerWrap = document.createElement('div');
+        pickerWrap.className = 'bubble bot wide';
 
-      Chat.button('במקום זאת: שיעור חד־פעמי עכשיו', ()=>{
-        Chat.userBubble('שיעור חד־פעמי');
-        setTimeout(()=> location.href='./branch1.html', 200);
-      });
+        const grid = document.createElement('div');
+        grid.className = 'slots-grid';
 
-      // קישור לתקנון – אופציונלי
-      const s = document.createElement('div'); s.className='summary';
-      s.appendChild(Chat.chip('קישור לתקנון'));
-      const a = document.createElement('a');
-      a.href = TERMS_LINK; a.target='_blank'; a.rel='noopener';
-      a.textContent = 'תנאי התקנון';
-      a.style.marginInlineStart = '6px';
-      const wrap = document.createElement('div'); wrap.className='bubble bot'; wrap.appendChild(a);
-      document.getElementById('area').appendChild(s);
-      document.getElementById('area').appendChild(wrap);
+        const rowsWrap = document.createElement('div');
+        rowsWrap.id = 'rowsWrap';
+        rowsWrap.className = 'slots-grid';
+
+        const preview = document.createElement('div');
+        preview.className = 'slot-preview';
+
+        const TIMES = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+        const DAYS  = ['','א','ב','ג','ד','ה'];
+        const toNum = s => parseInt(String(s||'').replace(':',''),10) || 0;
+
+        const makeSelect = (placeholder, values)=>{
+          const sel = document.createElement('select');
+          sel.className = 'input';
+          values.forEach(v=>{
+            const o = document.createElement('option');
+            o.value = v;
+            o.textContent = v ? (placeholder ? `${placeholder} ${v}` : v) : placeholder || 'בחר/י...';
+            sel.appendChild(o);
+          });
+          return sel;
+        };
+
+        const lastRowFilled = ()=>{
+          const rows = Array.from(rowsWrap.children);
+          if (!rows.length) return false;
+          const last = rows[rows.length - 1];
+          const [dSel, fSel, tSel] = last.querySelectorAll('select');
+          const d = dSel.value, f = fSel.value, t = tSel.value;
+          if(!(d && f && t)) return false;
+          return toNum(f) < toNum(t);
+        };
+
+        const refreshPreview = ()=>{
+          preview.innerHTML = '';
+          const rows = Array.from(rowsWrap.children);
+          const chosen = [];
+          for(const r of rows){
+            const [dSel, fSel, tSel] = r.querySelectorAll('select');
+            const d = dSel.value, f = fSel.value, t = tSel.value;
+            if(d && f && t && toNum(f) < toNum(t)){ chosen.push({d,f,t,row:r}); }
+          }
+          chosen.forEach(c => {
+            const chip = Chat.chip(`יום ${c.d} ${c.f}–${c.t}`);
+            chip.classList.add('emph');
+            const x = document.createElement('button');
+            x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד');
+            x.textContent='✖';
+            x.addEventListener('click', ()=>{
+              c.row.remove();
+              addBtn.disabled = !lastRowFilled();
+              refreshPreview();
+            });
+            chip.appendChild(x);
+            preview.appendChild(chip);
+          });
+        };
+
+        const wireRow = (row, btnContinueRef)=>{
+          const inputs = row.querySelectorAll('select');
+          inputs.forEach(sel=>{
+            sel.addEventListener('change', ()=>{
+              const [ , fSel, tSel] = row.querySelectorAll('select');
+              const f = fSel.value, t = tSel.value;
+
+              const errPrev = row.querySelector('.row-error');
+              if (errPrev) errPrev.remove();
+
+              if (f && t && toNum(f) >= toNum(t)){
+                const err = document.createElement('div');
+                err.className = 'row-error';
+                err.textContent = '״עד שעה״ חייב להיות אחרי ״משעה״';
+                row.appendChild(err);
+              }
+
+              addBtn.disabled = !lastRowFilled();
+              btnContinueRef.disabled = false;
+              refreshPreview();
+            });
+          });
+        };
+
+        const addRow = (force=false, btnContinueRef)=>{
+          if (!force && !lastRowFilled()){
+            Chat.botText('ניתן להוסיף מועד נוסף רק לאחר שמילאת את המועד הקודם.').classList.add('err');
+            return;
+          }
+          const row = document.createElement('div');
+          row.className = 'slot-row';
+
+          const daySel  = makeSelect('בחר/י יום', DAYS);
+          const fromSel = makeSelect('משעה', TIMES);
+          const toSel   = makeSelect('עד שעה', TIMES);
+
+          row.append(daySel, fromSel, toSel);
+          rowsWrap.appendChild(row);
+          wireRow(row, btnContinue);
+          addBtn.disabled = true;
+          refreshPreview();
+          area.scrollTop = area.scrollHeight;
+          return row;
+        };
+
+        const title = document.createElement('div');
+        title.className='muted';
+        title.textContent = 'ניתן להוסיף יותר ממועד אחד';
+
+        const addBtn = document.createElement('button');
+        addBtn.className='btn';
+        addBtn.textContent = '+ הוספת מועד נוסף';
+        addBtn.disabled = true;
+
+        const actions = document.createElement('div');
+        actions.className = 'slots-actions';
+
+        const btnContinue = document.createElement('button');
+        btnContinue.className = 'btn primary';
+        btnContinue.textContent = 'המשך';
+        btnContinue.addEventListener('click', ()=>{
+          Chat.userBubble('המשך');
+
+          const rows = Array.from(rowsWrap.children);
+          const chosen = [];
+          for(const r of rows){
+            const [daySel, fromSel, toSel] = r.querySelectorAll('select');
+            const d = daySel.value, f = fromSel.value, t = toSel.value;
+            if(d && f && t){
+              if (toNum(f) >= toNum(t)){
+                Chat.botText(`במועד יום ${d}: "עד שעה" חייב להיות אחרי "משעה" ⏱️`).classList.add('err');
+                return;
+              }
+              chosen.push(`יום ${d} ${f}–${t}`);
+            }
+          }
+          if (!chosen.length){
+            Chat.botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err');
+            return;
+          }
+          Chat.State.data.availability = chosen.join('; ');
+          stepNotes();
+        });
+
+        addBtn.onclick = ()=> addRow(false, btnContinue);
+
+        grid.append(title, rowsWrap, addBtn, preview);
+        pickerWrap.appendChild(grid);
+
+        actions.appendChild(btnContinue);
+        pickerWrap.appendChild(actions);
+
+        area.appendChild(pickerWrap);
+
+        addRow(true, btnContinue);
+      }, 900);
+    }
+
+    /* ===== שלב 5: הערות (רשות) ===== */
+    function stepNotes(){
+      setHelpContext('notes');
+      Chat.clear(); Chat.push(stepNotes);
+
+      Chat.typingThen(
+        '<strong>הערות למזכירות (לא חובה)</strong><br>' +
+        '<span class="muted">אפשר לציין העדפה למורה, רמה, או משהו חשוב לתיאום.</span>',
+        600, true
+      );
+
+      setTimeout(()=>{
+        const message = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'message', placeholder:'לדוגמה: עדיפות לערב / חיזוק בחומר מסוים' });
+
+        const btnNext = Chat.button('המשך', ()=>{
+          Chat.userBubble('המשך');
+          Chat.State.data.message = (message.value||'').trim();
+          stepReview();
+        }, 'btn primary');
+
+        message.addEventListener('input', ()=>{ btnNext.disabled = false; });
+      }, 700);
+    }
+
+    /* ===== שלב 6: סיכום ושליחה ===== */
+    function stepReview(){
+      setHelpContext('review');
+      Chat.clear(); Chat.push(stepReview);
+
+      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
+      Chat.scrollStartOf(h);
+
+      const card = document.createElement('div'); card.className='bubble bot';
+
+      const chips = document.createElement('div'); chips.className='summary';
+      chips.appendChild(Chat.chip('מנוי חודשי'));
+      if (Chat.State.data.planType){
+        const H = Chat.cfg?.PLAN_HE || { group:'קבוצה', triple:'טריפל', private:'פרטי' };
+        const price = Chat.State.data.price ? ` (${Chat.State.data.price}₪)` : '';
+        chips.appendChild(Chat.chip(`מסלול: ${H[Chat.State.data.planType]}${price}`));
+      }
+      if (Chat.State.data.availability) chips.appendChild(Chat.chip('נבחרו מועדים'));
+      card.appendChild(chips);
+
+      const d = Chat.State.data;
+      const details = document.createElement('div'); details.style.lineHeight='1.9';
+      const addLine = (label, value)=>{
+        const line=document.createElement('div');
+        const b=document.createElement('strong'); b.textContent=label+' ';
+        const span=document.createElement('span'); span.textContent=value || '';
+        line.append(b, span); details.appendChild(line);
+      };
+      addLine('שם מלא:', d.fullName);
+      addLine('טלפון לחזרה:', d.phone);
+      if (d.planType){
+        const H = Chat.cfg?.PLAN_HE || { group:'קבוצה', triple:'טריפל', private:'פרטי' };
+        addLine('מסלול מועדף:', `${H[d.planType]}${d.price?` – ${d.price}₪`:''}`);
+      }
+      addLine('ימים ושעות מועדפים:', d.availability || '—');
+      if (d.message) addLine('הערות למזכירות:', d.message);
+
+      card.appendChild(details);
+      document.getElementById('area').appendChild(card);
       (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
 
-      Chat.button('חזרה', ()=>Chat.goBack?.() || history.back());
+      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
+        const stop = Chat.showProcessing();
+
+        const H = Chat.cfg?.PLAN_HE || { group:'קבוצה', triple:'טריפל', private:'פרטי' };
+        const ok = await Chat.sendLeadToSheet({
+          path: 'מנוי חודשי – התעניינות',
+          planType: d.planType ? H[d.planType] : '',
+          price: d.price ? `${d.price}₪` : '',
+          subject: '',               // לא רלוונטי כאן
+          grade: '',                 // לא רלוונטי כאן
+          units: '',                 // לא רלוונטי כאן
+          availability: d.availability || '',
+          message: d.message || '',
+          extraNotes: '',
+          fullName: d.fullName || '',
+          phone: d.phone || '',
+          cta: 'התעניינות במנוי חודשי',
+          source: 'יוסטון – אתר',
+          status: 'לטיפול',
+          createdAt: new Date().toISOString()
+        });
+
+        stop();
+        Chat.clear();
+
+        if(ok){
+          Chat.botText('המידע נשלח למזכירות ✅ ניצור קשר בהקדם להשלמת ההצטרפות 👨‍🚀').classList.add('ok');
+          Chat.button('פתח/י את טופס הרישום 📝', ()=>{
+            Chat.userBubble('פתחתי את טופס הרישום');
+            window.open(REG_LINK, '_blank', 'noopener,noreferrer');
+          }, 'btn primary');
+        }else{
+          Chat.botText('לא הצלחנו לשמור את הבקשה ❌ אפשר לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+
+        const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
+        home.focus();
+      }, 'btn primary');
     }
 
     // הפעלה
