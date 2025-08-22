@@ -5,122 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מרכז העזרה (FAQ) – שיעור על בסיס מקום פנוי</title>
   <meta name="theme-color" content="#5b7cfa" />
+
+  <!-- עיצוב גלובלי בהיר ואחיד לכל הדפים -->
+  <link rel="stylesheet" href="styles.light.css?v=1" />
+
+  <!-- מעט עיצוב ייעודי ל־FAQ (רק מה שלא קיים בגלובלי) -->
   <style>
-    :root{
-      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1226cc; --border:#243043;
-      --primary:#5b7cfa; --primary-2:#7c5bfa; --text:#e5e7eb; --muted:#9aa6b2;
-      --chip-bg:#18233a; --chip-br:#31425d;
-      --radius:16px; --radius-sm:12px; --shadow:0 10px 30px rgba(0,0,0,.35);
-      --section-br:#2a3a57; --section-bg:#0f172acc; --highlight:#ffe8a3; --highlight-br:#f7c948;
-    }
-    body{
-      margin:0;
-      background: radial-gradient(1200px 600px at 100% -10%, #1a2a6c 0%, transparent 60%),
-                  radial-gradient(900px 500px at -10% 110%, #2a4858 0%, transparent 60%),
-                  linear-gradient(140deg, var(--bg1), var(--bg2));
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", "Noto Sans Hebrew", "Arimo", Arial, sans-serif;
-    }
-    .wrap{ max-width: 1100px; margin: 24px auto 40px; padding: 0 16px; }
+    .wrap{ max-width: 1100px }
+    .brand{ display:flex; align-items:center; gap:10px }
+    .logo{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center }
 
-    /* טופ-בר */
-    .topbar{
-      position: sticky; top:0; z-index: 5;
-      display:flex; gap:8px; align-items:center; justify-content:space-between;
-      padding:10px 12px;
-      background: linear-gradient(90deg, #0b1226 0%, #0f1833 100%);
-      border-bottom:1px solid var(--border);
-    }
-    .brand{ display:flex; align-items:center; gap:10px; }
-    .logo{
-      width:34px; height:34px; border-radius:10px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color:#0b1020; font-weight:800; display:grid; place-items:center;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
-    }
-    .title{ font-weight:700; }
+    /* פס עליון משתמש במחלקות הגלובליות .topbar ו-.btn */
+    .title{ font-weight:700 }
 
-    /* כפתורים */
-    .btn{
-      border-radius: 999px; border:1px solid var(--chip-br);
-      background:#111a31; color:var(--text);
-      padding:8px 14px; cursor:pointer;
-      transition: transform .06s ease, border-color .2s ease, filter .2s ease;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: var(--primary); }
-    .btn.primary{ background: linear-gradient(135deg, var(--primary), var(--primary-2)); border:none; color:#0b1020; font-weight:700; }
-    .btn.ghost{ background: transparent; }
-    .btn-link{
-      display:inline-flex; align-items:center; gap:8px;
-      text-decoration:none; border:1px solid var(--chip-br);
-      padding:10px 14px; border-radius:12px; background:#111a31; color:var(--text);
-    }
-    .btn-link:hover{ border-color: var(--primary); transform: translateY(-1px); }
-
-    /* חיפוש + טאבים */
-    .search-bar{ margin: 18px 0 8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    /* אזור חיפוש */
+    .search-bar{ margin: 18px 0 8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
     .search{
       flex:1 1 320px; min-width: 220px;
-      background:#0b142a; color:var(--text); border:1px solid var(--chip-br);
-      border-radius: 999px; padding:10px 14px; outline: none;
+      border-radius: 999px;
+      padding:10px 14px; outline: none;
+      border:1px solid var(--border); background:#ffffff; color:var(--text);
     }
-    .hint{ color:var(--muted); font-size:.9rem; }
+    .hint{ color:var(--muted); font-size:.9rem }
 
-    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0 16px; }
+    /* טאבים */
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0 16px }
     .tab{
-      border-radius: 999px; border:1px solid var(--chip-br); background:#101a33; color:var(--text);
+      border-radius: 999px; border:1px solid var(--border); background:#ffffff; color:var(--text);
       padding:6px 12px; cursor:pointer; user-select:none; font-size:.95rem;
+      transition: border-color var(--speed), transform var(--speed), box-shadow var(--speed);
+      box-shadow: 0 4px 10px rgba(15,23,42,0.07);
     }
-    .tab.active{ background: linear-gradient(135deg, var(--primary), var(--primary-2)); color:#0b1020; border:none; font-weight:700; }
+    .tab:hover{ transform: translateY(-1px); border-color: var(--primary) }
+    .tab.active{
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color:#0b1020; border:none; font-weight:700;
+      box-shadow: 0 10px 20px rgba(91,124,250,.25);
+    }
 
     /* כרטיסי פרקים */
     .section{
-      background: var(--section-bg);
-      border:1px solid var(--section-br);
+      background: var(--glass);
+      border:1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       margin-top: 16px;
       overflow: hidden;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
     }
     .section-header{
       display:flex; align-items:center; justify-content:space-between;
-      padding:14px 16px; border-bottom:1px solid var(--section-br); background: rgba(91,124,250,.10);
+      padding:14px 16px; border-bottom:1px solid var(--border);
+      background: linear-gradient(135deg, rgba(91,124,250,.14), rgba(124,91,250,.10));
     }
-    .section-title{ font-weight:800; }
-    .section-body{ padding: 10px 12px; display:grid; gap:10px; }
+    .section-title{ font-weight:800 }
+    .section-body{ padding: 10px 12px; display:grid; gap:10px }
 
     /* אקורדיון */
-    .faq-item{ border:1px solid var(--chip-br); border-radius:12px; overflow:hidden; background:#0f172acc; }
-    .faq-q{
-      width:100%; text-align:inherit; padding:12px 14px; background:transparent; color:var(--text); border:none; font-weight:700;
-      display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    .faq-item{
+      border:1px solid var(--border);
+      border-radius:12px; overflow:hidden; background:#ffffff;
+      box-shadow: 0 6px 14px rgba(15,23,42,0.06);
     }
-    .faq-q:hover{ background:#0f1b36; }
-    .faq-a{ padding:0 14px 12px 14px; color:var(--muted); display:none; line-height:1.65; }
-    .faq-item.open .faq-a{ display:block; }
-    .faq-item.open .faq-q{ border-bottom:1px solid var(--chip-br); }
+    .faq-q{
+      width:100%; text-align:inherit; padding:12px 14px; background:transparent; color:var(--text);
+      border:none; font-weight:700; display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    }
+    .faq-q:hover{ background: rgba(0,0,0,0.03) }
+    .faq-a{ padding:0 14px 12px 14px; color:var(--muted); display:none; line-height:1.65 }
+    .faq-item.open .faq-a{ display:block }
+    .faq-item.open .faq-q{ border-bottom:1px solid var(--border) }
 
     /* היילייט לפרק פתוח מהקשר */
     .section.highlight{
-      box-shadow: 0 0 0 2px var(--highlight-br), 0 10px 30px rgba(0,0,0,.35);
-      outline: 2px solid var(--highlight-br);
+      box-shadow: 0 0 0 2px rgba(247,201,72,.9), 0 16px 40px rgba(0,0,0,.12);
+      outline: 2px solid rgba(247,201,72,.9);
       scroll-margin-top: 84px;
     }
 
-    .links-grid{ display:flex; gap:8px; flex-wrap:wrap; }
-    footer{ text-align:center; color:var(--muted); font-size:.9rem; padding: 22px 0 10px; }
-    a, a:visited{ color: #9fb6ff; }
+    .links-grid{ display:flex; gap:8px; flex-wrap:wrap }
+    .btn-link{
+      display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+      border:1px solid var(--border); padding:10px 14px; border-radius:12px; background:#ffffff; color:var(--text);
+      transition: transform var(--speed), border-color var(--speed), box-shadow var(--speed);
+      box-shadow: 0 4px 10px rgba(15,23,42,0.07);
+    }
+    .btn-link:hover{ transform: translateY(-1px); border-color: var(--primary); box-shadow: 0 6px 14px rgba(15,23,42,0.10) }
+
+    footer{ text-align:center; color:var(--muted); font-size:.9rem; padding: 22px 0 10px }
+    a, a:visited{ color: var(--primary) }
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="brand">
-      <div class="logo">HB</div>
+      <div class="logo" style="background:linear-gradient(135deg,var(--primary),var(--primary-2));box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);color:#0b1020;font-weight:800;">HB</div>
       <div class="title">מרכז העזרה (FAQ)</div>
     </div>
     <div style="display:flex; gap:8px;">
       <button class="btn ghost" onclick="history.back()">חזרה</button>
-      <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      <button class="btn" onclick="location.href='index.html'">לתפריט ראשי</button>
     </div>
   </div>
 
@@ -246,10 +231,15 @@
       q.addEventListener('click', ()=>{
         const isOpen = wrap.classList.toggle('open');
         q.setAttribute('aria-expanded', String(isOpen));
-        // אקורדיון בסגנון "אחד פתוח בכל פעם" בתוך אותו פרק:
+        // אחד פתוח בכל פעם בתוך אותו פרק:
         if(isOpen){
           const siblings = wrap.parentElement.querySelectorAll('.faq-item');
-          siblings.forEach(s=>{ if(s!==wrap) s.classList.remove('open'); s.querySelector('.faq-q')?.setAttribute('aria-expanded','false'); });
+          siblings.forEach(s=>{
+            if(s!==wrap){
+              s.classList.remove('open');
+              s.querySelector('.faq-q')?.setAttribute('aria-expanded','false');
+            }
+          });
         }
       });
 
@@ -276,7 +266,7 @@
 
         const head = document.createElement('div'); head.className='section-header';
         head.innerHTML = `<div class="section-title">${sec.title}</div>
-                          <div class="muted" style="color:var(--muted); font-size:.9rem;">${sec.items.length} שאלות</div>`;
+                          <div class="muted" style="font-size:.9rem;">${sec.items.length} שאלות</div>`;
         const body = document.createElement('div'); body.className='section-body';
 
         if(key === 'links'){
@@ -311,8 +301,13 @@
           const show = !term || q.includes(term) || a.includes(term);
           item.style.display = show ? '' : 'none';
           anyVisible = anyVisible || show;
-          if(term && show) item.classList.add('open'), item.querySelector('.faq-q')?.setAttribute('aria-expanded','true');
-          else item.classList.remove('open'), item.querySelector('.faq-q')?.setAttribute('aria-expanded','false');
+          if(term && show){
+            item.classList.add('open');
+            item.querySelector('.faq-q')?.setAttribute('aria-expanded','true');
+          }else{
+            item.classList.remove('open');
+            item.querySelector('.faq-q')?.setAttribute('aria-expanded','false');
+          }
         });
         sec.style.display = anyVisible ? '' : 'none';
       });
@@ -320,16 +315,14 @@
     searchEl.addEventListener('input', applySearch);
 
     /* מיקוד לפי הקשר (?ctx=) */
-    function getCtx(){
-      const m = new URLSearchParams(location.search).get('ctx');
-      return ORDER.includes(m) ? m : null;
-    }
+    const ORDER_MAP = new Map(ORDER.map((k,i)=>[k,i]));
     function focusContext(){
-      const ctx = getCtx();
+      const ctx = new URLSearchParams(location.search).get('ctx');
+      const valid = ORDER_MAP.has(ctx) ? ctx : null;
       const allTabs = [...document.querySelectorAll('.tab')];
-      if(ctx){
-        const targetSec = document.getElementById('sec-'+ctx);
-        const targetTab = allTabs[ORDER.indexOf(ctx)];
+      if(valid){
+        const targetSec = document.getElementById('sec-'+valid);
+        const targetTab = allTabs[ORDER_MAP.get(valid)];
         if(targetTab){ allTabs.forEach(t=>t.classList.remove('active')); targetTab.classList.add('active'); }
         if(targetSec){
           targetSec.classList.add('highlight');
@@ -341,7 +334,7 @@
       }
     }
 
-    /* אתחול */
+    // אתחול
     build();
     focusContext();
   </script>
