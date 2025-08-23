@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מנויה קיימת – פעולות</title>
 
+  <!-- עיצוב כללי -->
+  <link rel="stylesheet" href="../styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
+
+  <style>
+    /* גלילה אמיתית לאזור השיחה (גם אם כאן זה רק תפריט) */
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+
+    /* כפתורים נייטרליים (ללא עדיפות צבעונית) */
+    .btn.primary {
+      background: var(--btn-bg, #f3f4f6) !important;
+      color: var(--btn-fg, #111827) !important;
+      border-color: var(--btn-border, #e5e7eb) !important;
+    }
+    .btn.next-arrow::after{ content:""; } /* ביטול חץ */
+    .menu { display:flex; flex-direction:column; gap:10px; }
+    .menu .btn { width:100%; text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <!-- טופ־בר -->
+      <div class="topbar">
+        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+      </div>
+
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">מנויה קיימת – פעולות</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן (כאן רק תפריט כפתורים) -->
+      <div class="body chat-body" id="area" role="region" aria-label="תפריט פעולות">
+        <div class="menu">
+          <button class="btn" onclick="location.href='reschedule.html'">שינוי יום/שעה קבועה של שיעור</button>
+          <button class="btn" onclick="location.href='cancel.html'">ביטול שיעור עתידי</button>
+          <button class="btn" onclick="location.href='billing.html'">עדכון פרטי תשלום</button>
+          <button class="btn" onclick="location.href='message.html'">שליחת הודעה למזכירות</button>
+          <button class="btn" onclick="location.href='boost.html'">אני רוצה שיעור תגבור בנוסף למנוי</button>
+          <button class="btn" onclick="location.href='makeup.html'">אני רוצה להשלים שיעור</button>
+        </div>
+      </div>
+
+      <!-- תחתית -->
+      <div class="footer">
+        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        <span class="spacer"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- קבצים משותפים (קיימים) -->
+  <script src="../js/config.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=3"></script>
+
+  <script>
+    // שמירה על קישור ה‑FAQ קונטקסטואלי (אם תרצה בעתיד פרמטרים)
+    (function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base = '../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    })('branch3-home');
+
+    // backBtn כאן לא ממש נחוץ בתפריט, אבל נשמור תאימות
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../index.html');
+  </script>
+</body>
+</html>
