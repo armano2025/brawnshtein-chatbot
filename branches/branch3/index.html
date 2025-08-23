@@ -5,23 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מנויה קיימת – פעולות</title>
 
-  <!-- עיצוב כללי -->
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
   <style>
-    /* גלילה אמיתית לאזור השיחה (גם אם כאן זה רק תפריט) */
+    :root{
+      --radius:16px;
+      --gap:14px;
+      --card-bg: rgba(255,255,255,0.75);
+      --card-brd:#e6eaf3;
+      --shadow: 0 8px 24px rgba(15,23,42,0.08);
+      --shadow-hover: 0 12px 36px rgba(15,23,42,0.12);
+      --soft-1:#eef6ff; --soft-1-b:#cfe3ff;   /* כחול עדין */
+      --soft-2:#ecfdf5; --soft-2-b:#c7f2e1;   /* ירוק עדין */
+      --soft-3:#fff1f2; --soft-3-b:#ffd7dc;   /* ורוד עדין */
+      --soft-4:#f5f3ff; --soft-4-b:#e3ddff;   /* לילך עדין */
+      --text: #0f172a;
+      --muted:#6b7280;
+      --gradient: radial-gradient(900px 520px at 100% -10%, #8ea5ff33, transparent 60%),
+                  radial-gradient(700px 460px at 0% 100%, #8bffd933, transparent 60%);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --card-bg: rgba(18,22,33,0.6);
+        --card-brd:#2a3142;
+        --shadow: 0 6px 18px rgba(0,0,0,0.35);
+        --shadow-hover: 0 10px 28px rgba(0,0,0,0.45);
+        --text:#e5e7eb; --muted:#9ca3af;
+        --soft-1:#0b2447; --soft-1-b:#1b3a6c;
+        --soft-2:#0f2f27; --soft-2-b:#174538;
+        --soft-3:#3a1820; --soft-3-b:#5b2230;
+        --soft-4:#241a3d; --soft-4-b:#3a2b61;
+      }
+    }
+
+    /* רקע עוגת-שכבות מודרני */
+    body{
+      font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
+        var(--gradient);
+      background-attachment: fixed;
+    }
+    @media (prefers-color-scheme: dark){
+      body{ background:
+        linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%),
+        var(--gradient);
+      }
+    }
+
+    /* מעטפת הכרטיס הראשי */
+    .wrap{ padding: clamp(12px, 2.5vw, 24px) }
+    .card{
+      border:1px solid var(--card-brd);
+      border-radius: clamp(16px, 2vw, 22px);
+      box-shadow: var(--shadow);
+      backdrop-filter: saturate(140%) blur(8px);
+      background: var(--card-bg);
+      overflow:hidden;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    /* טופ-בר */
+    .topbar{
+      padding: clamp(10px, 1.8vw, 14px);
+      border-bottom:1px solid var(--card-brd);
+      display:flex; gap:8px; align-items:center;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.02));
+    }
+
+    /* כותרת */
+    .head{
+      padding: clamp(16px, 2.4vw, 24px);
+      border-bottom:1px solid var(--card-brd);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+    .brand{ display:flex; align-items:center; gap:12px }
+    .logo{
+      width:40px; height:40px; border-radius:12px;
+      display:grid; place-items:center; font-weight:700;
+      background: linear-gradient(135deg,#5b7cfa, #6be6b3);
+      color:white; box-shadow: 0 6px 16px rgba(91,124,250,0.35);
+    }
+    .title{ font-weight:700; letter-spacing:0.2px }
+
+    /* גוף + אזור תוכן */
+    .body.chat-body{ padding: clamp(14px, 2.2vw, 20px); min-height: 40vh }
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
 
-    /* כפתורים נייטרליים (ללא עדיפות צבעונית) */
-    .btn.primary {
-      background: var(--btn-bg, #f3f4f6) !important;
-      color: var(--btn-fg, #111827) !important;
-      border-color: var(--btn-border, #e5e7eb) !important;
+    /* חלוקה לשני אזורים */
+    .section{
+      display:flex; flex-direction:column; gap:10px;
+      margin-block: clamp(12px, 2vw, 16px);
     }
-    .btn.next-arrow::after{ content:""; } /* ביטול חץ */
-    .menu { display:flex; flex-direction:column; gap:10px; }
-    .menu .btn { width:100%; text-align:center; }
+    .section-title{
+      display:flex; align-items:center; gap:8px;
+      font-weight:700; color:var(--muted); font-size: 0.98rem;
+      padding-inline:4px;
+    }
+    .choices{
+      display:grid; gap:12px; margin-top:8px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
+    @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
+
+    /* כפתורי-כרטיס */
+    .btn.choice{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; text-align:start;
+      font-weight:700;
+      padding: clamp(12px, 2vw, 16px) clamp(14px, 2.4vw, 18px);
+      border-radius: var(--radius);
+      border:1px solid transparent;
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease;
+      will-change: transform, box-shadow;
+      width:100%;
+    }
+    .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover) }
+    .btn.choice .emoji{ opacity:.95; font-size:20px; margin-inline-start:8px }
+
+    /* גוונים */
+    .soft-aqua{  background: var(--soft-1); border-color: var(--soft-1-b); color: var(--text) }
+    .soft-aqua:hover{  border-color: color-mix(in oklab, var(--soft-1-b), #5b7cfa 35%) }
+    .soft-mint{  background: var(--soft-2); border-color: var(--soft-2-b); color: var(--text) }
+    .soft-mint:hover{  border-color: color-mix(in oklab, var(--soft-2-b), #22c55e 35%) }
+    .soft-rose{  background: var(--soft-3); border-color: var(--soft-3-b); color: var(--text) }
+    .soft-rose:hover{  border-color: color-mix(in oklab, var(--soft-3-b), #ef4444 35%) }
+    .soft-lilac{ background: var(--soft-4); border-color: var(--soft-4-b); color: var(--text) }
+    .soft-lilac:hover{ border-color: color-mix(in oklab, var(--soft-4-b), #8b5cf6 35%) }
+
+    /* פוטר */
+    .footer{
+      padding: clamp(12px, 2vw, 16px);
+      border-top:1px solid var(--card-brd);
+      display:flex; align-items:center; gap:8px;
+    }
+    .footer .spacer{ flex:1 }
+
+    /* ניטרול עדיפויות צבעוניות ישנות */
+    .btn.primary{ background:#f3f4f6 !important; color:#111827 !important; border-color:#e5e7eb !important }
+    .btn.next-arrow::after{ content:""; }
+
+    /* נגישות תנועה */
+    @media (prefers-reduced-motion: reduce){
+      .btn.choice{ transition:none }
+      .btn.choice:hover{ transform:none }
+    }
   </style>
 </head>
 <body>
@@ -41,15 +174,44 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (כאן רק תפריט כפתורים) -->
-      <div class="body chat-body" id="area" role="region" aria-label="תפריט פעולות">
-        <div class="menu">
-          <button class="btn" onclick="location.href='reschedule.html'">שינוי יום/שעה קבועה של שיעור</button>
-          <button class="btn" onclick="location.href='cancel.html'">ביטול שיעור עתידי</button>
-          <button class="btn" onclick="location.href='billing.html'">עדכון פרטי תשלום</button>
-          <button class="btn" onclick="location.href='message.html'">שליחת הודעה למזכירות</button>
-          <button class="btn" onclick="location.href='boost.html'">אני רוצה שיעור תגבור בנוסף למנוי</button>
-          <button class="btn" onclick="location.href='makeup.html'">אני רוצה להשלים שיעור</button>
+      <!-- אזור התוכן (תפריט מחולק) -->
+      <div class="body chat-body" id="area" role="region" aria-label="תפריט פעולות למנויים">
+        <!-- אזור יומן -->
+        <div class="section">
+          <div class="section-title">📅 יומן</div>
+          <div class="choices" role="group" aria-label="פעולות יומן">
+            <button class="btn choice soft-aqua" id="btn-reschedule">
+              <span>שינוי יום/שעה קבועה של שיעור</span>
+              <span class="emoji">🔁</span>
+            </button>
+            <button class="btn choice soft-rose" id="btn-cancel">
+              <span>ביטול שיעור עתידי</span>
+              <span class="emoji">❌</span>
+            </button>
+            <button class="btn choice soft-lilac" id="btn-boost">
+              <span>אני רוצה שיעור תגבור בנוסף למנוי</span>
+              <span class="emoji">➕</span>
+            </button>
+            <button class="btn choice soft-aqua" id="btn-makeup">
+              <span>אני רוצה להשלים שיעור</span>
+              <span class="emoji">⏱️</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- אזור כספים -->
+        <div class="section">
+          <div class="section-title">💳 כספים</div>
+          <div class="choices" role="group" aria-label="פעולות כספיות">
+            <button class="btn choice soft-mint" id="btn-billing">
+              <span>עדכון פרטי תשלום</span>
+              <span class="emoji">💳</span>
+            </button>
+            <button class="btn choice soft-lilac" id="btn-message">
+              <span>שליחת הודעה למזכירות</span>
+              <span class="emoji">✉️</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -68,7 +230,7 @@
   <script src="../js/chat-helpers.js?v=3"></script>
 
   <script>
-    // שמירה על קישור ה‑FAQ קונטקסטואלי (אם תרצה בעתיד פרמטרים)
+    // קונטקסט ל-FAQ
     (function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
@@ -76,9 +238,17 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     })('branch3-home');
 
-    // backBtn כאן לא ממש נחוץ בתפריט, אבל נשמור תאימות
+    // backBtn – לתאימות
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../index.html');
+
+    // חיבורים לזרימות
+    document.getElementById('btn-reschedule').onclick = ()=> location.href='reschedule.html';
+    document.getElementById('btn-cancel').onclick     = ()=> location.href='cancel.html';
+    document.getElementById('btn-billing').onclick    = ()=> location.href='billing.html';
+    document.getElementById('btn-message').onclick    = ()=> location.href='message.html';
+    document.getElementById('btn-boost').onclick      = ()=> location.href='boost.html';
+    document.getElementById('btn-makeup').onclick     = ()=> location.href='makeup.html';
   </script>
 </body>
 </html>
