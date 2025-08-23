@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ביטול שיעור עתידי – מנויה קיימת</title>
 
+  <link rel="stylesheet" href="../styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
+
+  <style>
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+    .btn.primary {
+      background: var(--btn-bg, #f3f4f6) !important;
+      color: var(--btn-fg, #111827) !important;
+      border-color: var(--btn-border, #e5e7eb) !important;
+    }
+    .btn.next-arrow::after{ content:""; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <!-- טופ־בר -->
+      <div class="topbar">
+        <button class="btn" onclick="location.href='index.html'">לתפריט מנויה קיימת</button>
+      </div>
+
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">ביטול שיעור עתידי</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן -->
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- תחתית -->
+      <div class="footer">
+        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        <span class="spacer"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- קבצים משותפים (כבר קיימים) -->
+  <script src="../js/config.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=3"></script>
+
+  <!-- הזרימה הספציפית -->
+  <script src="./js/flows/cancel.js?v=1"></script>
+  <script>
+    // קישור חזרה בתוך הדף
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
+
+    // קונטקסט ל-FAQ
+    (function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base = '../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    })('branch3-cancel');
+
+    // הפעלה
+    CancelFlow.start();
+  </script>
+</body>
+</html>
