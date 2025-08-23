@@ -5,12 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יוסטון – צ׳טבוט</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
-  <!-- שדרוג תצוגת הכפתורים (פסטלים רכים + גריד) -->
   <style>
+    :root{
+      --radius:16px;
+      --gap:14px;
+      --card-bg: rgba(255,255,255,0.75);
+      --card-brd:#e6eaf3;
+      --shadow: 0 8px 24px rgba(15,23,42,0.08);
+      --shadow-hover: 0 12px 36px rgba(15,23,42,0.12);
+      --soft-1:#eef6ff; --soft-1-b:#cfe3ff;
+      --soft-2:#ecfdf5; --soft-2-b:#c7f2e1;
+      --soft-3:#fff1f2; --soft-3-b:#ffd7dc;
+      --soft-4:#f5f3ff; --soft-4-b:#e3ddff;
+      --text: #0f172a;
+      --muted:#6b7280;
+      --gradient: radial-gradient(1000px 600px at 100% -10%, #8ea5ff33, transparent 60%),
+                  radial-gradient(800px 500px at 0% 100%, #8bffd933, transparent 60%);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --card-bg: rgba(18,22,33,0.6);
+        --card-brd:#2a3142;
+        --shadow: 0 6px 18px rgba(0,0,0,0.35);
+        --shadow-hover: 0 10px 28px rgba(0,0,0,0.45);
+        --text:#e5e7eb; --muted:#9ca3af;
+        --soft-1:#0b2447; --soft-1-b:#1b3a6c;
+        --soft-2:#0f2f27; --soft-2-b:#174538;
+        --soft-3:#3a1820; --soft-3-b:#5b2230;
+        --soft-4:#241a3d; --soft-4-b:#3a2b61;
+      }
+    }
+    *{ box-sizing:border-box }
+    html, body{ height:100% }
+    body{
+      font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
+        var(--gradient);
+      background-attachment: fixed;
+    }
+    @media (prefers-color-scheme: dark){
+      body{ background:
+        linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%),
+        var(--gradient);
+      }
+    }
+
+    .wrap{ padding: clamp(12px, 2.5vw, 24px) }
+    .card{
+      border:1px solid var(--card-brd);
+      border-radius: clamp(16px, 2vw, 22px);
+      box-shadow: var(--shadow);
+      backdrop-filter: saturate(140%) blur(8px);
+      background: var(--card-bg);
+      overflow:hidden;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .head{
+      padding: clamp(16px, 2.4vw, 24px);
+      border-bottom:1px solid var(--card-brd);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+    .brand{ display:flex; align-items:center; gap:12px }
+    .logo{
+      width:40px; height:40px; border-radius:12px;
+      display:grid; place-items:center; font-weight:700;
+      background: linear-gradient(135deg,#5b7cfa, #6be6b3);
+      color:white; box-shadow: 0 6px 16px rgba(91,124,250,0.35);
+    }
+    .title{ font-weight:700; letter-spacing:0.2px }
+
+    .body.chat-body{ padding: clamp(14px, 2.2vw, 20px); min-height: 40vh }
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+
+    /* בועות קיימות (מהסטייל הגלובלי), נשפר ריווח */
+    .bubble.bot, .bubble.user{ border-radius: 16px; }
+
+    /* קבוצות בחירה (כפתורים ככרטיסים) */
+    .section{
+      display:flex; flex-direction:column; gap:10px;
+      margin-block: clamp(12px, 2vw, 16px);
+    }
+    .section-title{
+      display:flex; align-items:center; gap:8px;
+      font-weight:700; color:var(--muted); font-size: 0.98rem;
+      padding-inline:4px;
+    }
     .choices{
       display:grid; gap:12px; margin-top:8px;
       grid-template-columns: 1fr;
@@ -18,31 +104,44 @@
     @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
     @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
 
-    /* בסיס להגדלת כפתורי הבחירה */
     .btn.choice{
       display:flex; align-items:center; justify-content:space-between;
-      font-weight:700; padding:14px 16px; border-radius:14px;
-      box-shadow: 0 6px 14px rgba(15,23,42,0.06);
-      transition: transform var(--speed), border-color var(--speed), box-shadow var(--speed), filter var(--speed);
+      text-align: start;
+      gap:12px;
+      font-weight:700;
+      padding: clamp(12px, 2vw, 16px) clamp(14px, 2.4vw, 18px);
+      border-radius: var(--radius);
+      border:1px solid transparent;
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease;
+      will-change: transform, box-shadow;
     }
-    .btn.choice:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,23,42,0.10) }
+    .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover) }
+    .btn.choice .emoji{ opacity:.95; font-size:20px; margin-inline-start:8px }
 
-    /* שלושה גוונים בהירים נפרדים */
-    .soft-aqua{
-      background:#eef6ff; border:1px solid #cfe3ff; color: var(--text);
-    }
-    .soft-aqua:hover{ border-color:#9ec5ff }
-    .soft-mint{
-      background:#ecfdf5; border:1px solid #c7f2e1; color: var(--text);
-    }
-    .soft-mint:hover{ border-color:#97e6cf }
-    .soft-rose{
-      background:#fff1f2; border:1px solid #ffd7dc; color: var(--text);
-    }
-    .soft-rose:hover{ border-color:#ffb8c1 }
+    /* גווני כפתורים רכים */
+    .soft-aqua{ background: var(--soft-1); border-color: var(--soft-1-b); color: var(--text) }
+    .soft-aqua:hover{ border-color: color-mix(in oklab, var(--soft-1-b), #5b7cfa 35%) }
+    .soft-mint{ background: var(--soft-2); border-color: var(--soft-2-b); color: var(--text) }
+    .soft-mint:hover{ border-color: color-mix(in oklab, var(--soft-2-b), #22c55e 35%) }
+    .soft-rose{ background: var(--soft-3); border-color: var(--soft-3-b); color: var(--text) }
+    .soft-rose:hover{ border-color: color-mix(in oklab, var(--soft-3-b), #ef4444 35%) }
+    .soft-lilac{ background: var(--soft-4); border-color: var(--soft-4-b); color: var(--text) }
+    .soft-lilac:hover{ border-color: color-mix(in oklab, var(--soft-4-b), #8b5cf6 35%) }
 
-    /* איקון קטן מימין (אופציונלי) */
-    .btn.choice .emoji{ opacity:.9; font-size:18px; margin-inline-start:8px }
+    /* פוטר */
+    .footer{
+      padding: clamp(12px, 2vw, 16px);
+      border-top:1px solid var(--card-brd);
+      display:flex; align-items:center; gap:8px;
+    }
+    .footer .spacer{ flex:1 }
+
+    /* נגישות תנועה */
+    @media (prefers-reduced-motion: reduce){
+      .btn.choice{ transition:none }
+      .btn.choice:hover{ transform:none }
+    }
   </style>
 </head>
 <body>
@@ -90,7 +189,6 @@
       autoscroll();
       return d;
     }
-    // תומך בהעברת הורה ייעודי
     function actionBtn(text, onClick, cls='btn', parent=area){
       const b=document.createElement('button');
       b.className=cls;
@@ -120,32 +218,55 @@
       );
 
       setTimeout(()=>{
-        typingThen('<strong>בחרי את האפשרות שמתאימה לך 👇</strong>', 500);
+        typingThen('<strong>בחר/י את האפשרות שמתאימה לך 👇</strong>', 500);
       }, 900);
 
       setTimeout(()=>{
-        // עוטף כפתורים לגריד יפה
-        const choices = document.createElement('div');
-        choices.className = 'choices';
-        area.appendChild(choices);
+        // ״מנויים״
+        const sec1 = document.createElement('div');
+        sec1.className = 'section';
+        sec1.innerHTML = `
+          <div class="section-title">🧑‍🎓 מנויים</div>
+          <div class="choices" role="group" aria-label="מנויים">
+            <button class="btn choice soft-mint" id="btn-membership">
+              <span>ברשותי מנוי חודשי</span>
+              <span class="emoji">✅</span>
+            </button>
+          </div>
+        `;
+        area.appendChild(sec1);
 
-        // ענף 1 — אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)
-        actionBtn('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)', ()=>{
-          user('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)');
-          setTimeout(()=> location.href='branches/branch1.html', 150); // תוקן הנתיב
-        }, 'btn choice soft-aqua', choices);
+        // ״לא מנויים״
+        const sec2 = document.createElement('div');
+        sec2.className = 'section';
+        sec2.innerHTML = `
+          <div class="section-title">✨ לא מנויים</div>
+          <div class="choices" role="group" aria-label="לא מנויים">
+            <button class="btn choice soft-aqua" id="btn-oneoff">
+              <span>אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)</span>
+              <span class="emoji">📅</span>
+            </button>
+            <button class="btn choice soft-rose" id="btn-plan-info">
+              <span>אני רוצה פרטים על מנוי חודשי</span>
+              <span class="emoji">ℹ️</span>
+            </button>
+          </div>
+        `;
+        area.appendChild(sec2);
 
-        // ענף 2 — ברשותי מנוי חודשי (פעולות למנויה קיימת)
-        actionBtn('ברשותי מנוי חודשי', ()=>{
+        // חיבורים
+        document.getElementById('btn-membership').onclick = ()=>{
           user('ברשותי מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch3.html', 150);
-        }, 'btn choice soft-mint', choices);
-
-        // ענף 3 — אני רוצה פרטים על מנוי חודשי (מידע)
-        actionBtn('אני רוצה פרטים על מנוי חודשי', ()=>{
+          setTimeout(()=> location.href='branches/branch3/index.html', 150);
+        };
+        document.getElementById('btn-oneoff').onclick = ()=>{
+          user('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)');
+          setTimeout(()=> location.href='branches/branch1.html', 150);
+        };
+        document.getElementById('btn-plan-info').onclick = ()=>{
           user('אני רוצה פרטים על מנוי חודשי');
           setTimeout(()=> location.href='branches/branch2.html', 150);
-        }, 'btn choice soft-rose', choices);
+        };
       }, 1600);
     }
 
