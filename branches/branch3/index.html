@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>מנויה קיימת – פעולות</title>
+  <title>פעולות במנוי קיים 👨‍🚀</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.light.css?v=1" />
@@ -12,7 +12,6 @@
   <style>
     :root{
       --radius:16px;
-      --gap:14px;
       --card-bg: rgba(255,255,255,0.75);
       --card-brd:#e6eaf3;
       --shadow: 0 8px 24px rgba(15,23,42,0.08);
@@ -21,103 +20,95 @@
     }
 
     body{
-      font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      font-size: 17px;
-      background: linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%);
-      -webkit-tap-highlight-color: transparent;
+      font-family:'Rubik',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-size:17px;
+      color:var(--text);
+      background:linear-gradient(180deg,#f8fafc 0%,#f4f7ff 60%,#f9fafb 100%);
+      -webkit-tap-highlight-color:transparent;
     }
 
     .wrap{ padding:20px }
     .card{
       border:1px solid var(--card-brd);
       border-radius:22px;
-      background: var(--card-bg);
-      box-shadow: var(--shadow);
-      max-width: 980px;
-      margin: 0 auto;
-      overflow: hidden;
+      background:var(--card-bg);
+      box-shadow:var(--shadow);
+      max-width:980px; margin:0 auto; overflow:hidden;
     }
 
     /* טופ־בר */
     .topbar{
-      padding:12px;
-      border-bottom:1px solid var(--card-brd);
-      display:flex; gap:8px; align-items:center;
+      position:sticky; top:0; z-index:5;
+      display:flex; gap:8px; align-items:center; justify-content:space-between;
+      padding:12px; border-bottom:1px solid var(--card-brd);
       background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));
       backdrop-filter: blur(6px);
-      position: sticky; top: 0; z-index: 5;
     }
+    .topbar .left,
+    .topbar .right{ display:flex; gap:8px; align-items:center }
 
     /* כותרת */
     .head{
       display:flex; align-items:center; justify-content:space-between;
-      padding:20px; border-bottom:1px solid var(--card-brd)
+      padding:20px; border-bottom:1px solid var(--card-brd);
     }
     .brand{ display:flex; align-items:center; gap:12px }
     .logo{
-      width:40px; height:40px; border-radius:12px;
-      display:grid; place-items:center; font-weight:700;
-      background: linear-gradient(135deg,#5b7cfa, #6be6b3);
-      color:white;
+      width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:700;
+      background:linear-gradient(135deg,#5b7cfa,#6be6b3); color:#fff;
     }
-    .title-wrap{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
     .title{ font-weight:700 }
-    .chip{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px; border-radius:999px;
-      font-size: .9rem; color:#1f2937;
-      background:#eef2ff; border:1px solid #e0e7ff;
-    }
 
     /* גוף */
     .body{ padding:20px }
 
-    /* כרטיס מקטע */
+    /* מקטעים */
     .section{ margin-bottom:24px }
     .section-card{
-      border:1px solid var(--card-brd);
-      background:#fff;
-      border-radius:20px;
-      box-shadow: var(--shadow);
-      padding:16px;
+      border:1px solid var(--card-brd); background:#fff; border-radius:20px;
+      box-shadow:var(--shadow); padding:16px;
     }
     .section-title{
       font-weight:700; color:var(--muted); font-size:1rem;
-      margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;
+      margin:0 0 12px 0; display:flex; align-items:center; gap:8px;
     }
-    .section-title .dot{
-      width:8px; height:8px; border-radius:999px; background:#5b7cfa; opacity:.4
-    }
+    .section-title .dot{ width:8px; height:8px; border-radius:999px; background:#5b7cfa; opacity:.4 }
 
-    /* רשת */
+    /* רשת כפתורים */
     .choices{ display:grid; gap:12px }
-    @media(min-width:560px){ .choices{ grid-template-columns:1fr 1fr } }
+    @media (min-width:560px){ .choices{ grid-template-columns:1fr 1fr } }
 
     /* כפתור-כרטיס */
     .btn.choice{
       display:flex; align-items:center; justify-content:space-between;
       gap:12px; font-weight:700;
-      padding:16px 18px;
-      border-radius: var(--radius);
-      background: #fff;
-      border:1px solid var(--card-brd);
-      box-shadow: var(--shadow);
+      padding:16px 18px; border-radius:var(--radius);
+      background:#fff; border:1px solid var(--card-brd);
+      box-shadow:var(--shadow);
       transition: transform .18s ease, box-shadow .18s ease;
-      font-size: 1.06rem;              /* ← כתב גדול יותר בכפתורים */
-      line-height: 1.35;
+      font-size:1.06rem; line-height:1.35;
+      color:#111 !important;              /* ← טקסט שחור בכפתורים */
+      text-align:start;
     }
-    .btn.choice:hover{ transform:translateY(-1px); box-shadow: var(--shadow-hover) }
-    .emoji{ font-size:20px }
+    .btn.choice:hover{ transform:translateY(-1px); box-shadow:var(--shadow-hover) }
+
+    .icon{ width:22px; height:22px; stroke-width:2; opacity:.85 }
+    .icon-wrap{
+      inline-size:28px; block-size:28px; border-radius:8px;
+      display:grid; place-items:center; background:rgba(0,0,0,.04);
+    }
 
     /* פוטר */
     .footer{
       display:flex; align-items:center; gap:8px;
-      padding:12px 16px;
-      border-top:1px solid var(--card-brd);
-      background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
+      padding:12px 16px; border-top:1px solid var(--card-brd);
+      background:linear-gradient(180deg,rgba(0,0,0,0.02),transparent);
     }
     .footer .spacer{ flex:1 }
   </style>
+
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
   <div class="wrap">
@@ -125,23 +116,23 @@
 
       <!-- טופ־בר -->
       <div class="topbar">
-        <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+        <div class="right">
+          <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
+          <a id="faqTop" class="btn ghost" href="../faq.html">יש לי שאלות</a>
+        </div>
+        <div class="left"></div>
       </div>
 
       <!-- כותרת -->
       <div class="head">
         <div class="brand">
           <div class="logo">HB</div>
-          <div class="title-wrap">
-            <div class="title">מנויה קיימת – פעולות</div>
-            <span class="chip">👨‍🚀 יוסטון מלווה אותך</span>
-          </div>
+          <div class="title">פעולות במנוי קיים 👨‍🚀</div>
         </div>
-        <a id="faqBtn" class="btn ghost" href="../faq.html">יש לי שאלות</a>
       </div>
 
       <!-- תוכן -->
-      <div class="body" id="area">
+      <div class="body" id="area" role="region" aria-label="תפריט פעולות במנוי קיים">
 
         <!-- יומן -->
         <div class="section">
@@ -150,19 +141,22 @@
             <div class="choices" role="group" aria-label="פעולות יומן">
               <button class="btn choice" id="btn-reschedule" aria-label="שינוי יום או שעה קבועה של שיעור">
                 <span>שינוי יום/שעה קבועה של שיעור</span>
-                <span class="emoji">🔁</span>
+                <span class="icon-wrap"><i data-feather="refresh-ccw" class="icon"></i></span>
               </button>
+
               <button class="btn choice" id="btn-cancel" aria-label="ביטול שיעור עתידי">
                 <span>ביטול שיעור עתידי</span>
-                <span class="emoji">🗑️</span>
+                <span class="icon-wrap"><i data-feather="trash-2" class="icon"></i></span>
               </button>
+
               <button class="btn choice" id="btn-boost" aria-label="הוספת שיעור תגבור בנוסף למנוי">
                 <span>אני רוצה שיעור תגבור בנוסף למנוי</span>
-                <span class="emoji">➕</span>
+                <span class="icon-wrap"><i data-feather="plus-circle" class="icon"></i></span>
               </button>
+
               <button class="btn choice" id="btn-makeup" aria-label="השלמת שיעור">
                 <span>אני רוצה להשלים שיעור</span>
-                <span class="emoji">⏱️</span>
+                <span class="icon-wrap"><i data-feather="clock" class="icon"></i></span>
               </button>
             </div>
           </div>
@@ -175,15 +169,17 @@
             <div class="choices" role="group" aria-label="פעולות כספיות">
               <button class="btn choice" id="btn-billing" aria-label="עדכון פרטי תשלום">
                 <span>עדכון פרטי תשלום</span>
-                <span class="emoji">💳</span>
+                <span class="icon-wrap"><i data-feather="credit-card" class="icon"></i></span>
               </button>
+
               <button class="btn choice" id="btn-message" aria-label="שליחת הודעה למזכירות">
                 <span>שליחת הודעה למזכירות</span>
-                <span class="emoji">✉️</span>
+                <span class="icon-wrap"><i data-feather="mail" class="icon"></i></span>
               </button>
+
               <button class="btn choice" id="btn-cancel-sub" aria-label="ביטול מנוי">
                 <span>ביטול מנוי</span>
-                <span class="emoji">🚪</span>
+                <span class="icon-wrap"><i data-feather="x-circle" class="icon"></i></span>
               </button>
             </div>
           </div>
@@ -195,8 +191,9 @@
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <span class="spacer"></span>
-        <small style="color:#9aa3b2">יוסטון גרסה קלה · UX נקי</small>
+        <small style="color:#9aa3b2">יוסטון – גרסה קלה · UX נקי</small>
       </div>
+
     </div>
   </div>
 
@@ -205,19 +202,20 @@
   <script src="../js/chat-helpers.js?v=3"></script>
 
   <script>
-    // קונטקסט ל־FAQ (כמו אצלך)
+    // FAQ עם קונטקסט
     (function setHelpContext(ctx){
-      const btn = document.getElementById('faqBtn');
-      if(!btn) return;
-      const base = '../faq.html';
-      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+      const btnTop = document.getElementById('faqTop');
+      if(btnTop){
+        const base = '../faq.html';
+        btnTop.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+      }
     })('branch3-home');
 
-    // backBtn – תאימות
+    // חזרה
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../index.html');
 
-    // ניווט לפעולות
+    // ניווט
     document.getElementById('btn-reschedule').onclick = ()=> location.href='reschedule.html';
     document.getElementById('btn-cancel').onclick     = ()=> location.href='cancel.html';
     document.getElementById('btn-billing').onclick    = ()=> location.href='billing.html';
@@ -225,6 +223,9 @@
     document.getElementById('btn-boost').onclick      = ()=> location.href='boost.html';
     document.getElementById('btn-makeup').onclick     = ()=> location.href='makeup.html';
     document.getElementById('btn-cancel-sub').onclick = ()=> location.href='cancel-sub.html';
+
+    // הפעלת Feather
+    feather.replace();
   </script>
 </body>
 </html>
