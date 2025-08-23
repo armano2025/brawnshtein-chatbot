@@ -14,7 +14,7 @@
     if (State.history.length > 1) {
       State.history.pop();
       updateBack();
-      State.token++;         // מבטל timeouts ישנים
+      State.token++; // מבטל timeouts ישנים
       last()();
     }
   };
@@ -55,7 +55,7 @@
     const c=document.createElement('div');
     c.className='chip';
     c.textContent=text;
-    c.style.borderRadius = '10px'; // פחות עגול לטובת קריאות
+    c.style.borderRadius='10px'; // טיפונת פחות עגול
     return c;
   }
   function inputRow(label, {type='text', id, textarea=false, placeholder='', required=false, autocomplete, inputmode}={}){
@@ -182,12 +182,15 @@
     });
   }
 
-  // ====== Reusable: pickAvailability – פריסה אנכית מלאה ======
+  // ====== Reusable: pickAvailability (שורה אחת קבועה + צ'יפים) ======
   /**
-   * מחזיר Promise עם מערך בחירות ['יום א 16:00–18:00', ...].
-   * מציג לכל שורה: תווית + select, אחד מתחת לשני (יום / משעה / עד שעה).
+   * UI לבחירת זמינות:
+   * - שורת select יחידה (יום / משעה / עד שעה)
+   * - כפתור "+ הוספת מועד נוסף" לא יוצר שורה חדשה — שומר את הבחירה לצ'יפים ומאפס את אותה שורה
+   * - כפתור המשך פעיל רק כשנשמר לפחות מועד אחד
+   * מחזיר Promise<Array<string>> של טקסטים "יום X HH:MM–HH:MM"
    */
-  function pickAvailability(opts={}){
+  function pickAvailability(opts = {}) {
     const {
       titleHtml     = '<strong>בחירת ימים ושעות</strong>',
       tipText       = 'בחרו כמה שיותר אפשרויות שנוחות לכם',
@@ -199,216 +202,148 @@
 
     botHTML(`${titleHtml}<br><span class="muted">${tipText}</span>`);
 
-    return new Promise(resolve=>{
-      // מיכל גדול וברור
-      const wrap = document.createElement('div'); wrap.className='bubble bot wide';
-      wrap.style.padding = '16px';
-      wrap.style.maxWidth = '720px';
-      wrap.style.marginInline = 'auto';
+    return new Promise((resolve) => {
+      // מעטפת
+      const wrap = document.createElement('div'); wrap.className = 'bubble bot wide';
+      const grid = document.createElement('div'); grid.className = 'slots-grid';
+      const preview = document.createElement('div'); preview.className = 'slot-preview';
 
-      const grid = document.createElement('div');
-      grid.style.display = 'grid';
-      grid.style.gap = '12px';
+      // שורת בחירה יחידה (אנכי)
+      const row = document.createElement('div'); row.className = 'slot-row';
+      row.style.gridTemplateColumns = '1fr';
+      row.style.gap = '8px';
 
-      const rowsWrap = document.createElement('div');
-      rowsWrap.style.display = 'grid';
-      rowsWrap.style.gap = '14px';
-
-      const preview = document.createElement('div'); // צ'יפים של בחירות
-      preview.style.display = 'flex';
-      preview.style.flexWrap = 'wrap';
-      preview.style.gap = '8px';
-      preview.style.marginTop = '6px';
-
-      wrap.appendChild(rowsWrap);
-
-      const helper = document.createElement('div');
-      helper.className = 'muted';
-      helper.textContent = 'ניתן להוסיף יותר ממועד אחד';
-      wrap.appendChild(helper);
-
-      // כפתור הוספת שורה
-      const addBtn = document.createElement('button');
-      addBtn.className = 'btn';
-      addBtn.textContent = '+ הוספת מועד נוסף';
-      addBtn.disabled = true; // יופעל אחרי שורה תקינה
-      wrap.appendChild(addBtn);
-
-      wrap.appendChild(preview);
-      area.appendChild(wrap);
-
-      const toNum = s => parseInt(String(s||'').replace(':',''),10) || 0;
-
-      // שדה עם תווית + select (לפריסה אנכית אמיתית)
-      function makeField(label, values, placeholder){
-        const fw = document.createElement('div');
-        fw.style.display = 'flex';
-        fw.style.flexDirection = 'column';
-        fw.style.gap = '6px';
-
-        const l = document.createElement('label');
-        l.textContent = label;
-        l.style.fontWeight = '700';
-        l.style.color = 'var(--text)';
-
+      const makeSel = (placeholder, values) => {
         const sel = document.createElement('select');
         sel.className = 'input';
-        sel.style.width = '100%';
-        sel.style.fontSize = '1.05rem';
-        sel.style.padding = '12px 14px';
-        sel.style.borderRadius = '10px';
-        // אפשרות ריקה
-        const opt0 = document.createElement('option');
-        opt0.value = '';
-        opt0.textContent = placeholder || `בחר/י ${label}`;
-        sel.appendChild(opt0);
-        // שאר האפשרויות
-        values.forEach(v=>{
-          const o=document.createElement('option');
-          o.value=v; o.textContent=v;
+        // אופציית placeholder
+        const o0 = document.createElement('option');
+        o0.value = '';
+        o0.textContent = placeholder;
+        sel.appendChild(o0);
+        values.forEach(v => {
+          if(v==='') return; // כבר יש placeholder
+          const o = document.createElement('option');
+          o.value = v;
+          o.textContent = v;
           sel.appendChild(o);
         });
-
-        fw.append(l, sel);
-        return {wrap: fw, sel};
-      }
-
-      const isRowValid = (row)=>{
-        const f = row.__d?.value, s = row.__f?.value, t = row.__t?.value;
-        return f && s && t && toNum(s) < toNum(t);
+        return sel;
       };
 
-      const countValidRows = ()=>{
-        return [...rowsWrap.children].reduce((acc,r)=> acc + (isRowValid(r)?1:0), 0);
-      };
+      const daySel  = makeSel('בחר/י יום', days);
+      const fromSel = makeSel('משעה', times);
+      const toSel   = makeSel('עד שעה', times);
 
-      const lastRowFilled = ()=>{
-        const rows=[...rowsWrap.children];
-        if(!rows.length) return false;
-        return isRowValid(rows.at(-1));
-      };
+      row.append(daySel, fromSel, toSel);
+      grid.append(row);
 
-      const refreshPreview = ()=>{
-        preview.innerHTML='';
-        [...rowsWrap.children].forEach(r=>{
-          if(isRowValid(r)){
-            const c = chip(`יום ${r.__d.value} ${r.__f.value}–${r.__t.value}`);
-            c.classList.add('emph');
-            const x = document.createElement('button');
-            x.type='button'; x.className='x'; x.title='הסר'; x.setAttribute('aria-label','הסר מועד'); x.textContent='✖';
-            x.onclick=()=>{
-              r.remove();
-              ensureEditableTail();
-              updateUI();
-            };
-            c.appendChild(x);
-            preview.appendChild(c);
-          }
-        });
-      };
+      // “הוספת מועד נוסף” – שומר לצ'יפים, לא מוסיף שורות
+      const addBtn = document.createElement('button');
+      addBtn.type='button';
+      addBtn.className = 'btn';
+      addBtn.textContent = '+ הוספת מועד נוסף';
 
-      let btnContinue;
+      grid.append(addBtn, preview);
+      wrap.appendChild(grid);
 
-      const wireRow = (row)=>{
-        // כל שדה בשורה אנכי — כבר נעשה ב‑makeField
-        const onChange = ()=>{
-          row.querySelector('.row-error')?.remove();
-          if(row.__f.value && row.__t.value && toNum(row.__f.value) >= toNum(row.__t.value)){
-            const err=document.createElement('div'); err.className='row-error';
-            err.style.color = '#b91c1c';
-            err.style.fontSize = '.9rem';
-            err.style.marginTop = '2px';
-            err.textContent='״עד שעה״ חייב להיות אחרי ״משעה״';
-            row.appendChild(err);
-          }
-          updateUI();
-        };
-        [row.__d, row.__f, row.__t].forEach(sel=> sel.addEventListener('change', onChange));
-      };
-
-      const addRow = (force=false)=>{
-        if(!force && !lastRowFilled()){
-          botText('ניתן להוסיף מועד נוסף רק לאחר שמילאתם את המועד הקודם.').classList.add('err');
-          return;
-        }
-        const row=document.createElement('div');
-        row.className='slot-row';
-        row.style.display='grid';
-        row.style.gridTemplateColumns='1fr'; // אנכי
-        row.style.gap='10px';
-
-        const {wrap: dayW,  sel: daySel}  = makeField('בחר/י יום', days, 'בחר/י יום');
-        const {wrap: fromW, sel: fromSel} = makeField('משעה',     times, 'משעה');
-        const {wrap: toW,   sel: toSel}   = makeField('עד שעה',    times, 'עד שעה');
-
-        row.__d = daySel; row.__f = fromSel; row.__t = toSel;
-
-        row.append(dayW, fromW, toW);
-        rowsWrap.appendChild(row);
-        wireRow(row);
-        updateUI();
-        autoscroll();
-        return row;
-      };
-
-      const ensureEditableTail = ()=>{
-        if(rowsWrap.children.length === 0){
-          addRow(true);
-          return;
-        }
-        if(lastRowFilled()){
-          addRow(true);
-        }
-      };
-
-      const updateUI = ()=>{
-        addBtn.disabled = !lastRowFilled();
-        if(btnContinue) btnContinue.disabled = (countValidRows() === 0);
-        refreshPreview();
-      };
-
-      addBtn.onclick = ()=> addRow(false);
-
-      // Actions
+      // פעולות
       const actions = document.createElement('div');
-      actions.className='slots-actions';
-      actions.style.display = 'flex';
-      actions.style.gap = '8px';
-      actions.style.justifyContent = 'flex-end';
-      actions.style.marginTop = '10px';
-
-      btnContinue = document.createElement('button');
-      btnContinue.className='btn primary';
-      btnContinue.textContent=continueText;
+      actions.className = 'slots-actions';
+      const btnContinue = document.createElement('button');
+      btnContinue.type='button';
+      btnContinue.className = 'btn primary';
+      btnContinue.textContent = continueText;
       btnContinue.disabled = true;
-      btnContinue.onclick = ()=>{
-        userBubble(continueText);
-        const chosen=[];
-        [...rowsWrap.children].forEach(r=>{
-          if(isRowValid(r)){
-            chosen.push(`יום ${r.__d.value} ${r.__f.value}–${r.__t.value}`);
-          }
-        });
-        if(!chosen.length){
-          botText('נדרש לבחור לפחות מועד אחד 🕒').classList.add('err');
-          return;
-        }
-        resolve(chosen);
-      };
       actions.appendChild(btnContinue);
 
-      if(allowBack){
+      if (allowBack) {
         const backB = document.createElement('button');
-        backB.className='btn';
-        backB.textContent='חזרה';
-        backB.onclick = ()=>{ goBack(); resolve(null); };
+        backB.type='button';
+        backB.className = 'btn';
+        backB.textContent = 'חזרה';
+        backB.onclick = () => { goBack(); resolve(null); };
         actions.appendChild(backB);
       }
-
       wrap.appendChild(actions);
+      area.appendChild(wrap);
 
-      // init — יצירת שורה ראשונה
-      addRow(true);
+      // לוגיקה
+      const toNum = s => parseInt(String(s || '').replace(':', ''), 10) || 0;
+      const chosen = new Set(); // למניעת כפילויות
+
+      const keyOf = (d, f, t) => `יום ${d} ${f}–${t}`;
+
+      const clearRowError = () => row.querySelector('.row-error')?.remove();
+      const showRowError = (msg) => {
+        clearRowError();
+        const err = document.createElement('div');
+        err.className = 'row-error';
+        err.textContent = msg;
+        row.appendChild(err);
+      };
+
+      const resetSelectors = () => {
+        daySel.selectedIndex = 0;
+        fromSel.selectedIndex = 0;
+        toSel.selectedIndex = 0;
+        clearRowError();
+      };
+
+      const refreshPreview = () => {
+        preview.innerHTML = '';
+        [...chosen].forEach(txt => {
+          const chipEl = chip(txt);
+          chipEl.classList.add('emph');
+          const x = document.createElement('button');
+          x.type = 'button'; x.className = 'x'; x.title = 'הסר'; x.setAttribute('aria-label', 'הסר מועד'); x.textContent = '✖';
+          x.onclick = () => { chosen.delete(txt); refreshPreview(); updateUI(); };
+          chipEl.appendChild(x);
+          preview.appendChild(chipEl);
+        });
+      };
+
+      const isCurrentValid = () => {
+        const d = daySel.value, f = fromSel.value, t = toSel.value;
+        if (!(d && f && t)) { showRowError('נא לבחור יום ושעות מלאות'); return false; }
+        if (toNum(f) >= toNum(t)) { showRowError('״עד שעה״ חייב להיות אחרי ״משעה״'); return false; }
+        clearRowError();
+        return true;
+      };
+
+      const updateUI = () => {
+        btnContinue.disabled = chosen.size === 0;
+      };
+
+      // שינויי select – הסרת שגיאה מיידית
+      [daySel, fromSel, toSel].forEach(sel => {
+        sel.addEventListener('change', () => { clearRowError(); });
+      });
+
+      // לחיצה על “הוספת מועד נוסף” – מוסיף לצ׳יפים ומאפס את אותה שורה
+      addBtn.onclick = () => {
+        const d = daySel.value, f = fromSel.value, t = toSel.value;
+        if (!isCurrentValid()) return;
+
+        const k = keyOf(d, f, t);
+        if (chosen.has(k)) {
+          showRowError('המועד כבר נבחר');
+          return;
+        }
+        chosen.add(k);
+        refreshPreview();
+        resetSelectors();
+        updateUI();
+      };
+
+      // המשך
+      btnContinue.onclick = () => {
+        userBubble(continueText);
+        resolve([...chosen]); // מערך טקסטים "יום X HH:MM–HH:MM"
+      };
+
+      // מצב התחלתי
+      updateUI();
     });
   }
 
