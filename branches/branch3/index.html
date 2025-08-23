@@ -2,158 +2,179 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>מנויה קיימת – פעולות</title>
 
+  <!-- פונט + עיצוב בסיסי קיים -->
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
   <style>
+    /* ====== משתנים ====== */
     :root{
-      --radius:16px;
-      --gap:14px;
-      --card-bg: rgba(255,255,255,0.75);
+      --radius:16px; --gap:14px;
+      --card-bg: rgba(255,255,255,0.72);
       --card-brd:#e6eaf3;
-      --shadow: 0 8px 24px rgba(15,23,42,0.08);
-      --shadow-hover: 0 12px 36px rgba(15,23,42,0.12);
-      --soft-1:#eef6ff; --soft-1-b:#cfe3ff;   /* כחול עדין */
-      --soft-2:#ecfdf5; --soft-2-b:#c7f2e1;   /* ירוק עדין */
-      --soft-3:#fff1f2; --soft-3-b:#ffd7dc;   /* ורוד עדין */
-      --soft-4:#f5f3ff; --soft-4-b:#e3ddff;   /* לילך עדין */
-      --text: #0f172a;
-      --muted:#6b7280;
-      --gradient: radial-gradient(900px 520px at 100% -10%, #8ea5ff33, transparent 60%),
-                  radial-gradient(700px 460px at 0% 100%, #8bffd933, transparent 60%);
+      --shadow: 0 8px 22px rgba(15,23,42,.08);
+      --shadow-hover: 0 14px 34px rgba(15,23,42,.12);
+      --text:#0f172a; --muted:#6b7280;
+      --soft-1:#eef6ff; --soft-1-b:#cfe3ff;  /* כחול רך */
+      --soft-2:#ecfdf5; --soft-2-b:#c7f2e1;  /* ירוק רך */
+      --soft-3:#fff1f2; --soft-3-b:#ffd7dc;  /* ורוד רך */
+      --soft-4:#f5f3ff; --soft-4-b:#e3ddff;  /* לילך רך */
+      --ring:#5b7cfa;
+      --gradient:
+        radial-gradient(900px 520px at 100% -10%, #8ea5ff33, transparent 60%),
+        radial-gradient(700px 460px at   0% 100%, #8bffd933, transparent 60%);
     }
     @media (prefers-color-scheme: dark){
       :root{
-        --card-bg: rgba(18,22,33,0.6);
+        --card-bg: rgba(17,22,33,.6);
         --card-brd:#2a3142;
-        --shadow: 0 6px 18px rgba(0,0,0,0.35);
-        --shadow-hover: 0 10px 28px rgba(0,0,0,0.45);
         --text:#e5e7eb; --muted:#9ca3af;
         --soft-1:#0b2447; --soft-1-b:#1b3a6c;
         --soft-2:#0f2f27; --soft-2-b:#174538;
         --soft-3:#3a1820; --soft-3-b:#5b2230;
         --soft-4:#241a3d; --soft-4-b:#3a2b61;
+        --shadow: 0 6px 18px rgba(0,0,0,.35);
+        --shadow-hover: 0 10px 28px rgba(0,0,0,.45);
       }
     }
 
-    /* רקע עוגת-שכבות מודרני */
+    /* ====== רקע כללי ====== */
     body{
-      font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family:'Rubik',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background:
-        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
+        linear-gradient(180deg,#f8fafc 0%,#f4f7ff 60%,#f9fafb 100%),
         var(--gradient);
-      background-attachment: fixed;
+      background-attachment:fixed;
+      color:var(--text);
+      -webkit-tap-highlight-color: transparent;
     }
     @media (prefers-color-scheme: dark){
       body{ background:
-        linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%),
+        linear-gradient(180deg,#0b1220 0%,#0f1626 60%,#0b1220 100%),
         var(--gradient);
       }
     }
 
-    /* מעטפת הכרטיס הראשי */
-    .wrap{ padding: clamp(12px, 2.5vw, 24px) }
+    /* ====== מסגרת דף ====== */
+    .wrap{ padding:clamp(12px,2.4vw,24px) }
     .card{
-      border:1px solid var(--card-brd);
-      border-radius: clamp(16px, 2vw, 22px);
-      box-shadow: var(--shadow);
-      backdrop-filter: saturate(140%) blur(8px);
-      background: var(--card-bg);
-      overflow:hidden;
-      max-width: 980px;
-      margin: 0 auto;
+      max-width: 980px; margin:0 auto; overflow:hidden;
+      border:1px solid var(--card-brd); border-radius:clamp(16px,2vw,22px);
+      background:var(--card-bg); backdrop-filter:saturate(140%) blur(8px);
+      box-shadow:var(--shadow);
     }
 
-    /* טופ-בר */
+    /* ====== טופ-בר דביק ====== */
     .topbar{
-      padding: clamp(10px, 1.8vw, 14px);
+      position:sticky; top:0; z-index:5;
+      display:flex; align-items:center; gap:8px;
+      padding:clamp(10px,1.6vw,14px);
       border-bottom:1px solid var(--card-brd);
-      display:flex; gap:8px; align-items:center;
-      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.02));
+      background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));
+      backdrop-filter: blur(6px);
+    }
+    @media (prefers-color-scheme: dark){
+      .topbar{ background:linear-gradient(180deg,rgba(10,14,22,.55),rgba(10,14,22,.25)) }
     }
 
-    /* כותרת */
+    /* ====== כותרת ====== */
     .head{
-      padding: clamp(16px, 2.4vw, 24px);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:clamp(16px,2.2vw,22px);
       border-bottom:1px solid var(--card-brd);
-      display:flex; align-items:center; justify-content:space-between; gap:8px;
     }
     .brand{ display:flex; align-items:center; gap:12px }
     .logo{
-      width:40px; height:40px; border-radius:12px;
-      display:grid; place-items:center; font-weight:700;
-      background: linear-gradient(135deg,#5b7cfa, #6be6b3);
-      color:white; box-shadow: 0 6px 16px rgba(91,124,250,0.35);
+      width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+      font-weight:700;color:#fff;background:linear-gradient(135deg,#5b7cfa,#6be6b3);
+      box-shadow:0 6px 16px rgba(91,124,250,.35);
     }
-    .title{ font-weight:700; letter-spacing:0.2px }
+    .title{ font-weight:700; letter-spacing:.2px }
 
-    /* גוף + אזור תוכן */
-    .body.chat-body{ padding: clamp(14px, 2.2vw, 20px); min-height: 40vh }
+    /* ====== גוף ====== */
+    .body.chat-body{ padding:clamp(14px,2.2vw,20px); min-height:40vh }
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
 
-    /* חלוקה לשני אזורים */
-    .section{
-      display:flex; flex-direction:column; gap:10px;
-      margin-block: clamp(12px, 2vw, 16px);
+    /* ====== כרטיסי מקטע ====== */
+    .section-card{
+      border:1px solid var(--card-brd);
+      border-radius: calc(var(--radius) + 4px);
+      padding: clamp(12px,1.8vw,16px);
+      box-shadow: var(--shadow);
+      background: rgba(255,255,255,.55);
     }
+    @media (prefers-color-scheme: dark){
+      .section-card{ background: rgba(14,18,28,.45) }
+    }
+
+    .section{ display:flex; flex-direction:column; gap:12px; margin-block:14px }
     .section-title{
       display:flex; align-items:center; gap:8px;
-      font-weight:700; color:var(--muted); font-size: 0.98rem;
-      padding-inline:4px;
+      font-weight:700; color:var(--muted); font-size:.98rem;
+      padding-inline:4px; margin-bottom:2px;
     }
-    .choices{
-      display:grid; gap:12px; margin-top:8px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
-    @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
 
-    /* כפתורי-כרטיס */
+    /* ====== רשת בחירות ====== */
+    .choices{ display:grid; gap:12px }
+    @media (min-width:560px){ .choices{ grid-template-columns:1fr 1fr } }
+    @media (min-width:920px){ .choices{ grid-template-columns:1fr 1fr 1fr } }
+
+    /* ====== כפתור-כרטיס ====== */
     .btn.choice{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px; text-align:start;
-      font-weight:700;
-      padding: clamp(12px, 2vw, 16px) clamp(14px, 2.4vw, 18px);
-      border-radius: var(--radius);
-      border:1px solid transparent;
+      width:100%; display:flex; align-items:center; justify-content:space-between;
+      gap:12px; text-align:start; font-weight:700;
+      padding: clamp(14px,2vw,16px) clamp(16px,2.4vw,18px);
+      border-radius: var(--radius); border:1px solid transparent;
       box-shadow: var(--shadow);
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease;
-      will-change: transform, box-shadow;
-      width:100%;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;
+      background:#fff;
     }
-    .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover) }
-    .btn.choice .emoji{ opacity:.95; font-size:20px; margin-inline-start:8px }
+    @media (prefers-color-scheme: dark){ .btn.choice{ background:#121722 } }
+    .btn.choice:hover{ transform:translateY(-1px); box-shadow:var(--shadow-hover) }
+    .btn.choice:active{ transform:translateY(0); filter:saturate(1.05) }
+    .btn.choice:focus-visible{
+      outline:none; box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 65%, transparent);
+      border-color: color-mix(in oklab, var(--ring) 45%, transparent);
+    }
+    .emoji{ font-size:20px; margin-inline-start:10px; opacity:.95 }
+    .chev{
+      inline-size: 22px; block-size: 22px; border-radius: 999px;
+      display:grid; place-items:center; font-size:14px; opacity:.55;
+      background: rgba(0,0,0,.06);
+    }
+    @media (prefers-color-scheme: dark){ .chev{ background: rgba(255,255,255,.08) } }
 
-    /* גוונים */
-    .soft-aqua{  background: var(--soft-1); border-color: var(--soft-1-b); color: var(--text) }
-    .soft-aqua:hover{  border-color: color-mix(in oklab, var(--soft-1-b), #5b7cfa 35%) }
-    .soft-mint{  background: var(--soft-2); border-color: var(--soft-2-b); color: var(--text) }
-    .soft-mint:hover{  border-color: color-mix(in oklab, var(--soft-2-b), #22c55e 35%) }
-    .soft-rose{  background: var(--soft-3); border-color: var(--soft-3-b); color: var(--text) }
-    .soft-rose:hover{  border-color: color-mix(in oklab, var(--soft-3-b), #ef4444 35%) }
-    .soft-lilac{ background: var(--soft-4); border-color: var(--soft-4-b); color: var(--text) }
-    .soft-lilac:hover{ border-color: color-mix(in oklab, var(--soft-4-b), #8b5cf6 35%) }
+    /* וריאציות רכות */
+    .soft-aqua{  background:var(--soft-1); border-color:var(--soft-1-b) }
+    .soft-aqua:hover{  border-color:color-mix(in oklab,var(--soft-1-b),#5b7cfa 35%) }
+    .soft-mint{  background:var(--soft-2); border-color:var(--soft-2-b) }
+    .soft-mint:hover{  border-color:color-mix(in oklab,var(--soft-2-b),#22c55e 35%) }
+    .soft-rose{  background:var(--soft-3); border-color:var(--soft-3-b) }
+    .soft-rose:hover{  border-color:color-mix(in oklab,var(--soft-3-b),#ef4444 35%) }
+    .soft-lilac{ background:var(--soft-4); border-color:var(--soft-4-b) }
+    .soft-lilac:hover{ border-color:color-mix(in oklab,var(--soft-4-b),#8b5cf6 35%) }
 
-    /* פוטר */
+    /* ====== פוטר ====== */
     .footer{
-      padding: clamp(12px, 2vw, 16px);
-      border-top:1px solid var(--card-brd);
       display:flex; align-items:center; gap:8px;
+      padding:clamp(12px,2vw,16px);
+      border-top:1px solid var(--card-brd);
+      background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
     }
     .footer .spacer{ flex:1 }
 
-    /* ניטרול עדיפויות צבעוניות ישנות */
-    .btn.primary{ background:#f3f4f6 !important; color:#111827 !important; border-color:#e5e7eb !important }
+    /* התאמות: נטרול btn.primary הישן */
+    .btn.primary{ background:#f3f4f6!important; color:#111827!important; border-color:#e5e7eb!important }
     .btn.next-arrow::after{ content:""; }
 
     /* נגישות תנועה */
     @media (prefers-reduced-motion: reduce){
       .btn.choice{ transition:none }
-      .btn.choice:hover{ transform:none }
+      .btn.choice:hover,.btn.choice:active{ transform:none }
     }
   </style>
 </head>
@@ -161,7 +182,7 @@
   <div class="wrap">
     <div class="card">
 
-      <!-- טופ־בר -->
+      <!-- טופ־בר דביק -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
@@ -174,48 +195,58 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (תפריט מחולק) -->
+      <!-- תוכן -->
       <div class="body chat-body" id="area" role="region" aria-label="תפריט פעולות למנויים">
-        <!-- אזור יומן -->
+
+        <!-- יומן -->
         <div class="section">
           <div class="section-title">📅 יומן</div>
-          <div class="choices" role="group" aria-label="פעולות יומן">
-            <button class="btn choice soft-aqua" id="btn-reschedule">
-              <span>שינוי יום/שעה קבועה של שיעור</span>
-              <span class="emoji">🔁</span>
-            </button>
-            <button class="btn choice soft-rose" id="btn-cancel">
-              <span>ביטול שיעור עתידי</span>
-              <span class="emoji">❌</span>
-            </button>
-            <button class="btn choice soft-lilac" id="btn-boost">
-              <span>אני רוצה שיעור תגבור בנוסף למנוי</span>
-              <span class="emoji">➕</span>
-            </button>
-            <button class="btn choice soft-aqua" id="btn-makeup">
-              <span>אני רוצה להשלים שיעור</span>
-              <span class="emoji">⏱️</span>
-            </button>
+          <div class="section-card">
+            <div class="choices" role="group" aria-label="פעולות יומן">
+              <button class="btn choice soft-aqua" id="btn-reschedule" aria-label="שינוי יום או שעה קבועה של שיעור">
+                <span>שינוי יום/שעה קבועה של שיעור</span>
+                <span class="emoji">🔁</span>
+              </button>
+
+              <button class="btn choice soft-rose" id="btn-cancel" aria-label="ביטול שיעור עתידי">
+                <span>ביטול שיעור עתידי</span>
+                <span class="emoji">❌</span>
+              </button>
+
+              <button class="btn choice soft-lilac" id="btn-boost" aria-label="הוספת שיעור תגבור בנוסף למנוי">
+                <span>אני רוצה שיעור תגבור בנוסף למנוי</span>
+                <span class="emoji">➕</span>
+              </button>
+
+              <button class="btn choice soft-aqua" id="btn-makeup" aria-label="השלמת שיעור">
+                <span>אני רוצה להשלים שיעור</span>
+                <span class="emoji">⏱️</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- אזור כספים -->
+        <!-- כספים -->
         <div class="section">
           <div class="section-title">💳 כספים</div>
-          <div class="choices" role="group" aria-label="פעולות כספיות">
-            <button class="btn choice soft-mint" id="btn-billing">
-              <span>עדכון פרטי תשלום</span>
-              <span class="emoji">💳</span>
-            </button>
-            <button class="btn choice soft-lilac" id="btn-message">
-              <span>שליחת הודעה למזכירות</span>
-              <span class="emoji">✉️</span>
-            </button>
+          <div class="section-card">
+            <div class="choices" role="group" aria-label="פעולות כספיות">
+              <button class="btn choice soft-mint" id="btn-billing" aria-label="עדכון פרטי תשלום">
+                <span>עדכון פרטי תשלום</span>
+                <span class="emoji">💳</span>
+              </button>
+
+              <button class="btn choice soft-lilac" id="btn-message" aria-label="שליחת הודעה למזכירות">
+                <span>שליחת הודעה למזכירות</span>
+                <span class="emoji">✉️</span>
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
 
-      <!-- תחתית -->
+      <!-- פוטר -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
@@ -225,12 +256,12 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים (קיימים) -->
+  <!-- קבצי JS משותפים -->
   <script src="../js/config.js?v=3"></script>
   <script src="../js/chat-helpers.js?v=3"></script>
 
   <script>
-    // קונטקסט ל-FAQ
+    // קונטקסט לעזרה
     (function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
@@ -238,11 +269,11 @@
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     })('branch3-home');
 
-    // backBtn – לתאימות
+    // backBtn – תאימות
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../index.html');
 
-    // חיבורים לזרימות
+    // ניווט לפעולות
     document.getElementById('btn-reschedule').onclick = ()=> location.href='reschedule.html';
     document.getElementById('btn-cancel').onclick     = ()=> location.href='cancel.html';
     document.getElementById('btn-billing').onclick    = ()=> location.href='billing.html';
