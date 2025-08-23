@@ -442,4 +442,110 @@
 
     /* ===== שלב 5: הערות ===== */
     function stepNotes(){
-      setHelpContext
+      setHelpContext('notes');
+      Chat.clear(); Chat.push(stepNotes);
+
+      const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
+      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 600, true);
+
+      setTimeout(()=>{
+        const message = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב' });
+
+        const btnNext = Chat.button('המשך', ()=>{
+          Chat.userBubble('המשך');
+          Chat.State.data.message = (message.value||'').trim();
+          stepReview();
+        }, 'btn primary');
+
+        message.addEventListener('input', ()=>{ btnNext.disabled = false; });
+      }, 800);
+    }
+
+    /* ===== שלב 6: סיכום ===== */
+    function stepReview(){
+      setHelpContext('review');
+      Chat.clear(); Chat.push(stepReview);
+
+      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
+      Chat.scrollStartOf(h);
+
+      const card = document.createElement('div'); card.className='bubble bot';
+
+      const chips = document.createElement('div'); chips.className='summary';
+      if (Chat.State.data.subject)   chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
+      if (Chat.State.data.grade)     chips.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
+      if (Chat.State.data.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
+      card.appendChild(chips);
+
+      const d = Chat.State.data;
+      const details = document.createElement('div'); details.style.lineHeight='1.9';
+      const addLine = (label, value)=>{
+        const line=document.createElement('div');
+        const b=document.createElement('strong'); b.textContent=label+' ';
+        const span=document.createElement('span'); span.textContent=value;
+        line.append(b, span); details.appendChild(line);
+      };
+      addLine('שם:', `${d.firstName||''}`);
+      addLine('שם משפחה:', `${d.lastName||''}`);
+      addLine('מקצוע:', `${d.subject||''}`);
+      addLine('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יחידות`:''}`);
+      addLine('מסלול:', `${(Chat.cfg.PLAN_HE[d.planType]||'')}${d.price?` – ${d.price}₪`:''}`);
+      addLine('ימים ושעות מועדפים:', d.availability||'');
+      if (d.message) addLine('הערות למזכירות:', d.message);
+      addLine('טלפון לחזרה:', d.phone||'');
+
+      card.appendChild(details);
+      document.getElementById('area').appendChild(card);
+      (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
+
+      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
+        const stopProcessing = Chat.showProcessing();
+        const fullName = `${Chat.State.data.firstName||''} ${Chat.State.data.lastName||''}`.trim();
+
+        const ok = await Chat.sendLeadToSheet({
+          path: 'שיעור על בסיס מקום פנוי',
+          planType: Chat.cfg.PLAN_HE[Chat.State.data.planType],
+          price: `${Chat.State.data.price}₪`,
+          subject: Chat.State.data.subject,
+          grade: Chat.State.data.grade,
+          units: Chat.State.data.units || '',
+          availability: Chat.State.data.availability,
+          message: Chat.State.data.message || '',
+          extraNotes: '',
+          fullName,
+          firstName: Chat.State.data.firstName,
+          lastName:  Chat.State.data.lastName,
+          phone: Chat.State.data.phone,
+          cta: 'שיעור חד־פעמי',
+          source: 'יוסטון – אתר',
+          status: 'לטיפול',
+          createdAt: new Date().toISOString()
+        });
+
+        stopProcessing();
+        Chat.clear();
+
+        if(ok){
+          Chat.botText('המידע נשלח למזכירות ✅ ניצור קשר בהקדם בוואטסאפ לתיאום שיעור על בסיס מקום פנוי 👨‍🚀').classList.add('ok');
+        }else{
+          Chat.botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
+        }
+        const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
+        home.focus();
+      }, 'btn primary');
+    }
+
+    // הפעלה
+    start();
+  </script>
+</body>
+</html>
+
+
+
+
+זה הקוד של הענף הראשון
+תחבר אותו כמו שצריך לצ׳ט הלפרס החדש שבנינו
+
+תכף אשלח גם את הענף השני והשלישי
+
