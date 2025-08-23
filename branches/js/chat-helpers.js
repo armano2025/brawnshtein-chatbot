@@ -326,6 +326,134 @@
     });
   }
 
+  /* ====== Reusable: askFreeMessage – הודעה/מלל חופשי למזכירות ====== */
+  /**
+   * מציג כותרת + שדה הודעה (textarea), אופציה לשדה "פרטים נוספים" (textarea),
+   * כפתור "המשך" ו"כפתור חזרה" (אופציונלי).
+   * מחזיר Promise עם אובייקט: { message, extraNotes }
+   */
+  function askFreeMessage(opts = {}){
+    const {
+      titleHtml          = '<strong>הודעה למזכירות</strong><br><span class="muted">כתבו לנו כל דבר שחשוב שנדע</span>',
+      messageLabel       = 'הודעה',
+      messagePlaceholder = 'כתבו כאן כל דבר שתרצו',
+      requireMessage     = true,
+      includeNotes       = true,
+      notesLabel         = 'פרטים נוספים (רשות)',
+      notesPlaceholder   = 'אם יש עוד פרטים חשובים',
+      nextText           = 'המשך',
+      showBack           = true,
+    } = opts;
+
+    clearErrors();
+    const h = botHTML(titleHtml);
+    scrollStartOf(h);
+
+    const messageEl = inputRow(messageLabel, { textarea:true, id:'msg',       placeholder: messagePlaceholder });
+    const notesEl   = includeNotes ?        inputRow(notesLabel,   { textarea:true, id:'msg_notes', placeholder: notesPlaceholder }) : null;
+
+    return new Promise(resolve=>{
+      const onNext = once(()=>{
+        clearErrors();
+        const message    = (messageEl.value || '').trim();
+        const extraNotes = (notesEl?.value || '').trim();
+
+        if(requireMessage && !message){
+          inlineError('נדרש למלא הודעה ✍️', messageEl);
+          return;
+        }
+        resolve({ message, extraNotes });
+      });
+
+      button(nextText, ()=>{
+        userBubble(nextText);
+        onNext();
+      }, 'btn primary');
+
+      if(showBack){
+        button('חזרה', ()=> goBack());
+      }
+    });
+  }
+
+  /* ====== Reusable: askCalendarDate – בחירת תאריך מיומן חודשי ====== */
+  /**
+   * מציג כותרת + input type="date" (native) + כפתור "המשך" ו"חזרה".
+   * מחזיר Promise עם { date } בפורמט YYYY-MM-DD.
+   */
+  function askCalendarDate(opts = {}){
+    const {
+      titleHtml   = '<strong>בחירת תאריך</strong><br><span class="muted">בחרו תאריך בלוח החודשי</span>',
+      label       = 'תאריך',
+      id          = 'selected_date',
+      requireDate = true,
+      minToday    = false,           // אם true: קובע min ליום הנוכחי
+      min,                           // מחרוזת 'YYYY-MM-DD' אם רוצים לקבוע ידנית
+      max,                           // מחרוזת 'YYYY-MM-DD'
+      nextText    = 'המשך',
+      showBack    = true,
+    } = opts;
+
+    clearErrors();
+    const h = botHTML(titleHtml);
+    scrollStartOf(h);
+
+    const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
+    const l=document.createElement('label'); l.textContent=label;
+    const i=document.createElement('input'); i.type='date'; i.className='input'; i.id=id;
+    if(minToday){ i.min = new Date().toISOString().slice(0,10); }
+    if(min){ i.min = min; }
+    if(max){ i.max = max; }
+    wrap.append(l,i); area.appendChild(wrap); autoscroll();
+
+    return new Promise(resolve=>{
+      const onNext = once(()=>{
+        clearErrors();
+        const date = (i.value || '').trim(); // YYYY-MM-DD
+        if(requireDate && !date){
+          inlineError('נדרש לבחור תאריך 📅', i);
+          return;
+        }
+        resolve({ date });
+      });
+
+      button(nextText, ()=>{
+        userBubble(nextText);
+        onNext();
+      }, 'btn primary');
+
+      if(showBack){
+        button('חזרה', ()=> goBack());
+      }
+    });
+  }
+
+  /* ====== (Optional helpers) selectTime / selectSubject ====== */
+  /**
+   * עוזר קצר לבחירת שעה מרשימה נפתחת. מחזיר HTMLElement <select>.
+   */
+  function selectTime({ id='time', label='שעה', times=['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'] } = {}){
+    const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
+    const l=document.createElement('label'); l.textContent=label;
+    const s=document.createElement('select'); s.className='input'; s.id=id;
+    const o0=document.createElement('option'); o0.value=''; o0.textContent='בחר/י שעה'; s.appendChild(o0);
+    times.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); });
+    wrap.append(l,s); area.appendChild(wrap); autoscroll();
+    return s;
+  }
+
+  /**
+   * עוזר קצר לבחירת מקצוע מרשימה נפתחת. מחזיר HTMLElement <select>.
+   */
+  function selectSubject({ id='subject', label='מקצוע', subjects=['','מתמטיקה','אנגלית','פיזיקה','שפה','הוראה מתקנת','אנגלית מדוברת'] } = {}){
+    const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
+    const l=document.createElement('label'); l.textContent=label;
+    const s=document.createElement('select'); s.className='input'; s.id=id;
+    subjects.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent = v || 'בחר/י מקצוע'; s.appendChild(o); });
+    wrap.append(l,s); area.appendChild(wrap); autoscroll();
+    return s;
+  }
+
   /* ===== Expose ===== */
   window.Chat = {
     cfg, State, clear, push, goBack, updateBack,
@@ -333,6 +461,10 @@
     typingThen, showProcessing, scrollStartOf,
     inlineError, clearErrors, summaryCard, once,
     normalizeILPhone, validILPhone, sendLeadToSheet,
-    askContact, pickAvailability
+    askContact, pickAvailability,
+    askFreeMessage,        // חדש: מלל חופשי למזכירות
+    askCalendarDate,       // חדש: בחירת תאריך מיומן חודשי
+    selectTime,            // עוזר בחירת שעה (בונוס)
+    selectSubject          // עוזר בחירת מקצוע (בונוס)
   };
 })();
