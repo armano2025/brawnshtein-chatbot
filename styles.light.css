@@ -229,7 +229,14 @@ body{
    רכיבי זמינות
    ========================= */
 .slots-grid { display:grid; gap:10px; }
-.slot-row   { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+
+/* <<< שינוי כאן: פריסה אנכית לשורת בחירת מועד >>> */
+.slot-row{
+  display:grid;
+  grid-template-columns: 1fr;  /* עמודה אחת: יום / משעה / עד שעה אחד מתחת לשני */
+  gap:10px;
+}
+
 .slot-preview{
   margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;
   padding-top:4px; border-top:1px dashed var(--border);
