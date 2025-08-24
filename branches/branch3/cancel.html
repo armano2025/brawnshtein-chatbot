@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ביטול שיעור עתידי – מנויה קיימת</title>
 
-  <!-- שים לב לנתיב המתוקן: שתי רמות למעלה -->
+  <!-- שים לב לנתיב: שתי רמות למעלה -->
   <link rel="stylesheet" href="../../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
@@ -42,7 +42,6 @@
       <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
-        <!-- גם פה לתקן מסלול אם faq.html בשורש -->
         <a id="faqBtn" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         <span class="spacer"></span>
       </div>
@@ -50,12 +49,12 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים (ב-branches/js) – אלה נכונים להישאר ../ -->
+  <!-- קבצים משותפים (ב-branches/js) -->
   <script src="../js/config.js?v=3"></script>
-  <script src="../js/chat-helpers.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=4"></script> <!-- עודכן ל-v=4 -->
 
   <!-- הזרימה הספציפית -->
-  <script src="./js/flows/cancel.js?v=1"></script>
+  <script src="./js/flows/cancel.js?v=2"></script> <!-- עודכן ל-v=2 -->
   <script>
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
