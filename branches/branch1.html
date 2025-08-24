@@ -5,14 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>שיעור חד פעמי על בסיס מקום פנוי</title>
 
-  <!-- נקשר לעיצוב האחיד -->
+  <!-- שים לב: branch1.html נמצא ב-branches/, אז קובץ ה-CSS בשורש = ../ -->
   <link rel="stylesheet" href="../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
+
+  <style>
+    :root{
+      --radius:16px;
+      --gap:14px;
+      --card-bg: rgba(255,255,255,0.75);
+      --card-brd:#e6eaf3;
+      --shadow: 0 8px 24px rgba(15,23,42,0.08);
+      --shadow-hover: 0 12px 36px rgba(15,23,42,0.12);
+      --text: #0f172a;
+      --muted:#6b7280;
+      --soft-1:#eef6ff; --soft-1-b:#cfe3ff;
+      --soft-2:#ecfdf5; --soft-2-b:#c7f2e1;
+      --soft-3:#fff1f2; --soft-3-b:#ffd7dc;
+      --soft-4:#f5f3ff; --soft-4-b:#e3ddff;
+      --gradient: radial-gradient(900px 520px at 100% -10%, #8ea5ff33, transparent 60%),
+                  radial-gradient(700px 460px at 0% 100%, #8bffd933, transparent 60%);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --card-bg: rgba(18,22,33,0.6);
+        --card-brd:#2a3142;
+        --shadow: 0 6px 18px rgba(0,0,0,0.35);
+        --shadow-hover: 0 10px 28px rgba(0,0,0,0.45);
+        --text:#e5e7eb; --muted:#9ca3af;
+        --soft-1:#0b2447; --soft-1-b:#1b3a6c;
+        --soft-2:#0f2f27; --soft-2-b:#174538;
+        --soft-3:#3a1820; --soft-3-b:#5b2230;
+        --soft-4:#241a3d; --soft-4-b:#3a2b61;
+      }
+    }
+
+    body{
+      font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
+        var(--gradient);
+      background-attachment: fixed;
+    }
+    @media (prefers-color-scheme: dark){
+      body{ background:
+        linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%),
+        var(--gradient);
+      }
+    }
+
+    .wrap{ padding: clamp(12px, 2.5vw, 24px) }
+    .card{
+      border:1px solid var(--card-brd);
+      border-radius: clamp(16px, 2vw, 22px);
+      box-shadow: var(--shadow);
+      backdrop-filter: saturate(140%) blur(8px);
+      background: var(--card-bg);
+      overflow:hidden;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      padding: clamp(10px, 1.8vw, 14px);
+      border-bottom:1px solid var(--card-brd);
+      display:flex; gap:8px; align-items:center;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.02));
+    }
+
+    .head{
+      padding: clamp(16px, 2.4vw, 24px);
+      border-bottom:1px solid var(--card-brd);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+    .brand{ display:flex; align-items:center; gap:12px }
+    .logo{
+      width:40px; height:40px; border-radius:12px;
+      display:grid; place-items:center; font-weight:700;
+      background: linear-gradient(135deg,#5b7cfa, #6be6b3);
+      color:white; box-shadow: 0 6px 16px rgba(91,124,250,0.35);
+    }
+    .title{ font-weight:700; letter-spacing:0.2px }
+
+    .body.chat-body{ padding: clamp(14px, 2.2vw, 20px); min-height: 40vh }
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+
+    /* ניטרול עדיפות צבעונית */
+    .btn.primary {
+      background: var(--btn-bg, #f3f4f6) !important;
+      color: var(--btn-fg, #111827) !important;
+      border-color: var(--btn-border, #e5e7eb) !important;
+    }
+    .btn.next-arrow::after{ content:""; }
+    @media (prefers-reduced-motion: reduce){
+      .btn{ transition:none }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- טופ־בר (מופרד מהכותרת, כפתור תפריט אחיד לכל הדפים) -->
+      <!-- טופ־בר -->
       <div class="topbar">
         <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
       </div>
@@ -25,32 +118,38 @@
         </div>
       </div>
 
-      <!-- אזור התוכן (בועות/כפתורים) -->
+      <!-- אזור התוכן -->
       <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
-      <!-- תחתית: חזרה + שאלות (FAQ) -->
+      <!-- תחתית -->
       <div class="footer">
         <button id="backBtn" class="btn" disabled>חזרה</button>
+        <!-- faq בשורש => ../ -->
         <a id="faqBtn" class="btn ghost" href="../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         <span class="spacer"></span>
       </div>
     </div>
   </div>
 
-  <!-- סקריפטים משותפים (עדכנתי v בשביל cache-bust) -->
+  <!-- קבצים משותפים:
+       כאן branch1.html יושב ב-branches/, וה‑helpers ב-branches/js => הנתיב הוא ./js/... -->
   <script src="./js/config.js?v=3"></script>
   <script src="./js/chat-helpers.js?v=3"></script>
 
   <script>
-    /* ===== קונטקסט לכפתור ה-FAQ לפי שלב ===== */
-    function setHelpContext(ctx){
+    /* ===== קונטקסט ל-FAQ ===== */
+    (function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
       const base = '../faq.html';
       btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
-    }
+    })('branch1-oneoff');
 
-    /* ===== עזר קטן ל-select (טופס בתוך צ'אט) ===== */
+    /* ===== ניווט אחורה דרך ההיסטוריה של ה-Chat ===== */
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
+
+    /* ===== עזר ל-select (אם צריך בתוך השלבים) ===== */
     function selectRow(label, options, id){
       const wrap = document.createElement('div');
       wrap.className = 'input-wrap bubble bot';
@@ -86,65 +185,33 @@
       stepContactFirst();
     }
 
-    /* ===== שלב 0: פרטי קשר ===== */
-    async function stepContactFirst(){
-      setHelpContext('contact');
+    /* ===== שלב 0: פרטי קשר (משתמשים ב-askContact האחיד כדי לשמור שפה אחידה עם הענף החדש) ===== */
+    function stepContactFirst(){
       Chat.clear(); Chat.push(stepContactFirst);
 
-      const header = Chat.botHTML('<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמח לשם פרטי, שם משפחה ומספר טלפון לחזרה</span> 👨‍🚀');
-      Chat.scrollStartOf(header);
-
-      await waitP(300);
-      const firstName = Chat.inputRow('שם פרטי', { id:'firstName', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
-      await waitP(120);
-      const lastName  = Chat.inputRow('שם משפחה', { id:'lastName', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
-      await waitP(120);
-      const phone     = Chat.inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
-
-      await waitP(120);
-      const btnNext = Chat.button('המשך', ()=>{
-        Chat.userBubble('המשך');
-
-        const fn  = (firstName.value||'').trim();
-        const ln  = (lastName.value||'').trim();
-        const tel = Chat.normalizeILPhone(phone.value||'');
-
-        if(!fn){  showInlineError('נדרש שם פרטי ✏️', firstName); return; }
-        if(!ln){  showInlineError('נדרש שם משפחה ✏️', lastName); return; }
-        if(!Chat.validILPhone(tel)){ showInlineError('מספר טלפון לא תקין 📞', phone); return; }
-
-        Chat.State.data.firstName = fn;
-        Chat.State.data.lastName  = ln;
-        Chat.State.data.phone     = tel;
-
+      Chat.askContact({
+        titleHtml: '<strong>כדי שנתאם שיעור על בסיס מקום פנוי</strong><br><span class="muted">נשמור שם פרטי, משפחה וטלפון לחזרה</span> 👨‍🚀',
+        nextText: 'המשך',
+        requireLast: true,
+        showBack: false
+      }).then(contact=>{
+        if(!contact) return;
+        Chat.State.data.firstName = contact.firstName;
+        Chat.State.data.lastName  = contact.lastName;
+        Chat.State.data.phone     = contact.phone;
         stepSubject();
-      }, 'btn primary');
-
-      [firstName, lastName, phone].forEach(el=>{
-        el.addEventListener('input', ()=>{
-          removeLastErr();
-          btnNext.disabled = false;
-        });
       });
-
-      function showInlineError(msg, el){ Chat.botText(msg).classList.add('err'); el.focus(); }
-      function removeLastErr(){
-        const area = document.getElementById('area');
-        const lastErr = [...area.querySelectorAll('.bubble.err, .err')].pop();
-        if(lastErr) lastErr.remove();
-      }
-      function waitP(ms){ return new Promise(r=>setTimeout(r, ms)); }
     }
 
     /* ===== שלב 1: מקצוע ===== */
     function stepSubject(){
-      setHelpContext('subject');
+      setHelpCtx('subject');
       Chat.clear(); Chat.push(stepSubject);
 
       const name = Chat.State.data.firstName ? ` ${Chat.State.data.firstName}` : '';
       Chat.typingThen(
-        `<strong>מעולה${name}! אשמח לעזור לתאם שיעור חד פעמי, על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
-        650, true
+        `<strong>מעולה${name}! נתקדם לתאם שיעור חד־פעמי על בסיס מקום פנוי 👨‍🚀</strong><br><strong>איזה מקצוע תרצו?</strong> 📖`,
+        600, true
       );
 
       setTimeout(()=>{
@@ -160,15 +227,15 @@
         const s = document.createElement('div'); s.className='summary';
         s.appendChild(Chat.chip('שיעור חד־פעמי'));
         document.getElementById('area').appendChild(s);
-      }, 900);
+      }, 800);
     }
 
     /* ===== שלב 2: כיתה ===== */
     function stepGrade(){
-      setHelpContext('grade');
+      setHelpCtx('grade');
       Chat.clear(); Chat.push(stepGrade);
 
-      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀`, 600, true);
+      Chat.typingThen(`<strong>באיזו כיתה?</strong> 👨‍🚀`, 550, true);
 
       setTimeout(()=>{
         const grades = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','חינוך ביתי','סטודנט/ית','אחר'];
@@ -179,29 +246,24 @@
 
           const g = gradeSelect.value;
           if(!g){
-            Chat.botText('נדרש לבחור כיתה ✏️').classList.add('err');
-            gradeSelect.focus(); return;
+            Chat.inlineError('נדרש לבחור כיתה ✏️', gradeSelect);
+            return;
           }
           Chat.State.data.grade = g;
           if (['י','יא','יב'].includes(g)) { stepUnits(); }
           else { stepPlan(); }
-        }, 'btn primary');
+        }, 'btn');
 
-        gradeSelect.addEventListener('change', ()=>{
-          const area = document.getElementById('area');
-          const lastErr = [...area.querySelectorAll('.err')].pop();
-          if(lastErr) lastErr.remove();
-          btnNext.disabled = false;
-        });
-      }, 800);
+        gradeSelect.addEventListener('change', ()=>{ btnNext.disabled = false; });
+      }, 700);
     }
 
     /* ===== שלב 2b: יחידות ===== */
     function stepUnits(){
-      setHelpContext('units');
+      setHelpCtx('units');
       Chat.clear(); Chat.push(stepUnits);
 
-      Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 600, true);
+      Chat.typingThen('<strong>כמה יחידות בגרות?</strong> 👨‍🚀', 550, true);
 
       setTimeout(()=>{
         ['3','4','5'].forEach(u => Chat.button(`${u} יחידות`, ()=>{
@@ -214,22 +276,22 @@
         s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}`));
         if (Chat.State.data.subject) s.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
         document.getElementById('area').appendChild(s);
-      }, 700);
+      }, 650);
     }
 
     /* ===== שלב 3: מסלול ===== */
     function stepPlan(){
-      setHelpContext('plan');
+      setHelpCtx('plan');
       Chat.clear(); Chat.push(stepPlan);
 
       const P = Chat.cfg.PRICES, H = Chat.cfg.PLAN_HE;
       Chat.typingThen('<strong>בחירת מסלול</strong><br><span class="muted">נא לבחור מסלול מתאים:</span> 👨‍🚀', 600, true);
 
       setTimeout(()=>{
-        const isMath = (Chat.State.data.subject || '').trim() === 'מתמטיקה';
-        const isHighGrade = ['יא','יב'].includes(Chat.State.data.grade);
-        const isFiveUnits = (Chat.State.data.units || '') === '5';
-        const allowGroup = !(isMath && isHighGrade && isFiveUnits);
+        const isMath       = (Chat.State.data.subject || '').trim() === 'מתמטיקה';
+        const isHighGrade  = ['יא','יב'].includes(Chat.State.data.grade);
+        const isFiveUnits  = (Chat.State.data.units || '') === '5';
+        const allowGroup   = !(isMath && isHighGrade && isFiveUnits);
 
         if (allowGroup){
           Chat.button(`קבוצה – עד 5 תלמידים – ${P.group}₪`, ()=>{
@@ -237,7 +299,7 @@
             Chat.State.data.planType='group';
             Chat.State.data.price=P.group;
             stepAvailability();
-          }, 'btn primary');
+          }, 'btn');
         }
 
         Chat.button(`טריפל – עד 3 תלמידים – ${P.triple}₪`, ()=>{
@@ -245,25 +307,25 @@
           Chat.State.data.planType='triple';
           Chat.State.data.price=P.triple;
           stepAvailability();
-        });
+        }, 'btn');
 
         Chat.button(`פרטי – ${P.private}₪`, ()=>{
           Chat.userBubble(`פרטי – ${P.private}₪`);
           Chat.State.data.planType='private';
           Chat.State.data.price=P.private;
           stepAvailability();
-        });
+        }, 'btn');
 
         const s = document.createElement('div'); s.className='summary';
         if (Chat.State.data.subject) s.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
         if (Chat.State.data.grade)   s.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
         document.getElementById('area').appendChild(s);
-      }, 800);
+      }, 700);
     }
 
-    /* ===== שלב 4: זמינות — משתמשים ב־Chat.pickAvailability (שורה אחת + צ׳יפים) ===== */
+    /* ===== שלב 4: זמינות – בורר שורה אחת + צ׳יפים (מ-helpers) ===== */
     function stepAvailability(){
-      setHelpContext('availability');
+      setHelpCtx('availability');
       Chat.clear(); Chat.push(stepAvailability);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
@@ -271,7 +333,7 @@
         '<strong>שעות פתיחה</strong><br>' +
         '<span class="muted">אנחנו פתוחים בימים א׳–ה׳ בין 14:00–21:00.</span><br><br>' +
         `<strong>בחירת ימים ושעות מועדפים${name}</strong> 👨‍🚀`,
-        650, true
+        600, true
       );
 
       setTimeout(async ()=>{
@@ -280,105 +342,118 @@
           continueText: 'המשך',
           allowBack: true
         });
-        if(!chosen) return; // חזרה
+        if(!chosen) return;
         Chat.State.data.availability = chosen.join('; ');
         stepNotes();
-      }, 700);
+      }, 650);
     }
 
-    /* ===== שלב 5: הערות ===== */
+    /* ===== שלב 5: הערות חופשיות (אפשר ריק) ===== */
     function stepNotes(){
-      setHelpContext('notes');
+      setHelpCtx('notes');
       Chat.clear(); Chat.push(stepNotes);
 
       const name = Chat.State.data.firstName ? `, ${Chat.State.data.firstName}` : '';
-      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 600, true);
+      Chat.typingThen(`<strong>הערות למזכירות</strong><br><span class="muted">אפשר לציין העדפה למורה, רמה, או בקשה מיוחדת (לא חובה)${name}</span> 👨‍🚀`, 550, true);
 
       setTimeout(()=>{
         const message = Chat.inputRow('הערות (לא חובה)', { textarea:true, id:'message', placeholder:'לדוגמה: רענון לקראת מבחן / העדפה לשעת ערב' });
 
-        const btnNext = Chat.button('המשך', ()=>{
+        Chat.button('המשך', ()=>{
           Chat.userBubble('המשך');
           Chat.State.data.message = (message.value||'').trim();
           stepReview();
-        }, 'btn primary');
+        }, 'btn');
 
-        message.addEventListener('input', ()=>{ btnNext.disabled = false; });
-      }, 800);
+      }, 650);
     }
 
-    /* ===== שלב 6: סיכום ===== */
+    /* ===== שלב 6: סיכום ושליחה ===== */
     function stepReview(){
-      setHelpContext('review');
+      setHelpCtx('review');
       Chat.clear(); Chat.push(stepReview);
 
-      const h = Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
-      Chat.scrollStartOf(h);
-
-      const card = document.createElement('div'); card.className='bubble bot';
-
-      const chips = document.createElement('div'); chips.className='summary';
-      if (Chat.State.data.subject)   chips.appendChild(Chat.chip(`מקצוע: ${Chat.State.data.subject}`));
-      if (Chat.State.data.grade)     chips.appendChild(Chat.chip(`כיתה: ${Chat.State.data.grade}${Chat.State.data.units?` • ${Chat.State.data.units} יחידות`:''}`));
-      if (Chat.State.data.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[Chat.State.data.planType]} (${Chat.State.data.price}₪)`));
-      card.appendChild(chips);
+      Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">נא לוודא שהכול נכון לפני שליחה.</span> 👨‍🚀');
 
       const d = Chat.State.data;
-      const details = document.createElement('div'); details.style.lineHeight='1.9';
-      const addLine = (label, value)=>{
-        const line=document.createElement('div');
-        const b=document.createElement('strong'); b.textContent=label+' ';
-        const span=document.createElement('span'); span.textContent=value;
-        line.append(b, span); details.appendChild(line);
-      };
-      addLine('שם:', `${d.firstName||''}`);
-      addLine('שם משפחה:', `${d.lastName||''}`);
-      addLine('מקצוע:', `${d.subject||''}`);
-      addLine('כיתה:', `${d.grade||''}${d.units?` • ${d.units} יחידות`:''}`);
-      addLine('מסלול:', `${(Chat.cfg.PLAN_HE[d.planType]||'')}${d.price?` – ${d.price}₪`:''}`);
-      addLine('ימים ושעות מועדפים:', d.availability||'');
-      if (d.message) addLine('הערות למזכירות:', d.message);
-      addLine('טלפון לחזרה:', d.phone||'');
 
-      card.appendChild(details);
-      document.getElementById('area').appendChild(card);
-      (function(){ const a=document.getElementById('area'); a.scrollTop=a.scrollHeight; })();
+      // שבבונים עליונים (context)
+      const chips = document.createElement('div'); chips.className='summary';
+      if (d.subject)   chips.appendChild(Chat.chip(`מקצוע: ${d.subject}`));
+      if (d.grade)     chips.appendChild(Chat.chip(`כיתה: ${d.grade}${d.units?` • ${d.units} יחידות`:''}`));
+      if (d.planType)  chips.appendChild(Chat.chip(`מסלול: ${Chat.cfg.PLAN_HE[d.planType]}${d.price?` – ${d.price}₪`:''}`));
+      document.getElementById('area').appendChild(chips);
 
-      Chat.button('אישור ושליחה למזכירות 📤', async ()=>{
-        const stopProcessing = Chat.showProcessing();
-        const fullName = `${Chat.State.data.firstName||''} ${Chat.State.data.lastName||''}`.trim();
+      // כרטיס סיכום
+      Chat.summaryCard([
+        ['שם:', d.firstName || ''],
+        ['שם משפחה:', d.lastName || ''],
+        ['מקצוע:', d.subject || ''],
+        ['כיתה:', `${d.grade||''}${d.units?` • ${d.units} יחידות`:''}`],
+        ['מסלול:', (Chat.cfg.PLAN_HE[d.planType]||'') + (d.price?` – ${d.price}₪`: '')],
+        ['ימים ושעות מועדפים:', d.availability || ''],
+        ['הערות למזכירות:', d.message || ''],
+        ['טלפון לחזרה:', d.phone || '']
+      ]);
 
-        const ok = await Chat.sendLeadToSheet({
-          path: 'שיעור על בסיס מקום פנוי',
-          planType: Chat.cfg.PLAN_HE[Chat.State.data.planType],
-          price: `${Chat.State.data.price}₪`,
-          subject: Chat.State.data.subject,
-          grade: Chat.State.data.grade,
-          units: Chat.State.data.units || '',
-          availability: Chat.State.data.availability,
-          message: Chat.State.data.message || '',
-          extraNotes: '',
-          fullName,
-          firstName: Chat.State.data.firstName,
-          lastName:  Chat.State.data.lastName,
-          phone: Chat.State.data.phone,
-          cta: 'שיעור חד־פעמי',
-          source: 'יוסטון – אתר',
-          status: 'לטיפול',
-          createdAt: new Date().toISOString()
-        });
+      Chat.button('אישור ושליחה למזכירות 📤', submitOneOff, 'btn');
+      Chat.button('עריכה', ()=> Chat.goBack?.(), 'btn');
+    }
 
-        stopProcessing();
-        Chat.clear();
+    async function submitOneOff(){
+      const d=Chat.State.data;
 
-        if(ok){
-          Chat.botText('המידע נשלח למזכירות ✅ ניצור קשר בהקדם בוואטסאפ לתיאום שיעור על בסיס מקום פנוי 👨‍🚀').classList.add('ok');
-        }else{
-          Chat.botText('לא הצלחנו לשמור את הבקשה לגיליון ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
-        }
-        const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
-        home.focus();
-      }, 'btn primary');
+      // ולידציה סופית
+      const errs=[];
+      if(!d.firstName || !d.lastName) errs.push('name');
+      if(!Chat.validILPhone(d.phone)) errs.push('phone');
+      if(!d.subject) errs.push('subject');
+      if(!d.grade) errs.push('grade');
+      if(!d.planType) errs.push('plan');
+      if(!d.availability) errs.push('availability');
+
+      if(errs.length){
+        Chat.botText('חסר שדה נדרש. אנא בדקו ונסו שוב.').classList.add('err');
+        return;
+      }
+
+      const stopProcessing = Chat.showProcessing('שולח למזכירות…');
+      const ok = await Chat.sendLeadToSheet({
+        path: 'שיעור על בסיס מקום פנוי',
+        cta: 'שיעור חד־פעמי',
+        planType: Chat.cfg.PLAN_HE[d.planType],
+        price: `${d.price||''}₪`,
+        subject: d.subject,
+        grade: d.grade,
+        units: d.units || '',
+        availability: d.availability,
+        message: d.message || '',
+        extraNotes: '',
+        fullName: `${d.firstName||''} ${d.lastName||''}`.trim(),
+        firstName: d.firstName,
+        lastName:  d.lastName,
+        phone: d.phone,
+        source: 'יוסטון – אתר',
+        status: 'לטיפול',
+        createdAt: new Date().toISOString()
+      });
+      stopProcessing();
+
+      Chat.clear();
+      if(ok){
+        Chat.botText('המידע נשלח למזכירות ✅ ניצור קשר בהקדם בוואטסאפ לתיאום שיעור על בסיס מקום פנוי 👨‍🚀').classList.add('ok');
+      }else{
+        Chat.botText('לא הצלחנו לשמור את הבקשה ❌ ניתן לנסות שוב או לפנות בוואטסאפ 050‑9570866.').classList.add('err');
+      }
+      const home = Chat.button('חזרה לתפריט הראשי', ()=> location.href='../index.html', 'btn');
+      home.focus();
+    }
+
+    function setHelpCtx(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base = '../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
     }
 
     // הפעלה
