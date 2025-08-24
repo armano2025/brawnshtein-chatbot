@@ -182,7 +182,7 @@
     });
   }
 
-  /* ====== Reusable: pickAvailability – שורה אחת, צ׳יפים, איפוס ====== */
+  /* ====== Reusable: pickAvailability ====== */
   function pickAvailability(opts={}){
     const {
       titleHtml     = '<strong>בחירת ימים ושעות</strong>',
@@ -315,7 +315,7 @@
     });
   }
 
-  /* ====== Reusable: askFreeMessage – הודעה/מלל חופשי למזכירות ====== */
+  /* ====== Reusable: askFreeMessage ====== */
   function askFreeMessage(opts = {}){
     const {
       titleHtml          = '<strong>הודעה למזכירות</strong><br><span class="muted">כתבו לנו כל דבר שחשוב שנדע</span>',
@@ -360,7 +360,7 @@
     });
   }
 
-  /* ====== Reusable: askCalendarDate – בחירת תאריך מיומן חודשי ====== */
+  /* ====== Reusable: askCalendarDate ====== */
   function askCalendarDate(opts = {}){
     const {
       titleHtml   = '<strong>בחירת תאריך</strong><br><span class="muted">בחרו תאריך בלוח החודשי</span>',
@@ -398,7 +398,7 @@
       });
 
       button(nextText, ()=>{
-        userBubble(nextText);   // <— היה כאן באג: continueText
+        userBubble(nextText);   // תיקון: היה continueText
         onNext();
       }, 'btn primary');
 
@@ -431,14 +431,14 @@
   /* ===== Helpers: תאריכים ===== */
   function formatDateHeb(yyyy_mm_dd){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(yyyy_mm_dd||'')) return yyyy_mm_dd||'';
-    const [y,m,d] = yyyy_mm_dd.split('-');
+    const [y,m,d] = (yyyy_mm_dd||'').split('-');
     return `${d}/${m}`;
   }
   function isValidDateStr(yyyy_mm_dd){
     return /^\d{4}-\d{2}-\d{2}$/.test(yyyy_mm_dd||'');
   }
 
-  /* ====== NEW: askDateTimeSlots – תאריכים+שעה מרובים עם צ'יפים ====== */
+  /* ===== NEW: askDateTimeSlots ===== */
   function askDateTimeSlots(opts = {}){
     const {
       titleHtml     = '<strong>בחירת תאריך ושעה</strong><br><span class="muted">בחרו תאריך ושעה, הוסיפו, וניתן להוסיף עוד מועדים</span>',
@@ -478,7 +478,7 @@
     wrapTime.append(lTime, sTime);
     area.appendChild(wrapTime); autoscroll();
 
-    // כפתור הוספת מועד + תצוגת צ'יפים
+    // הוספת מועד + צ'יפים
     const addWrap=document.createElement('div'); addWrap.className='bubble bot'; addWrap.style.padding='12px';
     const addBtn=document.createElement('button'); addBtn.className='btn'; addBtn.textContent='+ הוספת מועד';
     addBtn.disabled = true;
@@ -487,12 +487,13 @@
     area.appendChild(addWrap); autoscroll();
 
     const slots=[]; // {date, time, label}
-
     const validCurrent = ()=> isValidDateStr(iDate.value) && !!sTime.value.trim();
     const refreshAddState = ()=>{ addBtn.disabled = !validCurrent(); };
 
     iDate.addEventListener('change', refreshAddState);
     sTime.addEventListener('change', refreshAddState);
+
+    let btnContinue; // נאתחל אחר כך
 
     const renderChips = ()=>{
       chips.innerHTML='';
@@ -500,7 +501,7 @@
         const c=chip(slot.label); c.classList.add('emph');
         const x=document.createElement('button');
         x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד'); x.textContent='✖';
-        x.onclick=()=>{ slots.splice(idx,1); renderChips(); btnContinue.disabled = slots.length < requireAtLeast; };
+        x.onclick=()=>{ slots.splice(idx,1); renderChips(); if(btnContinue) btnContinue.disabled = slots.length < requireAtLeast; };
         c.appendChild(x);
         chips.appendChild(c);
       });
@@ -518,34 +519,36 @@
       renderChips();
       iDate.value=''; sTime.value='';
       refreshAddState();
-      btnContinue.disabled = slots.length < requireAtLeast;
+      if(btnContinue) btnContinue.disabled = slots.length < requireAtLeast;
     };
 
-    // אזור פעולות תחתון + Promise תקין
-    return new Promise(resolve=>{
-      const actions=document.createElement('div'); actions.className='slots-actions';
+    // פעולות תחתונות
+    const actions=document.createElement('div'); actions.className='slots-actions';
+    btnContinue=document.createElement('button'); btnContinue.className='btn primary'; btnContinue.textContent=continueText; btnContinue.disabled = slots.length < requireAtLeast;
 
-      const btnContinue=document.createElement('button');
-      btnContinue.className='btn primary';
-      btnContinue.textContent=continueText;
-      btnContinue.disabled = slots.length < requireAtLeast;
-      btnContinue.onclick=()=>{
-        userBubble(continueText);
-        if(slots.length < requireAtLeast){
-          inlineError(`נדרש לבחור לפחות ${requireAtLeast} מועד 🕒`, sTime);
-          return;
-        }
-        resolve({ slots: slots.map(s=>({ ...s })) });
-      };
-      actions.appendChild(btnContinue);
+    let resolver; // ימולא בתוך ה-Promise
 
-      if(allowBack){
-        const backB=document.createElement('button'); backB.className='btn'; backB.textContent='חזרה';
-        backB.onclick=()=>{ goBack(); resolve(null); };
-        actions.appendChild(backB);
+    btnContinue.onclick=()=>{
+      userBubble(continueText);
+      if(slots.length < requireAtLeast){
+        inlineError(`נדרש לבחור לפחות ${requireAtLeast} מועד 🕒`, sTime);
+        return;
       }
+      resolver({ slots: slots.map(s=>({ ...s })) }); // resolve בטוח
+    };
+    actions.appendChild(btnContinue);
 
-      area.appendChild(actions); autoscroll();
+    if(allowBack){
+      const backB=document.createElement('button'); backB.className='btn'; backB.textContent='חזרה';
+      backB.onclick=()=>{ goBack(); resolver(null); };
+      actions.appendChild(backB);
+    }
+    area.appendChild(actions); autoscroll();
+
+    // Promise תקין: מגדירים את resolver בסקופ של resolve ואז משתפים אותו כלפי מעלה
+    return new Promise((resolve)=>{
+      let resolved=false;
+      resolver = (v)=>{ if(resolved) return; resolved=true; resolve(v); };
     });
   }
 
