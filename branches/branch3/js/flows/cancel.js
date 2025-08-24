@@ -11,7 +11,7 @@ const CancelFlow = (() => {
   function stepContact(){
     Chat.push(stepContact);
     Chat.askContact({
-      titleHtml: '<strong>ביטול שיעור עתידי</strong><br><span class="muted">נשמור פרטי קשר ואז נבחר מקצוע ותאריכים לביטול.</span>',
+      titleHtml: '<strong>ביטול שיעור עתידי</strong><br><span class="muted">נשמור פרטי קשר ונמשיך לפרטים.</span>',
       nextText: 'המשך',
       requireLast: true,
       showBack: false
@@ -26,7 +26,7 @@ const CancelFlow = (() => {
   function stepSubject(){
     Chat.push(stepSubject);
 
-    Chat.botHTML('<strong>באיזה מקצוע לבטל?</strong><br><span class="muted">בחר/י מקצוע מהרשימה</span>');
+    Chat.botHTML('<strong>איזה מקצוע לביטול?</strong><br><span class="muted">בחר/י מתוך הרשימה</span>');
     const subjSel = Chat.selectSubject({
       id: 'cancel_subject',
       label: 'מקצוע',
@@ -47,14 +47,15 @@ const CancelFlow = (() => {
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* ===== שלב 3: בחירת כמה תאריכים+שעות (צ׳יפים) ===== */
+  /* ===== שלב 3: בחירת תאריך ושעה (אפשר כמה) ===== */
   function stepDateTimeSlots(){
     Chat.push(stepDateTimeSlots);
 
+    // שים לב: askDateTimeSlots כולל בתוכו כבר כפתורי "הוסף מועד", "המשך" ו"חזרה"
     Chat.askDateTimeSlots({
       titleHtml:
         '<strong>בחירת תאריך ושעה לביטול</strong><br>' +
-        '<span class="muted">בחר/י תאריך ושעה, הוסיפ/י לרשימה, וניתן להוסיף כמה מועדים</span>',
+        '<span class="muted">בחר/י תאריך ושעה, לחצ/י "+ הוספת מועד", וניתן להוסיף כמה מועדים. ניתן להסיר כל צ׳יפ לפני המשך.</span>',
       dateLabel: 'תאריך השיעור',
       timeLabel: 'שעה',
       minToday: true,
@@ -63,18 +64,19 @@ const CancelFlow = (() => {
       allowBack: true
     }).then(res=>{
       if(!res) return; // המשתמש חזר אחורה
-      const { slots=[] } = res;  // [{date, time, label}, ...]
+      const { slots = [] } = res;
+
       if(!slots.length){
         Chat.inlineError('נדרש לבחור לפחות מועד אחד לביטול 🕒');
         return;
       }
 
-      // שמירה ב-State
-      Chat.State.data.lessonSlots = slots;                           // מערך מלא
-      Chat.State.data.slotsText   = slots.map(s=>`${s.date} ${s.time}`).join('; ');
-      Chat.State.data.slotsHuman  = slots.map(s=>s.label).join('; ');
+      // נשמור גם טקסטים לאחור-תאימות/דו"ח
+      Chat.State.data.lessonSlots = slots; // [{date, time, label}]
+      Chat.State.data.slotsText   = slots.map(s => `${s.date} ${s.time}`).join('; ');
+      Chat.State.data.slotsHuman  = slots.map(s => s.label).join('; ');
 
-      // תאימות לאחור (אם צריך בשיטס): מועד ראשון לשדות יחידניים
+      // לשדות legacy (למקרה שהגיליון מצפה לשדה יחיד)
       const first = slots[0] || {};
       Chat.State.data.lessonDate = first.date || '';
       Chat.State.data.lessonTime = first.time || '';
@@ -83,13 +85,13 @@ const CancelFlow = (() => {
     });
   }
 
-  /* ===== שלב 4: סיבת ביטול – מלל חופשי (רשות) ===== */
+  /* ===== שלב 4: סיבת ביטול (רשות) ===== */
   function stepReason(){
     Chat.push(stepReason);
     Chat.askFreeMessage({
       titleHtml: '<strong>סיבת ביטול / פרטים (רשות)</strong><br><span class="muted">אפשר לדלג אם אין צורך</span>',
       messageLabel: 'הודעה למזכירות (רשות)',
-      messagePlaceholder: 'רשות: הסבר קצר…',
+      messagePlaceholder: 'הסבר קצר אם תרצו להוסיף…',
       requireMessage: false,
       includeNotes: false,
       nextText: 'המשך',
@@ -108,19 +110,24 @@ const CancelFlow = (() => {
     const d = Chat.State.data;
     Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
 
-    // בנייה ידידותית של רשימת מועדים
-    const humanList = (d.lessonSlots||[]).length
-      ? (d.lessonSlots||[]).map(s=>s.label).join(' • ')
-      : (d.slotsHuman || '');
-
-    Chat.summaryCard([
+    // כרטיס סיכום+צ׳יפים של המועדים
+    const card = Chat.summaryCard([
       ['פעולה:', 'ביטול שיעור'],
       ['שם מלא:', `${d.firstName||''} ${d.lastName||''}`.trim()],
       ['טלפון לחזרה:', d.phone || ''],
       ['מקצוע:', d.subject || ''],
-      ['מועדים לביטול:', humanList || `${d.lessonDate||''} • ${d.lessonTime||''}`],
       ['הודעה:', d.message || '']
     ]);
+
+    if (Array.isArray(d.lessonSlots) && d.lessonSlots.length){
+      const chips = document.createElement('div');
+      chips.className = 'summary';
+      d.lessonSlots.forEach(s=>{
+        chips.appendChild(Chat.chip(s.label || `${s.date} • ${s.time}`));
+      });
+      card.appendChild(document.createElement('hr'));
+      card.appendChild(chips);
+    }
 
     Chat.button('אישור ושליחה למזכירות 📤', submit, 'btn');
     Chat.button('עריכה', ()=> Chat.goBack?.(), 'btn');
@@ -130,39 +137,35 @@ const CancelFlow = (() => {
   async function submit(){
     const d = Chat.State.data;
 
-    // ולידציה סופית
+    // ולידציה סופית לפני שליחה
     const errs=[];
     if(!d.firstName || !d.lastName) errs.push('name');
     if(!Chat.validILPhone(d.phone)) errs.push('phone');
     if(!d.subject) errs.push('subject');
 
-    // חייב לפחות מועד אחד: או lessonSlots (חדש) או שדות בודדים (תאימות)
-    const hasMulti = Array.isArray(d.lessonSlots) && d.lessonSlots.length>0;
-    const hasSingle = d.lessonDate && d.lessonTime;
-    if(!hasMulti && !hasSingle) errs.push('slots');
+    // אם יש אסופה – נבדוק שיש לפחות אחת; אחרת נסתמך על השדות היחידים
+    const hasSlots = Array.isArray(d.lessonSlots) && d.lessonSlots.length > 0;
+    if(!hasSlots){
+      if(!d.lessonDate) errs.push('date');
+      if(!d.lessonTime) errs.push('time');
+    }
 
     if(errs.length){
       Chat.botText('חסר שדה נדרש. אנא בדקו ונסו שוב.').classList.add('err');
       return;
     }
 
-    // נלקח המועד הראשון לשדות הישנים:
-    const first = hasMulti ? d.lessonSlots[0] : { date: d.lessonDate, time: d.lessonTime };
-
+    // הכנה לשילוח
     const payload = {
       path: 'מנויה קיימת – ביטול שיעור',
       cta: 'ביטול שיעור',
-
-      // תמיכה אחורה (שדה יחיד)
-      lessonDate: first?.date || '',
-      lessonTime: first?.time || '',
-
-      // תמיכה קדימה (מרובה מועדים)
-      lessonSlots: hasMulti ? d.lessonSlots : [{ date: d.lessonDate, time: d.lessonTime }],
-      slotsText:   d.slotsText || (hasSingle ? `${d.lessonDate} ${d.lessonTime}` : ''),
-      slotsHuman:  d.slotsHuman || (hasSingle ? `${d.lessonDate} • ${d.lessonTime}` : ''),
-
       subject: d.subject,
+      // Legacy (שדה יחיד – נשתמש ב״ראשון״ אם יש צבר)
+      lessonDate: hasSlots ? (d.lessonSlots[0]?.date || '') : (d.lessonDate || ''),
+      lessonTime: hasSlots ? (d.lessonSlots[0]?.time || '') : (d.lessonTime || ''),
+      // ייצוג מלא של כל המועדים שנבחרו
+      lessonSlots: hasSlots ? d.lessonSlots.map(s=>`${s.date} ${s.time}`).join('; ') : '',
+      lessonSlotsHuman: hasSlots ? d.lessonSlots.map(s=>s.label).join('; ') : '',
       message: d.message || '',
       extraNotes: '',
       fullName: `${d.firstName||''} ${d.lastName||''}`.trim(),
