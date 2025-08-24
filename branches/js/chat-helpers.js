@@ -183,11 +183,6 @@
   }
 
   /* ====== Reusable: pickAvailability – שורה אחת, צ׳יפים, איפוס ====== */
-  /**
-   * שלושה select קבועים (יום / משעה / עד שעה) + כפתור "הוספת מועד נוסף".
-   * כל הוספה שומרת כצ׳יפ ומאפסת את אותם השדות — בלי ליצור שורות חדשות.
-   * מחזיר Promise עם מערך בחירות ['יום א 16:00–18:00', ...].
-   */
   function pickAvailability(opts={}){
     const {
       titleHtml     = '<strong>בחירת ימים ושעות</strong>',
@@ -207,14 +202,12 @@
       wrap.style.maxWidth='720px';
       wrap.style.marginInline='auto';
 
-      // שורה יחידה אנכית
       const row = document.createElement('div');
       row.className='slot-row';
       row.style.display='grid';
       row.style.gridTemplateColumns='1fr';
       row.style.gap='10px';
 
-      // יוצר שדה אנכי (תווית + select)
       const makeField = (label, values, placeholder)=>{
         const fw=document.createElement('div');
         fw.style.display='flex'; fw.style.flexDirection='column'; fw.style.gap='6px';
@@ -233,7 +226,6 @@
       row.append(dayW, fromW, toW);
       wrap.appendChild(row);
 
-      // עזרה + כפתור הוספה
       const hint=document.createElement('div');
       hint.className='muted';
       hint.textContent='ניתן להוסיף יותר ממועד אחד';
@@ -245,7 +237,6 @@
       addBtn.disabled=true;
       wrap.appendChild(addBtn);
 
-      // תצוגת צ׳יפים
       const preview=document.createElement('div');
       preview.className='slot-preview';
       wrap.appendChild(preview);
@@ -290,13 +281,11 @@
         const txt = `יום ${daySel.value} ${fromSel.value}–${toSel.value}`;
         selected.push(txt);
         renderChips();
-        // איפוס שדות לבחירה חדשה
         daySel.value=''; fromSel.value=''; toSel.value='';
         refreshAddState();
         btnContinue.disabled = selected.length===0;
       };
 
-      // פעולות תחתונות
       const actions=document.createElement('div');
       actions.className='slots-actions';
 
@@ -327,11 +316,6 @@
   }
 
   /* ====== Reusable: askFreeMessage – הודעה/מלל חופשי למזכירות ====== */
-  /**
-   * מציג כותרת + שדה הודעה (textarea), אופציה לשדה "פרטים נוספים" (textarea),
-   * כפתור "המשך" ו"כפתור חזרה" (אופציונלי).
-   * מחזיר Promise עם אובייקט: { message, extraNotes }
-   */
   function askFreeMessage(opts = {}){
     const {
       titleHtml          = '<strong>הודעה למזכירות</strong><br><span class="muted">כתבו לנו כל דבר שחשוב שנדע</span>',
@@ -377,19 +361,15 @@
   }
 
   /* ====== Reusable: askCalendarDate – בחירת תאריך מיומן חודשי ====== */
-  /**
-   * מציג כותרת + input type="date" (native) + כפתור "המשך" ו"חזרה".
-   * מחזיר Promise עם { date } בפורמט YYYY-MM-DD.
-   */
   function askCalendarDate(opts = {}){
     const {
       titleHtml   = '<strong>בחירת תאריך</strong><br><span class="muted">בחרו תאריך בלוח החודשי</span>',
       label       = 'תאריך',
       id          = 'selected_date',
       requireDate = true,
-      minToday    = false,           // אם true: קובע min ליום הנוכחי
-      min,                           // מחרוזת 'YYYY-MM-DD' אם רוצים לקבוע ידנית
-      max,                           // מחרוזת 'YYYY-MM-DD'
+      minToday    = false,
+      min,
+      max,
       nextText    = 'המשך',
       showBack    = true,
     } = opts;
@@ -409,7 +389,7 @@
     return new Promise(resolve=>{
       const onNext = once(()=>{
         clearErrors();
-        const date = (i.value || '').trim(); // YYYY-MM-DD
+        const date = (i.value || '').trim();
         if(requireDate && !date){
           inlineError('נדרש לבחור תאריך 📅', i);
           return;
@@ -418,7 +398,7 @@
       });
 
       button(nextText, ()=>{
-        userBubble(nextText);
+        userBubble(continueText);
         onNext();
       }, 'btn primary');
 
@@ -429,9 +409,6 @@
   }
 
   /* ====== (Optional helpers) selectTime / selectSubject ====== */
-  /**
-   * עוזר קצר לבחירת שעה מרשימה נפתחת. מחזיר HTMLElement <select>.
-   */
   function selectTime({ id='time', label='שעה', times=['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'] } = {}){
     const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
     const l=document.createElement('label'); l.textContent=label;
@@ -442,9 +419,6 @@
     return s;
   }
 
-  /**
-   * עוזר קצר לבחירת מקצוע מרשימה נפתחת. מחזיר HTMLElement <select>.
-   */
   function selectSubject({ id='subject', label='מקצוע', subjects=['','מתמטיקה','אנגלית','פיזיקה','שפה','הוראה מתקנת','אנגלית מדוברת'] } = {}){
     const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
     const l=document.createElement('label'); l.textContent=label;
@@ -452,6 +426,140 @@
     subjects.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent = v || 'בחר/י מקצוע'; s.appendChild(o); });
     wrap.append(l,s); area.appendChild(wrap); autoscroll();
     return s;
+  }
+
+  /* ===== Helpers: תאריכים ===== */
+  function formatDateHeb(yyyy_mm_dd){
+    // הופך 'YYYY-MM-DD' ל 'DD/MM'
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(yyyy_mm_dd||'')) return yyyy_mm_dd||'';
+    const [y,m,d] = yyyy_mm_dd.split('-');
+    return `${d}/${m}`;
+  }
+  function isValidDateStr(yyyy_mm_dd){
+    return /^\d{4}-\d{2}-\d{2}$/.test(yyyy_mm_dd||'');
+  }
+
+  /* ====== NEW: askDateTimeSlots – בחירת כמה תאריכים + שעה, עם צ׳יפים ====== */
+  /**
+   * קומפוננטה גנרית לבחירת אחד/כמה תאריכים + שעה לכל תאריך (תורמת ל"תורים" מדויקים).
+   * מאפיינים:
+   *  - בוחר/ת תאריך (input[type=date]) + שעה (select) ואז לוחץ/ת "הוספת מועד".
+   *  - כל מועד נשמר כצ'יפ עם כפתור הסרה.
+   *  - "המשך" פעיל רק כשלפחות מועד אחד נבחר.
+   *
+   * שימוש:
+   * const { slots } = await Chat.askDateTimeSlots({ minToday:true, times:['14:00','15:00',...], continueText:'המשך' });
+   * // slots: [{ date:'YYYY-MM-DD', time:'HH:MM', label:'DD/MM • HH:MM' }, ...]
+   */
+  function askDateTimeSlots(opts = {}){
+    const {
+      titleHtml     = '<strong>בחירת תאריך ושעה</strong><br><span class="muted">בחרו תאריך ושעה, הוסיפו, וניתן להוסיף עוד מועדים</span>',
+      dateLabel     = 'תאריך',
+      timeLabel     = 'שעה',
+      idDate        = 'slot_date',
+      idTime        = 'slot_time',
+      requireAtLeast= 1,
+      minToday      = true,
+      min,
+      max,
+      times         = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'],
+      continueText  = 'המשך',
+      allowBack     = true,
+    } = opts;
+
+    clearErrors();
+    const h = botHTML(titleHtml);
+    scrollStartOf(h);
+
+    // תאריך
+    const wrapDate=document.createElement('div'); wrapDate.className='input-wrap bubble bot';
+    const lDate=document.createElement('label'); lDate.textContent=dateLabel;
+    const iDate=document.createElement('input'); iDate.type='date'; iDate.className='input'; iDate.id=idDate;
+    if(minToday) iDate.min = new Date().toISOString().slice(0,10);
+    if(min) iDate.min = min;
+    if(max) iDate.max = max;
+    wrapDate.append(lDate, iDate);
+    area.appendChild(wrapDate); autoscroll();
+
+    // שעה
+    const wrapTime=document.createElement('div'); wrapTime.className='input-wrap bubble bot';
+    const lTime=document.createElement('label'); lTime.textContent=timeLabel;
+    const sTime=document.createElement('select'); sTime.className='input'; sTime.id=idTime;
+    const o0=document.createElement('option'); o0.value=''; o0.textContent='בחר/י שעה'; sTime.appendChild(o0);
+    (times||[]).forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; sTime.appendChild(o); });
+    wrapTime.append(lTime, sTime);
+    area.appendChild(wrapTime); autoscroll();
+
+    // כפתור הוספת מועד + תצוגת צ'יפים
+    const addWrap=document.createElement('div'); addWrap.className='bubble bot'; addWrap.style.padding='12px';
+    const addBtn=document.createElement('button'); addBtn.className='btn'; addBtn.textContent='+ הוספת מועד';
+    addBtn.disabled = true;
+    const chips=document.createElement('div'); chips.className='slot-preview'; chips.style.marginTop='8px';
+    addWrap.append(addBtn, chips);
+    area.appendChild(addWrap); autoscroll();
+
+    const slots=[]; // {date, time, label}
+
+    const validCurrent = ()=> isValidDateStr(iDate.value) && !!sTime.value.trim();
+    const refreshAddState = ()=>{ addBtn.disabled = !validCurrent(); };
+
+    iDate.addEventListener('change', refreshAddState);
+    sTime.addEventListener('change', refreshAddState);
+
+    const renderChips = ()=>{
+      chips.innerHTML='';
+      slots.forEach((slot, idx)=>{
+        const c=chip(slot.label); c.classList.add('emph');
+        const x=document.createElement('button');
+        x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד'); x.textContent='✖';
+        x.onclick=()=>{ slots.splice(idx,1); renderChips(); btnContinue.disabled = slots.length < requireAtLeast; };
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+    };
+
+    addBtn.onclick = ()=>{
+      if(!validCurrent()) return;
+      const d=iDate.value, t=sTime.value.trim();
+      const label = `${formatDateHeb(d)} • ${t}`;
+      // מניעת כפילויות זהות
+      if(slots.some(s=> s.date===d && s.time===t)){
+        inlineError('המועד כבר נבחר ✋', sTime);
+        return;
+      }
+      slots.push({ date:d, time:t, label });
+      renderChips();
+      iDate.value=''; sTime.value='';
+      refreshAddState();
+      btnContinue.disabled = slots.length < requireAtLeast;
+    };
+
+    // אזור פעולות תחתון
+    const actions=document.createElement('div'); actions.className='slots-actions';
+    const btnContinue=document.createElement('button'); btnContinue.className='btn primary'; btnContinue.textContent=continueText; btnContinue.disabled = slots.length < requireAtLeast;
+    btnContinue.onclick=()=>{
+      userBubble(continueText);
+      if(slots.length < requireAtLeast){
+        inlineError(`נדרש לבחור לפחות ${requireAtLeast} מועד 🕒`, sTime);
+        return;
+      }
+      // נחזיר העתק כדי למנוע שינויים מבחוץ
+      resolver({ slots: slots.map(s=>({ ...s })) });
+    };
+    actions.appendChild(btnContinue);
+
+    if(allowBack){
+      const backB=document.createElement('button'); backB.className='btn'; backB.textContent='חזרה';
+      backB.onclick=()=>{ goBack(); resolver(null); };
+      actions.appendChild(backB);
+    }
+    area.appendChild(actions); autoscroll();
+
+    // Promise עם control ל-resolve בטוח פעם אחת
+    let resolved=false;
+    function resolver(v){ if(resolved) return; resolved=true; resolve(v); }
+
+    return new Promise(resolve=>{ /* resolve מוגדר לעיל דרך resolver */ });
   }
 
   /* ===== Expose ===== */
@@ -462,9 +570,10 @@
     inlineError, clearErrors, summaryCard, once,
     normalizeILPhone, validILPhone, sendLeadToSheet,
     askContact, pickAvailability,
-    askFreeMessage,        // חדש: מלל חופשי למזכירות
-    askCalendarDate,       // חדש: בחירת תאריך מיומן חודשי
-    selectTime,            // עוזר בחירת שעה (בונוס)
-    selectSubject          // עוזר בחירת מקצוע (בונוס)
+    askFreeMessage,        // מלל חופשי למזכירות
+    askCalendarDate,       // בחירת תאריך (בודד) מיומן חודשי
+    selectTime,            // בחירת שעה
+    selectSubject,         // בחירת מקצוע
+    askDateTimeSlots       // חדש: בחירת כמה תאריכים + שעה עם צ׳יפים
   };
 })();
