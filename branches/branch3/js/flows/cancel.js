@@ -1,9 +1,8 @@
 // /branches/branch3/js/flows/cancel.js
 const CancelFlow = (() => {
-  /* ===== התחלה ===== */
   function start(){
     Chat.clear();
-    Chat.State.data = {}; // איפוס הקשר זרימה
+    Chat.State.data = {};
     stepContact();
   }
 
@@ -17,15 +16,14 @@ const CancelFlow = (() => {
       showBack: false
     }).then(c=>{
       if(!c) return;
-      Chat.State.data = { ...Chat.State.data, ...c }; // firstName, lastName, phone
+      Chat.State.data = { ...Chat.State.data, ...c };
       stepSubject();
     });
   }
 
-  /* ===== שלב 2: בחירת מקצוע ===== */
+  /* ===== שלב 2: מקצוע ===== */
   function stepSubject(){
     Chat.push(stepSubject);
-
     Chat.botHTML('<strong>איזה מקצוע לביטול?</strong><br><span class="muted">בחר/י מתוך הרשימה</span>');
     const subjSel = Chat.selectSubject({
       id: 'cancel_subject',
@@ -36,10 +34,7 @@ const CancelFlow = (() => {
     Chat.button('המשך', ()=>{
       Chat.userBubble('המשך');
       const subject = (subjSel.value||'').trim();
-      if(!subject){
-        Chat.inlineError('בחר/י מקצוע 📚', subjSel);
-        return;
-      }
+      if(!subject){ Chat.inlineError('בחר/י מקצוע 📚', subjSel); return; }
       Chat.State.data.subject = subject;
       stepDateTimeSlots();
     }, 'btn');
@@ -47,14 +42,14 @@ const CancelFlow = (() => {
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* ===== שלב 3: בחירת תאריך ושעה (אפשר כמה) ===== */
+  /* ===== שלב 3: בחירת מועד/ים ===== */
   function stepDateTimeSlots(){
     Chat.push(stepDateTimeSlots);
 
     Chat.askDateTimeSlots({
       titleHtml:
         '<strong>בחירת תאריך ושעה לביטול</strong><br>' +
-        '<span class="muted">בחר/י תאריך ושעה, הקש/י "+ הוספת מועד" כדי להוסיף, ואפשר להסיר כל צ׳יפ לפני המשך.</span>',
+        '<span class="muted">בחר/י תאריך ושעה, הוסיפו כצ׳יפ, ואפשר להוסיף/להסיר לפני המשך.</span>',
       dateLabel: 'תאריך השיעור',
       timeLabel: 'שעה',
       minToday: true,
@@ -62,53 +57,31 @@ const CancelFlow = (() => {
       continueText: 'המשך',
       allowBack: true
     }).then(res=>{
-      if(res == null) return; // המשתמש לחץ חזרה בתוך הרכיב
-
-      // תמיכה גם בהחזרה כ-Array וגם כ-Object { slots: [...] }
+      if(res == null) return; // חזרה
       const raw = Array.isArray(res) ? res : (res && Array.isArray(res.slots) ? res.slots : []);
-      if(!raw.length){
-        Chat.inlineError('נדרש לבחור לפחות מועד אחד לביטול 🕒');
-        return;
-      }
+      if(!raw.length){ Chat.inlineError('נדרש לבחור לפחות מועד אחד לביטול 🕒'); return; }
 
-      // ננרמל למבנה אחיד: {date:'YYYY-MM-DD', time:'HH:MM', label:'DD/MM • HH:MM'}
       const toObj = (s)=>{
         if(typeof s === 'string'){
-          // ננסה לפענח "YYYY-MM-DD HH:MM" או "DD/MM • HH:MM"
           const m1 = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})$/);
-          if(m1){
-            const [_, d, t] = m1;
-            return { date:d, time:t, label: humanize(d, t) };
-          }
+          if(m1){ const [_, d, t] = m1; return { date:d, time:t, label:humanize(d,t) }; }
           const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\d{2}:\d{2})$/);
-          if(m2){
-            const [_, ddmm, t] = m2;
-            // ללא שנה – נשאיר label כמו שהוא, ונשמור date ריק
-            return { date:'', time:t, label:`${ddmm} • ${t}` };
-          }
+          if(m2){ const [_, ddmm, t] = m2; return { date:'', time:t, label:`${ddmm} • ${t}` }; }
           return { date:'', time:'', label:s };
         }
-        // אובייקט קיים
         const d = s.date || '';
         const t = s.time || s.lessonTime || '';
-        return { date:d, time:t, label: s.label || humanize(d, t) };
+        return { date:d, time:t, label: s.label || humanize(d,t) };
       };
       const slots = raw.map(toObj).filter(x => x.time);
-
-      if(!slots.length){
-        Chat.inlineError('נדרש לבחור לפחות מועד אחד תקין 🕒');
-        return;
-      }
+      if(!slots.length){ Chat.inlineError('נדרש לבחור לפחות מועד אחד תקין 🕒'); return; }
 
       Chat.State.data.lessonSlots = slots;
       Chat.State.data.slotsText  = slots.map(s => `${s.date} ${s.time}`.trim()).join('; ');
       Chat.State.data.slotsHuman = slots.map(s => s.label).join('; ');
-
-      // תאימות לאחור – נמלא את הראשון גם בשדות הישנים
       Chat.State.data.lessonDate = slots[0].date || '';
       Chat.State.data.lessonTime = slots[0].time || '';
 
-      // נתקדם
       stepReason();
     });
 
@@ -119,7 +92,7 @@ const CancelFlow = (() => {
     }
   }
 
-  /* ===== שלב 4: סיבת ביטול (רשות) ===== */
+  /* ===== שלב 4: סיבת ביטול ===== */
   function stepReason(){
     Chat.push(stepReason);
     Chat.askFreeMessage({
