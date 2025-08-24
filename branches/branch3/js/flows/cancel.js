@@ -11,46 +11,22 @@ const CancelFlow = (() => {
   function stepContact(){
     Chat.push(stepContact);
     Chat.askContact({
-      titleHtml: '<strong>ביטול שיעור עתידי</strong><br><span class="muted">נשמור פרטי קשר ונמשיך לבחירת המועד לביטול.</span>',
+      titleHtml: '<strong>ביטול שיעור עתידי</strong><br><span class="muted">נשמור פרטי קשר ואז נבחר מקצוע ותאריכים לביטול.</span>',
       nextText: 'המשך',
       requireLast: true,
       showBack: false
     }).then(c=>{
       if(!c) return;
       Chat.State.data = { ...Chat.State.data, ...c }; // firstName, lastName, phone (normalized)
-      stepDetails_Date();
+      stepSubject();
     });
   }
 
-  /* ===== שלב 2: תאריך מיומן חודשי ===== */
-  function stepDetails_Date(){
-    Chat.push(stepDetails_Date);
-    Chat.askCalendarDate({
-      titleHtml: '<strong>בחירת תאריך</strong><br><span class="muted">בחרו את תאריך השיעור שברצונכם לבטל</span>',
-      label: 'תאריך השיעור',
-      id: 'cancel_date',
-      minToday: true,   // אפשר לשנות ל-false אם צריך גם עבר
-      nextText: 'המשך',
-      showBack: true
-    }).then(({date})=>{
-      if(!date) return;
-      Chat.State.data.lessonDate = date; // YYYY-MM-DD
-      stepDetails_TimeSubject();
-    });
-  }
+  /* ===== שלב 2: בחירת מקצוע ===== */
+  function stepSubject(){
+    Chat.push(stepSubject);
 
-  /* ===== שלב 3: שעה + מקצוע ===== */
-  function stepDetails_TimeSubject(){
-    Chat.push(stepDetails_TimeSubject);
-
-    Chat.botHTML('<strong>פרטי השיעור</strong><br><span class="muted">בחרו שעה ומקצוע</span>');
-
-    const timeSel = Chat.selectTime({
-      id: 'cancel_time',
-      label: 'שעה',
-      times: ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00']
-    });
-
+    Chat.botHTML('<strong>באיזה מקצוע לבטל?</strong><br><span class="muted">בחר/י מקצוע מהרשימה</span>');
     const subjSel = Chat.selectSubject({
       id: 'cancel_subject',
       label: 'מקצוע',
@@ -59,35 +35,61 @@ const CancelFlow = (() => {
 
     Chat.button('המשך', ()=>{
       Chat.userBubble('המשך');
-
-      const lessonTime = (timeSel.value||'').trim();
-      const subject    = (subjSel.value||'').trim();
-
-      if(!lessonTime){
-        Chat.inlineError('בחר/י שעה ⏰', timeSel);
-        return;
-      }
+      const subject = (subjSel.value||'').trim();
       if(!subject){
         Chat.inlineError('בחר/י מקצוע 📚', subjSel);
         return;
       }
-
-      Chat.State.data.lessonTime = lessonTime;
-      Chat.State.data.subject    = subject;
-
-      stepDetails_Message();
+      Chat.State.data.subject = subject;
+      stepDateTimeSlots();
     }, 'btn');
 
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* ===== שלב 4: מלל חופשי למזכירות ===== */
-  function stepDetails_Message(){
-    Chat.push(stepDetails_Message);
+  /* ===== שלב 3: בחירת כמה תאריכים+שעות (צ׳יפים) ===== */
+  function stepDateTimeSlots(){
+    Chat.push(stepDateTimeSlots);
+
+    Chat.askDateTimeSlots({
+      titleHtml:
+        '<strong>בחירת תאריך ושעה לביטול</strong><br>' +
+        '<span class="muted">בחר/י תאריך ושעה, הוסיפ/י לרשימה, וניתן להוסיף כמה מועדים</span>',
+      dateLabel: 'תאריך השיעור',
+      timeLabel: 'שעה',
+      minToday: true,
+      times: ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'],
+      continueText: 'המשך',
+      allowBack: true
+    }).then(res=>{
+      if(!res) return; // המשתמש חזר אחורה
+      const { slots=[] } = res;  // [{date, time, label}, ...]
+      if(!slots.length){
+        Chat.inlineError('נדרש לבחור לפחות מועד אחד לביטול 🕒');
+        return;
+      }
+
+      // שמירה ב-State
+      Chat.State.data.lessonSlots = slots;                           // מערך מלא
+      Chat.State.data.slotsText   = slots.map(s=>`${s.date} ${s.time}`).join('; ');
+      Chat.State.data.slotsHuman  = slots.map(s=>s.label).join('; ');
+
+      // תאימות לאחור (אם צריך בשיטס): מועד ראשון לשדות יחידניים
+      const first = slots[0] || {};
+      Chat.State.data.lessonDate = first.date || '';
+      Chat.State.data.lessonTime = first.time || '';
+
+      stepReason();
+    });
+  }
+
+  /* ===== שלב 4: סיבת ביטול – מלל חופשי (רשות) ===== */
+  function stepReason(){
+    Chat.push(stepReason);
     Chat.askFreeMessage({
       titleHtml: '<strong>סיבת ביטול / פרטים (רשות)</strong><br><span class="muted">אפשר לדלג אם אין צורך</span>',
       messageLabel: 'הודעה למזכירות (רשות)',
-      messagePlaceholder: 'הסבר קצר אם תרצו להוסיף…',
+      messagePlaceholder: 'רשות: הסבר קצר…',
       requireMessage: false,
       includeNotes: false,
       nextText: 'המשך',
@@ -106,13 +108,17 @@ const CancelFlow = (() => {
     const d = Chat.State.data;
     Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
 
+    // בנייה ידידותית של רשימת מועדים
+    const humanList = (d.lessonSlots||[]).length
+      ? (d.lessonSlots||[]).map(s=>s.label).join(' • ')
+      : (d.slotsHuman || '');
+
     Chat.summaryCard([
       ['פעולה:', 'ביטול שיעור'],
       ['שם מלא:', `${d.firstName||''} ${d.lastName||''}`.trim()],
       ['טלפון לחזרה:', d.phone || ''],
-      ['תאריך:', d.lessonDate || ''],
-      ['שעה:', d.lessonTime || ''],
       ['מקצוע:', d.subject || ''],
+      ['מועדים לביטול:', humanList || `${d.lessonDate||''} • ${d.lessonTime||''}`],
       ['הודעה:', d.message || '']
     ]);
 
@@ -124,24 +130,38 @@ const CancelFlow = (() => {
   async function submit(){
     const d = Chat.State.data;
 
-    // ולידציה סופית לפני שליחה
+    // ולידציה סופית
     const errs=[];
     if(!d.firstName || !d.lastName) errs.push('name');
     if(!Chat.validILPhone(d.phone)) errs.push('phone');
-    if(!d.lessonDate) errs.push('date');
-    if(!d.lessonTime) errs.push('time');
     if(!d.subject) errs.push('subject');
+
+    // חייב לפחות מועד אחד: או lessonSlots (חדש) או שדות בודדים (תאימות)
+    const hasMulti = Array.isArray(d.lessonSlots) && d.lessonSlots.length>0;
+    const hasSingle = d.lessonDate && d.lessonTime;
+    if(!hasMulti && !hasSingle) errs.push('slots');
 
     if(errs.length){
       Chat.botText('חסר שדה נדרש. אנא בדקו ונסו שוב.').classList.add('err');
       return;
     }
 
+    // נלקח המועד הראשון לשדות הישנים:
+    const first = hasMulti ? d.lessonSlots[0] : { date: d.lessonDate, time: d.lessonTime };
+
     const payload = {
       path: 'מנויה קיימת – ביטול שיעור',
       cta: 'ביטול שיעור',
-      lessonDate: d.lessonDate,       // YYYY-MM-DD
-      lessonTime: d.lessonTime,       // HH:MM
+
+      // תמיכה אחורה (שדה יחיד)
+      lessonDate: first?.date || '',
+      lessonTime: first?.time || '',
+
+      // תמיכה קדימה (מרובה מועדים)
+      lessonSlots: hasMulti ? d.lessonSlots : [{ date: d.lessonDate, time: d.lessonTime }],
+      slotsText:   d.slotsText || (hasSingle ? `${d.lessonDate} ${d.lessonTime}` : ''),
+      slotsHuman:  d.slotsHuman || (hasSingle ? `${d.lessonDate} • ${d.lessonTime}` : ''),
+
       subject: d.subject,
       message: d.message || '',
       extraNotes: '',
