@@ -157,23 +157,24 @@
     const lastName  = inputRow('שם משפחה',  { id:'lastName',  placeholder:'לדוגמה: לוי', required:requireLast, autocomplete:'family-name' });
     const phone     = inputRow('טלפון לחזרה', { type:'tel', id:'phone', placeholder:'לדוגמה: 0501234567', required:true, autocomplete:'tel', inputmode:'tel' });
 
+    // נקה הודעת שגיאה עם הקלדה/שינוי
+    [firstName,lastName,phone].forEach(el=> el.addEventListener('input', clearErrors));
+
     return new Promise(resolve=>{
-      const onNext = once(()=>{
+      let resolved=false;
+      const btnNext = button(nextText, ()=>{
+        userBubble(nextText);
         clearErrors();
+
         const fn  = (firstName.value||'').trim();
         const ln  = (lastName.value||'').trim();
         const tel = normalizeILPhone(phone.value||'');
 
-        if(!fn){ inlineError('נדרש שם פרטי ✏️', firstName); return; }
-        if(requireLast && !ln){ inlineError('נדרש שם משפחה ✏️', lastName); return; }
-        if(!validILPhone(tel)){ inlineError('מספר טלפון לא תקין 📞', phone); return; }
+        if(!fn){ inlineError('נדרש שם פרטי ✏️', firstName); btnNext.disabled=false; return; }
+        if(requireLast && !ln){ inlineError('נדרש שם משפחה ✏️', lastName); btnNext.disabled=false; return; }
+        if(!validILPhone(tel)){ inlineError('מספר טלפון לא תקין 📞', phone); btnNext.disabled=false; return; }
 
-        resolve({ firstName: fn, lastName: ln, phone: tel });
-      });
-
-      button(nextText, ()=>{
-        userBubble(nextText);
-        onNext();
+        if(!resolved){ resolved=true; resolve({ firstName: fn, lastName: ln, phone: tel }); }
       }, 'btn primary');
 
       if(showBack){
@@ -336,22 +337,25 @@
     const messageEl = inputRow(messageLabel, { textarea:true, id:'msg',       placeholder: messagePlaceholder });
     const notesEl   = includeNotes ?        inputRow(notesLabel,   { textarea:true, id:'msg_notes', placeholder: notesPlaceholder }) : null;
 
+    // נקה שגיאות עם הקלדה
+    messageEl.addEventListener('input', clearErrors);
+    notesEl?.addEventListener('input', clearErrors);
+
     return new Promise(resolve=>{
-      const onNext = once(()=>{
+      let resolved=false;
+      const btnNext = button(nextText, ()=>{
+        userBubble(nextText);
         clearErrors();
+
         const message    = (messageEl.value || '').trim();
         const extraNotes = (notesEl?.value || '').trim();
 
         if(requireMessage && !message){
           inlineError('נדרש למלא הודעה ✍️', messageEl);
+          btnNext.disabled=false;
           return;
         }
-        resolve({ message, extraNotes });
-      });
-
-      button(nextText, ()=>{
-        userBubble(nextText);
-        onNext();
+        if(!resolved){ resolved=true; resolve({ message, extraNotes }); }
       }, 'btn primary');
 
       if(showBack){
@@ -386,20 +390,22 @@
     if(max){ i.max = max; }
     wrap.append(l,i); area.appendChild(wrap); autoscroll();
 
+    // נקה שגיאה עם שינוי
+    i.addEventListener('change', clearErrors);
+
     return new Promise(resolve=>{
-      const onNext = once(()=>{
+      let resolved=false;
+      const btnNext = button(nextText, ()=>{
+        userBubble(nextText);
         clearErrors();
+
         const date = (i.value || '').trim();
         if(requireDate && !date){
           inlineError('נדרש לבחור תאריך 📅', i);
+          btnNext.disabled=false;
           return;
         }
-        resolve({ date });
-      });
-
-      button(nextText, ()=>{
-        userBubble(nextText);   // תיקון: היה continueText
-        onNext();
+        if(!resolved){ resolved=true; resolve({ date }); }
       }, 'btn primary');
 
       if(showBack){
@@ -493,7 +499,7 @@
     iDate.addEventListener('change', refreshAddState);
     sTime.addEventListener('change', refreshAddState);
 
-    let btnContinue; // נאתחל אחר כך
+    let btnContinue;
 
     const renderChips = ()=>{
       chips.innerHTML='';
@@ -534,7 +540,7 @@
         inlineError(`נדרש לבחור לפחות ${requireAtLeast} מועד 🕒`, sTime);
         return;
       }
-      resolver({ slots: slots.map(s=>({ ...s })) }); // resolve בטוח
+      resolver({ slots: slots.map(s=>({ ...s })) });
     };
     actions.appendChild(btnContinue);
 
@@ -545,7 +551,7 @@
     }
     area.appendChild(actions); autoscroll();
 
-    // Promise תקין: מגדירים את resolver בסקופ של resolve ואז משתפים אותו כלפי מעלה
+    // Promise בטוח
     return new Promise((resolve)=>{
       let resolved=false;
       resolver = (v)=>{ if(resolved) return; resolved=true; resolve(v); };
