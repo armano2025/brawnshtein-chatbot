@@ -1,12 +1,14 @@
+<script>
 // /branches/branch3/js/flows/cancel.js
 const CancelFlow = (() => {
+  /* ===== התחלה ===== */
   function start(){
     Chat.clear();
-    Chat.State.data = {};
+    Chat.State.data = {}; // איפוס הקשר זרימה
     stepContact();
   }
 
-  /* שלב 1: פרטי קשר */
+  /* ===== שלב 1: פרטי קשר ===== */
   function stepContact(){
     Chat.push(stepContact);
     Chat.askContact({
@@ -16,14 +18,16 @@ const CancelFlow = (() => {
       showBack: false
     }).then(c=>{
       if(!c) return;
-      Chat.State.data = { ...Chat.State.data, ...c };
+      Chat.State.data = { ...Chat.State.data, ...c }; // firstName, lastName, phone
       stepSubject();
     });
   }
 
-  /* שלב 2: מקצוע */
+  /* ===== שלב 2: בחירת מקצוע ===== */
   function stepSubject(){
+    Chat.clear();                // ניקוי לפני מסך חדש (קליל)
     Chat.push(stepSubject);
+
     Chat.botHTML('<strong>איזה מקצוע לביטול?</strong><br><span class="muted">בחר/י מתוך הרשימה</span>');
     const subjSel = Chat.selectSubject({
       id: 'cancel_subject',
@@ -45,8 +49,9 @@ const CancelFlow = (() => {
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* שלב 3: בחירת מועד/ים (תאריך+שעה) */
+  /* ===== שלב 3: בחירת תאריך ושעה (אפשר כמה) ===== */
   function stepDateTimeSlots(){
+    Chat.clear();                // חשוב! מסך המועדים גדול – נתחיל בדף נקי
     Chat.push(stepDateTimeSlots);
 
     Chat.askDateTimeSlots({
@@ -60,27 +65,29 @@ const CancelFlow = (() => {
       continueText: 'המשך',
       allowBack: true
     }).then(res=>{
-      if(res == null) return; // המשתמש חזר אחורה
+      if(res == null) return; // המשתמש לחץ חזרה בתוך הרכיב
 
+      // תמיכה גם בהחזרה כ-Array וגם כ-Object { slots: [...] }
       const raw = Array.isArray(res) ? res : (res && Array.isArray(res.slots) ? res.slots : []);
       if(!raw.length){
         Chat.inlineError('נדרש לבחור לפחות מועד אחד לביטול 🕒');
         return;
       }
 
+      // נרמל למבנה אחיד
       const toObj = (s)=>{
         if(typeof s === 'string'){
           const m1 = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})$/);
-          if(m1){ const [_, d, t] = m1; return { date:d, time:t, label: humanize(d, t) }; }
-          const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\d{2}:\d{2})$/);
-          if(m2){ const [_, ddmm, t] = m2; return { date:'', time:t, label:`${ddmm} • ${t}` }; }
+          if(m1){ const [, d, t] = m1; return { date:d, time:t, label: humanize(d,t) }; }
+          const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\d{2}:\ד{2})$/);
+          if(m2){ const [, ddmm, t] = m2; return { date:'', time:t, label:`${ddmm} • ${t}` }; }
           return { date:'', time:'', label:s };
         }
         const d = s.date || '';
         const t = s.time || s.lessonTime || '';
-        return { date:d, time:t, label: s.label || humanize(d, t) };
+        return { date:d, time:t, label: s.label || humanize(d,t) };
       };
-      const slots = raw.map(toObj).filter(x => x.time);
+      const slots = raw.map(toObj).filter(x=>x.time);
 
       if(!slots.length){
         Chat.inlineError('נדרש לבחור לפחות מועד אחד תקין 🕒');
@@ -91,6 +98,7 @@ const CancelFlow = (() => {
       Chat.State.data.slotsText  = slots.map(s => `${s.date} ${s.time}`.trim()).join('; ');
       Chat.State.data.slotsHuman = slots.map(s => s.label).join('; ');
 
+      // תאימות לאחור – הראשון גם לשדות הישנים
       Chat.State.data.lessonDate = slots[0].date || '';
       Chat.State.data.lessonTime = slots[0].time || '';
 
@@ -104,9 +112,11 @@ const CancelFlow = (() => {
     }
   }
 
-  /* שלב 4: סיבת ביטול (רשות) */
+  /* ===== שלב 4: סיבת ביטול (רשות) ===== */
   function stepReason(){
+    Chat.clear();                // 💥 זה הפיקס שמסיר את ה־DOM הכבד לפני הטופס הבא
     Chat.push(stepReason);
+
     Chat.askFreeMessage({
       titleHtml: '<strong>סיבת ביטול / פרטים (רשות)</strong><br><span class="muted">אפשר לדלג אם אין צורך</span>',
       messageLabel: 'הודעה למזכירות (רשות)',
@@ -121,10 +131,10 @@ const CancelFlow = (() => {
     });
   }
 
-  /* שלב 5: סיכום ושליחה */
+  /* ===== שלב 5: סיכום ושליחה ===== */
   function stepSummary(){
-    Chat.push(stepSummary);
     Chat.clear();
+    Chat.push(stepSummary);
 
     const d = Chat.State.data;
     Chat.botHTML('<strong>סיכום הבקשה</strong><br><span class="muted">בדקו שהכול נכון לפני שליחה.</span>');
@@ -151,7 +161,7 @@ const CancelFlow = (() => {
     Chat.button('עריכה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* שליחה */
+  /* ===== שליחה ===== */
   async function submit(){
     const d = Chat.State.data;
 
@@ -209,3 +219,4 @@ const CancelFlow = (() => {
 
   return { start };
 })();
+</script>
