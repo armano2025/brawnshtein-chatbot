@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ביטול שיעור עתידי – מנויה קיימת</title>
 
-  <!-- שים לב לנתיב: שתי רמות למעלה -->
+  <!-- CSS מהשורש (שתי רמות למעלה) -->
   <link rel="stylesheet" href="../../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
@@ -17,6 +17,8 @@
       border-color: var(--btn-border, #e5e7eb) !important;
     }
     .btn.next-arrow::after{ content:""; }
+    .topbar{ display:flex; gap:8px; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid rgba(17,24,39,.08); }
+    .topbar .left,.topbar .right{ display:flex; gap:8px; align-items:center }
   </style>
 </head>
 <body>
@@ -25,7 +27,14 @@
 
       <!-- טופ־בר -->
       <div class="topbar">
-        <button class="btn" onclick="location.href='index.html'">לתפריט מנויה קיימת</button>
+        <div class="right">
+          <!-- שינוי טקסט הכפתור: תפריט מנוי/ה -->
+          <button class="btn" onclick="location.href='index.html'">תפריט מנוי/ה</button>
+        </div>
+        <div class="left">
+          <!-- הוספת גישה לתפריט הראשי -->
+          <button class="btn" onclick="location.href='../../index.html'">לתפריט ראשי</button>
+        </div>
       </div>
 
       <!-- כותרת -->
@@ -41,7 +50,7 @@
 
       <!-- תחתית -->
       <div class="footer">
-        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <button id="backBtn" class="btn">חזרה</button>
         <a id="faqBtn" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         <span class="spacer"></span>
       </div>
@@ -49,16 +58,24 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים (ב-branches/js) -->
+  <!-- קבצים משותפים -->
   <script src="../js/config.js?v=3"></script>
-  <script src="../js/chat-helpers.js?v=4"></script> <!-- עודכן ל-v=4 -->
+  <script src="../js/chat-helpers.js?v=3"></script>
 
   <!-- הזרימה הספציפית -->
-  <script src="./js/flows/cancel.js?v=2"></script> <!-- עודכן ל-v=2 -->
+  <script src="./js/flows/cancel.js?v=1"></script>
   <script>
+    // כפתור חזרה: קודם נסה "חזרה בזרימה", ואם אין — חזור לתפריט המנוי/ה
     const backBtn = document.getElementById('backBtn');
-    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
+    if (backBtn) backBtn.onclick = ()=>{
+      if (window.Chat && Chat.goBack && Chat.State?.history?.length > 1){
+        Chat.goBack();
+      } else {
+        location.href = 'index.html';
+      }
+    };
 
+    // קונטקסט ל-FAQ
     (function setHelpContext(ctx){
       const btn = document.getElementById('faqBtn');
       if(!btn) return;
