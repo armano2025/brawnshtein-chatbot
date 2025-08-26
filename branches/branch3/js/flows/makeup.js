@@ -62,7 +62,7 @@ const MakeupFlow = (() => {
       continueText: 'המשך',
       allowBack: true
     }).then(res=>{
-      if(res == null) return; // המשתמש לחץ חזרה בתוך הרכיב
+      if(res == null) return; // המשתמש לחץ חזרה
 
       const raw = Array.isArray(res) ? res : (res && Array.isArray(res.slots) ? res.slots : []);
       if(!raw.length){
@@ -72,9 +72,11 @@ const MakeupFlow = (() => {
 
       const toObj = (s)=>{
         if(typeof s === 'string'){
+          // "YYYY-MM-DD HH:MM"
           const m1 = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})$/);
           if(m1){ const [_, d, t] = m1; return { date:d, time:t, label: humanize(d, t) }; }
-          const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\ד{2}:\ד{2})$/);
+          // "DD/MM • HH:MM"
+          const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\d{2}:\d{2})$/);
           if(m2){ const [_, ddmm, t] = m2; return { date:'', time:t, label:`${ddmm} • ${t}` }; }
           return { date:'', time:'', label:s };
         }
@@ -178,10 +180,8 @@ const MakeupFlow = (() => {
       path: 'מנוי קיים – השלמת שיעור',
       cta: 'השלמת שיעור',
       subject: d.subject,
-      // Legacy (שדה יחיד – נשתמש ב״ראשון״ אם יש צבר)
       lessonDate: hasSlots ? (d.lessonSlots[0]?.date || '') : (d.lessonDate || ''),
       lessonTime: hasSlots ? (d.lessonSlots[0]?.time || '') : (d.lessonTime || ''),
-      // ייצוג מלא של כל המועדים שנבחרו
       lessonSlots: hasSlots ? d.lessonSlots.map(s=>`${s.date} ${s.time}`.trim()).join('; ') : '',
       lessonSlotsHuman: hasSlots ? d.lessonSlots.map(s=>s.label).join('; ') : '',
       message: d.message || '',
