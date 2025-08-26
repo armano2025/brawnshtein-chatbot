@@ -1,1 +1,91 @@
+<!-- /branches/branch3/billing.html -->
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>עדכון פרטי תשלום – מנוי/ה קיים/ת</title>
 
+  <!-- עיצוב גלובלי -->
+  <link rel="stylesheet" href="../../styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
+
+  <style>
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+    .btn.primary {
+      background: var(--btn-bg, #f3f4f6) !important;
+      color: var(--btn-fg, #111827) !important;
+      border-color: var(--btn-border, #e5e7eb) !important;
+    }
+    .btn.next-arrow::after{ content:""; }
+
+    /* טופ־בר */
+    .topbar{
+      position: sticky; top: 0; z-index: 5;
+      display:flex; gap:8px; justify-content:space-between; align-items:center;
+      padding:12px; border-bottom:1px solid var(--card-brd, #e6eaf3);
+      background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));
+      backdrop-filter: blur(6px);
+    }
+    .topbar .right, .topbar .left{ display:flex; gap:8px; align-items:center }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <!-- טופ־בר -->
+      <div class="topbar">
+        <div class="right">
+          <button class="btn" onclick="location.href='index.html'">תפריט מנוי/ה</button>
+          <button class="btn" onclick="location.href='../../index.html'">לתפריט ראשי</button>
+        </div>
+        <div class="left">
+          <a id="faqBtn" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        </div>
+      </div>
+
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">עדכון פרטי תשלום</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן -->
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- תחתית -->
+      <div class="footer">
+        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <span class="spacer"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- קבצים משותפים -->
+  <script src="../js/config.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=3"></script>
+
+  <!-- הזרימה הספציפית -->
+  <script src="./js/flows/billing.js?v=1"></script>
+  <script>
+    // כפתור חזרה – שלב קודם בשיחה
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
+
+    // FAQ עם הקשר
+    (function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base='../../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    })('branch3-billing');
+
+    // התחלה
+    BillingFlow.start();
+  </script>
+</body>
+</html>
