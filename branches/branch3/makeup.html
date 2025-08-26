@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>השלמת שיעור – מנוי/ה קיים/ת</title>
 
-  <!-- קובץ עיצוב בשורש הפרויקט → שתי רמות מעלה -->
   <link rel="stylesheet" href="../../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
@@ -17,8 +16,6 @@
       border-color: var(--btn-border, #e5e7eb) !important;
     }
     .btn.next-arrow::after{ content:""; }
-    /* הודעת שגיאה נעימה אם משהו נופל מוקדם */
-    .boot-error{ padding:12px; border-radius:12px; background:#fff3f3; color:#b91c1c; border:1px solid #fecaca; margin:12px }
   </style>
 </head>
 <body>
@@ -45,10 +42,7 @@
       </div>
 
       <!-- אזור התוכן -->
-      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false">
-        <!-- fallback קטן עד שה־JS מצייר -->
-        <div class="bubble bot">טוען…</div>
-      </div>
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
 
       <!-- תחתית -->
       <div class="footer">
@@ -59,44 +53,24 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים (ב-branches/js) – חשוב לטעון לפני הזרימה -->
-  <script defer src="../js/config.js?v=3"></script>
-  <script defer src="../js/chat-helpers.js?v=3"></script>
+  <!-- קבצים משותפים -->
+  <script src="../js/config.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=3"></script>
 
   <!-- הזרימה הספציפית -->
-  <script defer src="./js/flows/makeup.js?v=2"></script>
+  <script src="./js/flows/makeup.js?v=1"></script>
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      try{
-        // כפתור חזרה בתוך הזרימה
-        const backBtn = document.getElementById('backBtn');
-        if (backBtn) backBtn.onclick = ()=> window.Chat?.goBack?.();
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
 
-        // FAQ עם הקשר
-        (function setHelpContext(ctx){
-          const btn = document.getElementById('faqBtn');
-          if(!btn) return;
-          const base='../../faq.html';
-          btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
-        })('branch3-makeup');
+    (function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base='../../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    })('branch3-makeup');
 
-        // הפעלת הזרימה
-        if (window.MakeupFlow?.start) {
-          window.MakeupFlow.start();
-        } else {
-          throw new Error('MakeupFlow לא נטען (בדוק נתיבי סקריפטים)');
-        }
-      }catch(err){
-        console.error(err);
-        const area = document.getElementById('area');
-        if(area){
-          const d=document.createElement('div');
-          d.className='boot-error';
-          d.textContent='אופס… משהו הפריע לטעינה. רענון יעזור, ואם לא — בדוק קונסול.';
-          area.appendChild(d);
-        }
-      }
-    });
+    MakeupFlow.start();
   </script>
 </body>
 </html>
