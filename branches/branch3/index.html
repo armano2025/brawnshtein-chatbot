@@ -6,12 +6,13 @@
   <title>פעולות במנוי קיים 👨‍🚀</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../styles.light.css?v=1" />
+  <!-- תיקון נתיב: שתי רמות למעלה -->
+  <link rel="stylesheet" href="../../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
   <style>
     :root{
-      --radius:16px;
+      --radius:18px;
       --card-bg: rgba(255,255,255,0.75);
       --card-brd:#e6eaf3;
       --shadow: 0 8px 24px rgba(15,23,42,0.08);
@@ -75,27 +76,27 @@
     .section-title .dot{ width:8px; height:8px; border-radius:999px; background:#5b7cfa; opacity:.4 }
 
     /* רשת כפתורים */
-    .choices{ display:grid; gap:12px }
+    .choices{ display:grid; gap:14px }
     @media (min-width:560px){ .choices{ grid-template-columns:1fr 1fr } }
 
-    /* כפתור-כרטיס */
+    /* כפתור-כרטיס (הוגדל והודק מעט) */
     .btn.choice{
       display:flex; align-items:center; justify-content:space-between;
-      gap:12px; font-weight:700;
-      padding:16px 18px; border-radius:var(--radius);
+      gap:14px; font-weight:700;
+      padding:18px 20px; border-radius:var(--radius);
       background:#fff; border:1px solid var(--card-brd);
       box-shadow:var(--shadow);
       transition: transform .18s ease, box-shadow .18s ease;
-      font-size:1.06rem; line-height:1.35;
-      color:#111 !important;              /* ← טקסט שחור בכפתורים */
+      font-size:1.12rem; line-height:1.35;
+      color:#111 !important;
       text-align:start;
     }
     .btn.choice:hover{ transform:translateY(-1px); box-shadow:var(--shadow-hover) }
 
-    .icon{ width:22px; height:22px; stroke-width:2; opacity:.85 }
+    .icon{ width:24px; height:24px; stroke-width:2; opacity:.85 }
     .icon-wrap{
-      inline-size:28px; block-size:28px; border-radius:8px;
-      display:grid; place-items:center; background:rgba(0,0,0,.04);
+      inline-size:32px; block-size:32px; border-radius:10px;
+      display:grid; place-items:center; background:rgba(0,0,0,.05);
     }
 
     /* פוטר */
@@ -117,8 +118,9 @@
       <!-- טופ־בר -->
       <div class="topbar">
         <div class="right">
-          <button class="btn" onclick="location.href='../index.html'">לתפריט ראשי</button>
-          <a id="faqTop" class="btn ghost" href="../faq.html">יש לי שאלות</a>
+          <!-- תיקון נתיבים: שתי רמות למעלה -->
+          <button class="btn" onclick="location.href='../../index.html'">לתפריט ראשי</button>
+          <a id="faqTop" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         </div>
         <div class="left"></div>
       </div>
@@ -146,7 +148,8 @@
 
               <button class="btn choice" id="btn-cancel" aria-label="ביטול שיעור עתידי">
                 <span>ביטול שיעור עתידי</span>
-                <span class="icon-wrap"><i data-feather="trash-2" class="icon"></i></span>
+                <!-- שינוי אייקון לפחות "אשפה": סימן ביטול ברור -->
+                <span class="icon-wrap"><i data-feather="x-octagon" class="icon"></i></span>
               </button>
 
               <button class="btn choice" id="btn-boost" aria-label="הוספת שיעור תגבור בנוסף למנוי">
@@ -197,25 +200,25 @@
     </div>
   </div>
 
-  <!-- קבצי JS קיימים -->
+  <!-- קבצי JS קיימים (שתי רמות למעלה עבור faq/index כבר טופל בטופ־בר) -->
   <script src="../js/config.js?v=3"></script>
   <script src="../js/chat-helpers.js?v=3"></script>
 
   <script>
-    // FAQ עם קונטקסט
+    // קונטקסט ל-FAQ (תיקון נתיב לבסיס: שתי רמות למעלה)
     (function setHelpContext(ctx){
       const btnTop = document.getElementById('faqTop');
       if(btnTop){
-        const base = '../faq.html';
+        const base = '../../faq.html';
         btnTop.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
       }
     })('branch3-home');
 
-    // חזרה
+    // חזרה: אם אין היסטוריה, נחזור לתפריט הראשי (תיקון נתיב)
     const backBtn = document.getElementById('backBtn');
-    if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../index.html');
+    if (backBtn) backBtn.onclick = ()=> history.length > 1 ? history.back() : (location.href='../../index.html');
 
-    // ניווט
+    // ניווט לכפתורי הסקשנים
     document.getElementById('btn-reschedule').onclick = ()=> location.href='reschedule.html';
     document.getElementById('btn-cancel').onclick     = ()=> location.href='cancel.html';
     document.getElementById('btn-billing').onclick    = ()=> location.href='billing.html';
@@ -224,7 +227,7 @@
     document.getElementById('btn-makeup').onclick     = ()=> location.href='makeup.html';
     document.getElementById('btn-cancel-sub').onclick = ()=> location.href='cancel-sub.html';
 
-    // הפעלת Feather
+    // Feather icons
     feather.replace();
   </script>
 </body>
