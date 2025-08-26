@@ -1,4 +1,3 @@
-<!-- /branches/branch3/message.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -6,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>שליחת הודעה למזכירות – מנוי/ה קיים/ת</title>
 
-  <!-- עיצוב גלובלי -->
+  <!-- נכסים גלובליים – שתי רמות למעלה -->
   <link rel="stylesheet" href="../../styles.light.css?v=1" />
   <meta name="theme-color" content="#5b7cfa" />
 
@@ -17,16 +16,6 @@
       color: var(--btn-fg, #111827) !important;
       border-color: var(--btn-border, #e5e7eb) !important;
     }
-    .btn.next-arrow::after{ content:""; }
-
-    .topbar{
-      position: sticky; top: 0; z-index: 5;
-      display:flex; gap:8px; justify-content:space-between; align-items:center;
-      padding:12px; border-bottom:1px solid var(--card-brd,#e6eaf3);
-      background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));
-      backdrop-filter: blur(6px);
-    }
-    .topbar .right, .topbar .left{ display:flex; gap:8px; align-items:center }
   </style>
 </head>
 <body>
@@ -34,12 +23,12 @@
     <div class="card">
 
       <!-- טופ־בר -->
-      <div class="topbar">
-        <div class="right">
+      <div class="topbar" style="display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--card-brd,#e6eaf3);background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));backdrop-filter: blur(6px);">
+        <div class="right" style="display:flex;gap:8px;align-items:center">
           <button class="btn" onclick="location.href='index.html'">תפריט מנוי/ה</button>
           <button class="btn" onclick="location.href='../../index.html'">לתפריט ראשי</button>
         </div>
-        <div class="left">
+        <div class="left" style="display:flex;gap:8px;align-items:center">
           <a id="faqBtn" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
         </div>
       </div>
@@ -64,14 +53,14 @@
     </div>
   </div>
 
-  <!-- קבצים משותפים -->
+  <!-- קבצים משותפים (ב-branches/js) -->
   <script src="../js/config.js?v=3"></script>
   <script src="../js/chat-helpers.js?v=3"></script>
 
   <!-- הזרימה הספציפית -->
   <script src="./js/flows/message.js?v=1"></script>
   <script>
-    // כפתור חזרה בתוך הזרימה
+    // חזרה בתוך הזרימה
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
 
