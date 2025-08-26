@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>השלמת שיעור – מנוי/ה קיים/ת</title>
 
+  <!-- שים לב לנתיבים: שתי רמות מעלה לקבצים גלובליים -->
+  <link rel="stylesheet" href="../../styles.light.css?v=1" />
+  <meta name="theme-color" content="#5b7cfa" />
+
+  <style>
+    #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
+    .btn.primary {
+      background: var(--btn-bg, #f3f4f6) !important;
+      color: var(--btn-fg, #111827) !important;
+      border-color: var(--btn-border, #e5e7eb) !important;
+    }
+    .btn.next-arrow::after{ content:""; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <!-- טופ־בר -->
+      <div class="topbar" style="display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--card-brd,#e6eaf3);background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.2));backdrop-filter: blur(6px);">
+        <div class="right" style="display:flex;gap:8px;align-items:center">
+          <button class="btn" onclick="location.href='index.html'">תפריט מנוי/ה</button>
+          <button class="btn" onclick="location.href='../../index.html'">לתפריט ראשי</button>
+        </div>
+        <div class="left" style="display:flex;gap:8px;align-items:center">
+          <a id="faqBtn" class="btn ghost" href="../../faq.html" target="_blank" rel="noopener">יש לי שאלות</a>
+        </div>
+      </div>
+
+      <!-- כותרת -->
+      <div class="head">
+        <div class="brand">
+          <div class="logo">HB</div>
+          <div class="title">השלמת שיעור</div>
+        </div>
+      </div>
+
+      <!-- אזור התוכן -->
+      <div class="body chat-body" id="area" role="log" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- תחתית -->
+      <div class="footer">
+        <button id="backBtn" class="btn" disabled>חזרה</button>
+        <span class="spacer"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- קבצים משותפים (ב-branches/js) -->
+  <script src="../js/config.js?v=3"></script>
+  <script src="../js/chat-helpers.js?v=3"></script>
+
+  <!-- הזרימה הספציפית -->
+  <script src="./js/flows/makeup.js?v=1"></script>
+  <script>
+    // כפתור חזרה בתוך הזרימה
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.onclick = ()=> Chat.goBack?.();
+
+    // FAQ עם הקשר
+    (function setHelpContext(ctx){
+      const btn = document.getElementById('faqBtn');
+      if(!btn) return;
+      const base='../../faq.html';
+      btn.href = ctx ? `${base}?ctx=${encodeURIComponent(ctx)}` : base;
+    })('branch3-makeup');
+
+    MakeupFlow.start();
+  </script>
+</body>
+</html>
