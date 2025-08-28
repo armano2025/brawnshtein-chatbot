@@ -7,11 +7,171 @@ const BoostFlow = (() => {
     stepContact();
   }
 
+  /* ===== עוזרים קטנים מקומיים ===== */
+  function makeSelect({ id, label, options }){
+    const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
+    const l=document.createElement('label'); l.textContent=label;
+    const s=document.createElement('select'); s.className='input'; s.id=id;
+    options.forEach(({value,text,disabled})=>{
+      const o=document.createElement('option');
+      o.value=value; o.textContent=text;
+      if(disabled) o.disabled=true;
+      s.appendChild(o);
+    });
+    wrap.append(l,s); Chat.scrollStartOf(wrap);
+    area.appendChild(wrap);
+    return s;
+  }
+  function formatDateHeb(yyyy_mm_dd){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(yyyy_mm_dd||'')) return yyyy_mm_dd||'';
+    const [y,m,d] = (yyyy_mm_dd||'').split('-');
+    return `${d}/${m}`;
+  }
+
+  /* ===== קומפוננטה מקומית: בחירת "תאריך + טווח שעות" עם צ'יפים (ריבוי אפשרויות) ===== */
+  function askDateWithHourRangeSlots(opts = {}){
+    const {
+      titleHtml     = '<strong>בחר/י תאריך וטווח שעות</strong><br><span class="muted">ניתן להוסיף כמה מועדים</span>',
+      dateLabel     = 'תאריך',
+      fromLabel     = 'משעה',
+      toLabel       = 'עד שעה',
+      idDate        = 'boost_slot_date',
+      idFrom        = 'boost_slot_from',
+      idTo          = 'boost_slot_to',
+      minToday      = true,
+      min,
+      max,
+      times         = ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'],
+      continueText  = 'המשך',
+      allowBack     = true,
+      requireAtLeast= 1
+    } = opts;
+
+    Chat.clearErrors();
+    Chat.botHTML(titleHtml);
+
+    // תאריך
+    const wrapDate=document.createElement('div'); wrapDate.className='input-wrap bubble bot';
+    const lDate=document.createElement('label'); lDate.textContent=dateLabel;
+    const iDate=document.createElement('input'); iDate.type='date'; iDate.className='input'; iDate.id=idDate;
+    if(minToday) iDate.min = new Date().toISOString().slice(0,10);
+    if(min) iDate.min = min;
+    if(max) iDate.max = max;
+    wrapDate.append(lDate, iDate);
+    area.appendChild(wrapDate);
+
+    // משעה
+    const sFrom = makeSelect({
+      id: idFrom,
+      label: fromLabel,
+      options: [{value:'',text:'בחר/י שעה'}].concat(times.map(t=>({value:t,text:t})))
+    });
+
+    // עד שעה
+    const sTo = makeSelect({
+      id: idTo,
+      label: toLabel,
+      options: [{value:'',text:'בחר/י שעה'}].concat(times.map(t=>({value:t,text:t})))
+    });
+
+    // כפתור הוספה + צ'יפים
+    const addWrap=document.createElement('div'); addWrap.className='bubble bot'; addWrap.style.padding='12px';
+    const addBtn=document.createElement('button'); addBtn.className='btn'; addBtn.textContent='+ הוספת מועד';
+    addBtn.disabled = true;
+    const chips=document.createElement('div'); chips.className='slot-preview'; chips.style.marginTop='8px';
+    addWrap.append(addBtn, chips);
+    area.appendChild(addWrap);
+
+    const slots=[]; // {date, from, to, label}
+
+    const toNum = (s)=> parseInt(String(s||'').replace(':',''),10) || 0;
+    const validCurrent = ()=> {
+      const d = iDate.value;
+      const f = sFrom.value?.trim();
+      const t = sTo.value?.trim();
+      return /^\d{4}-\d{2}-\d{2}$/.test(d||'') && f && t && toNum(f) < toNum(t);
+    };
+    const refreshAddState = ()=>{
+      addBtn.disabled = !validCurrent();
+      // הודעת שגיאה קטנה אם צריך
+      if(sFrom.value && sTo.value && toNum(sFrom.value) >= toNum(sTo.value)){
+        Chat.inlineError('״עד שעה״ חייב להיות אחרי ״משעה״', sTo);
+      }else{
+        Chat.clearErrors();
+      }
+    };
+
+    [iDate, sFrom, sTo].forEach(el => el.addEventListener('change', refreshAddState));
+
+    let btnContinue;
+
+    const renderChips = ()=>{
+      chips.innerHTML='';
+      slots.forEach((slot, idx)=>{
+        const c=Chat.chip(slot.label); c.classList.add('emph');
+        const x=document.createElement('button');
+        x.type='button'; x.className='x'; x.title='הסר מועד'; x.setAttribute('aria-label','הסר מועד'); x.textContent='✖';
+        x.onclick=()=>{ slots.splice(idx,1); renderChips(); if(btnContinue) btnContinue.disabled = slots.length < requireAtLeast; };
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+    };
+
+    addBtn.onclick = ()=>{
+      if(!validCurrent()) return;
+      const d = iDate.value;
+      const f = sFrom.value.trim();
+      const t = sTo.value.trim();
+
+      const label = `${formatDateHeb(d)} • ${f}–${t}`;
+      // מניעת כפילויות
+      if(slots.some(s=> s.date===d && s.from===f && s.to===t)){
+        Chat.inlineError('המועד כבר נבחר ✋', sTo);
+        return;
+      }
+      slots.push({ date:d, from:f, to:t, label });
+      renderChips();
+
+      // איפוס
+      iDate.value=''; sFrom.value=''; sTo.value='';
+      refreshAddState();
+      if(btnContinue) btnContinue.disabled = slots.length < requireAtLeast;
+    };
+
+    // פעולות תחתונות
+    const actions=document.createElement('div'); actions.className='slots-actions';
+    btnContinue=document.createElement('button'); btnContinue.className='btn primary'; btnContinue.textContent=continueText; btnContinue.disabled = true;
+
+    let resolver;
+
+    btnContinue.onclick=()=>{
+      Chat.userBubble(continueText);
+      if(slots.length < requireAtLeast){
+        Chat.inlineError(`נדרש לבחור לפחות ${requireAtLeast} מועד 🕒`, sTo);
+        return;
+      }
+      resolver({ slots: slots.map(s=>({ ...s })) });
+    };
+    actions.appendChild(btnContinue);
+
+    if(allowBack){
+      const backB=document.createElement('button'); backB.className='btn'; backB.textContent='חזרה';
+      backB.onclick=()=>{ Chat.goBack(); resolver(null); };
+      actions.appendChild(backB);
+    }
+    area.appendChild(actions);
+
+    return new Promise((resolve)=>{
+      let resolved=false;
+      resolver = (v)=>{ if(resolved) return; resolved=true; resolve(v); };
+    });
+  }
+
   /* ===== שלב 1: פרטי קשר ===== */
   function stepContact(){
     Chat.push(stepContact);
     Chat.askContact({
-      titleHtml: '<strong>שיעור תגבור</strong><br><span class="muted">נשמור פרטי קשר ונמשיך לבחירה.</span>',
+      titleHtml: '<strong>שיעור תגבור</strong> 👨‍🚀<br><span class="muted">נשמור פרטי קשר ונמשיך לבחירה.</span>',
       nextText: 'המשך',
       requireLast: true,
       showBack: false
@@ -41,31 +201,114 @@ const BoostFlow = (() => {
         return;
       }
       Chat.State.data.subject = subject;
+      stepGrade();
+    }, 'btn');
+
+    Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
+  }
+
+  /* ===== שלב 3: כיתה ===== */
+  function stepGrade(){
+    Chat.push(stepGrade);
+
+    Chat.botHTML('<strong>באיזו כיתה?</strong>');
+    const gradeSel = makeSelect({
+      id:'boost_grade',
+      label:'כיתה',
+      options: [
+        {value:'', text:'בחר/י כיתה'},
+        {value:'ז', text:'ז'},
+        {value:'ח', text:'ח'},
+        {value:'ט', text:'ט'},
+        {value:'י', text:'י'},
+        {value:'יא', text:'יא'},
+        {value:'יב', text:'יב'}
+      ]
+    });
+
+    Chat.button('המשך', ()=>{
+      Chat.userBubble('המשך');
+      const grade = (gradeSel.value||'').trim();
+      if(!grade){
+        Chat.inlineError('בחר/י כיתה 🏫', gradeSel);
+        return;
+      }
+      Chat.State.data.grade = grade;
+
+      // אם י/יא/יב – נמשיך לבדוק יחידות; רק ל-יא/יב יחידות נדרשות בתנאי
+      if(grade === 'יא' || grade === 'יב' || grade === 'י'){
+        stepUnits(); // בהנחיה ביקשת י, יא, יב — נשאל כמות יחידות
+      }else{
+        Chat.State.data.units = '';
+        stepPlan();
+      }
+    }, 'btn');
+
+    Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
+  }
+
+  /* ===== שלב 4: יחידות בגרות (מותנה בכיתה) ===== */
+  function stepUnits(){
+    Chat.push(stepUnits);
+
+    Chat.botHTML('<strong>כמה יחידות בגרות?</strong>');
+    const unitsSel = makeSelect({
+      id:'boost_units',
+      label:'יחידות בגרות',
+      options: [
+        {value:'', text:'בחר/י'},
+        {value:'3', text:'3 יחידות בגרות'},
+        {value:'4', text:'4 יחידות בגרות'},
+        {value:'5', text:'5 יחידות בגרות'},
+      ]
+    });
+
+    Chat.button('המשך', ()=>{
+      Chat.userBubble('המשך');
+      const units = (unitsSel.value||'').trim();
+      if(!units){
+        Chat.inlineError('בחר/י מספר יחידות 🎓', unitsSel);
+        return;
+      }
+      Chat.State.data.units = units; // '3' | '4' | '5'
       stepPlan();
     }, 'btn');
 
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* ===== שלב 3: בחירת מסלול/תעריף תגבור ===== */
+  /* ===== שלב 5: בחירת מסלול/תעריף תגבור ===== */
   function stepPlan(){
     Chat.push(stepPlan);
 
     Chat.botHTML('<strong>איזה מסלול תגבור מתאים לכם?</strong><br><span class="muted">תעריף לשיעור אחד (למנויים)</span>');
 
-    // בניית select ידני (עוזר כללי)
+    const isHigh5 = (Chat.State.data.grade==='יא' || Chat.State.data.grade==='יב') && Chat.State.data.units==='5';
+
     const wrap=document.createElement('div'); wrap.className='input-wrap bubble bot';
     const l=document.createElement('label'); l.textContent='מסלול תגבור';
     const s=document.createElement('select'); s.className='input'; s.id='boost_plan';
     const options = [
       { val:'',         text:'בחר/י מסלול' },
-      { val:'group',    text:'מסלול קבוצתי – 70₪ לשיעור', price:70 },
+      { val:'group',    text:'מסלול קבוצתי – 70₪ לשיעור', price:70, disabled: isHigh5 }, // נחסם ל-יא/יב 5 יח'
       { val:'triple',   text:'מסלול טריפל – 90₪ לשיעור',  price:90 },
       { val:'private',  text:'מסלול פרטי – 160₪ לשיעור', price:160 }
     ];
-    options.forEach(o=>{ const opt=document.createElement('option'); opt.value=o.val; opt.textContent=o.text; s.appendChild(opt); });
+    options.forEach(o=>{
+      const opt=document.createElement('option');
+      opt.value=o.val; opt.textContent=o.text;
+      if(o.disabled) opt.disabled=true;
+      s.appendChild(opt);
+    });
     wrap.append(l,s);
     area.appendChild(wrap); Chat.scrollStartOf(wrap);
+
+    if(isHigh5){
+      const note=document.createElement('div');
+      note.className='bubble bot muted';
+      note.textContent='ברמת יא/יב 5 יח"ל ניתן לבחור רק מסלול טריפל או מסלול פרטי.';
+      area.appendChild(note);
+    }
 
     Chat.button('המשך', ()=>{
       Chat.userBubble('המשך');
@@ -79,73 +322,80 @@ const BoostFlow = (() => {
       Chat.State.data.planText = meta.text || '';
       Chat.State.data.price    = meta.price || '';
 
-      stepDateTimeSlots();
+      stepDateRanges();
     }, 'btn');
 
     Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
   }
 
-  /* ===== שלב 4: מועדים אפשריים (אפשר רבים) ===== */
-  function stepDateTimeSlots(){
-    Chat.push(stepDateTimeSlots);
+  /* ===== שלב 6: תאריכים + טווחי שעות (ריבוי אופציות) ===== */
+  function stepDateRanges(){
+    Chat.push(stepDateRanges);
 
-    Chat.askDateTimeSlots({
+    askDateWithHourRangeSlots({
       titleHtml:
-        '<strong>בחירת מועדים נוחים לשיעור התגבור</strong><br>' +
-        '<span class="muted">בחר/י תאריך ושעה, לחצ/י "+ הוספת מועד" וניתן להוסיף כמה מועדים. אפשר להסיר כל צ׳יפ לפני המשך.</span>',
+        '<strong>מתי נוח לכם לשיעור התגבור?</strong><br>' +
+        '<span class="muted">בחר/י תאריך וטווח שעות, לחצ/י "+ הוספת מועד". אפשר להוסיף כמה מועדים ולהסיר לפני המשך.</span>',
       dateLabel: 'תאריך לשיעור תגבור',
-      timeLabel: 'שעה',
+      fromLabel: 'משעה',
+      toLabel:   'עד שעה',
       minToday: true,
       times: ['','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'],
       continueText: 'המשך',
       allowBack: true
     }).then(res=>{
-      if(res == null) return; // המשתמש לחץ חזרה
+      if(res == null) return; // חזרה
 
-      const raw = Array.isArray(res) ? res : (res && Array.isArray(res.slots) ? res.slots : []);
+      const raw = Array.isArray(res?.slots) ? res.slots : [];
       if(!raw.length){
         Chat.inlineError('נדרש לבחור לפחות מועד אחד 🕒');
         return;
       }
 
-      const toObj = (s)=>{
-        if(typeof s === 'string'){
-          const m1 = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})$/);
-          if(m1){ const [_, d, t] = m1; return { date:d, time:t, label: humanize(d, t) }; }
-          const m2 = s.match(/^(\d{2}\/\d{2})\s*[•·]\s*(\d{2}:\d{2})$/);
-          if(m2){ const [_, ddmm, t] = m2; return { date:'', time:t, label:`${ddmm} • ${t}` }; }
-          return { date:'', time:'', label:s };
-        }
-        const d = s.date || '';
-        const t = s.time || s.lessonTime || '';
-        return { date:d, time:t, label: s.label || humanize(d, t) };
-      };
+      // נוודא מבנה תקין
+      const slots = raw
+        .map(s=>({ date:s.date||'', from:s.from||'', to:s.to||'', label:s.label||'' }))
+        .filter(s=> s.date && s.from && s.to);
 
-      const slots = raw.map(toObj).filter(x => x.time);
       if(!slots.length){
         Chat.inlineError('נדרש לבחור לפחות מועד אחד תקין 🕒');
         return;
       }
 
-      // שמירה
-      Chat.State.data.lessonSlots = slots;
-      Chat.State.data.slotsText  = slots.map(s => `${s.date} ${s.time}`.trim()).join('; ');
-      Chat.State.data.slotsHuman = slots.map(s => s.label).join('; ');
-      // תאימות לאחור – הראשון
-      Chat.State.data.lessonDate = slots[0].date || '';
-      Chat.State.data.lessonTime = slots[0].time || '';
+      Chat.State.data.boostSlots = slots;  // date/from/to/label
+      // תאימות לאחור (שדות בודדים; נשתמש בתחילה)
+      Chat.State.data.lessonDate = slots[0].date;
+      Chat.State.data.lessonTime = `${slots[0].from}–${slots[0].to}`;
 
-      stepDetails();
+      stepStudentName();
     });
-
-    function humanize(yyyy_mm_dd, hhmm){
-      if(!yyyy_mm_dd) return hhmm || '';
-      const [y,m,d] = yyyy_mm_dd.split('-');
-      return `${d}/${m} • ${hhmm || ''}`.trim();
-    }
   }
 
-  /* ===== שלב 5: מלל חופשי (רשות) ===== */
+  /* ===== שלב 7: שם תלמיד/ה ===== */
+  function stepStudentName(){
+    Chat.push(stepStudentName);
+
+    Chat.botHTML('<strong>שם התלמיד/ה</strong><br><span class="muted">למי מיועד שיעור התגבור?</span>');
+    const studentFirst = Chat.inputRow('שם תלמיד/ה', { id:'student_first', placeholder:'לדוגמה: דנה', required:true, autocomplete:'given-name' });
+    const studentLast  = Chat.inputRow('שם משפחה התלמיד/ה', { id:'student_last', placeholder:'לדוגמה: לוי', required:true, autocomplete:'family-name' });
+
+    Chat.button('המשך', ()=>{
+      Chat.userBubble('המשך');
+      const fn=(studentFirst.value||'').trim();
+      const ln=(studentLast.value||'').trim();
+      if(!fn){ Chat.inlineError('נדרש שם תלמיד/ה ✏️', studentFirst); return; }
+      if(!ln){ Chat.inlineError('נדרש שם משפחה ✏️', studentLast); return; }
+
+      Chat.State.data.studentFirst = fn;
+      Chat.State.data.studentLast  = ln;
+
+      stepDetails();
+    }, 'btn');
+
+    Chat.button('חזרה', ()=> Chat.goBack?.(), 'btn');
+  }
+
+  /* ===== שלב 8: מלל חופשי (רשות) ===== */
   function stepDetails(){
     Chat.push(stepDetails);
     Chat.askFreeMessage({
@@ -162,7 +412,7 @@ const BoostFlow = (() => {
     });
   }
 
-  /* ===== שלב 6: סיכום ===== */
+  /* ===== שלב 9: סיכום ===== */
   function stepSummary(){
     Chat.push(stepSummary);
     Chat.clear();
@@ -172,18 +422,21 @@ const BoostFlow = (() => {
 
     const card = Chat.summaryCard([
       ['פעולה:', 'שיעור תגבור'],
-      ['שם מלא:', `${d.firstName||''} ${d.lastName||''}`.trim()],
+      ['שם מבקש/ת:', `${d.firstName||''} ${d.lastName||''}`.trim()],
       ['טלפון לחזרה:', d.phone || ''],
       ['מקצוע:', d.subject || ''],
+      ['כיתה:', d.grade || ''],
+      ['יחידות:', d.units ? `${d.units} יחידות` : ''],
       ['מסלול:', d.planText || ''],
+      ['שם התלמיד/ה:', `${d.studentFirst||''} ${d.studentLast||''}`.trim()],
       ['הודעה:', d.message || '']
     ]);
 
-    if (Array.isArray(d.lessonSlots) && d.lessonSlots.length){
+    if (Array.isArray(d.boostSlots) && d.boostSlots.length){
       const chips = document.createElement('div');
       chips.className = 'summary';
-      d.lessonSlots.forEach(s=>{
-        chips.appendChild(Chat.chip(s.label || `${s.date} • ${s.time}`));
+      d.boostSlots.forEach(s=>{
+        chips.appendChild(Chat.chip(s.label || `${formatDateHeb(s.date)} • ${s.from}–${s.to}`));
       });
       card.appendChild(document.createElement('hr'));
       card.appendChild(chips);
@@ -201,11 +454,14 @@ const BoostFlow = (() => {
     if(!d.firstName || !d.lastName) errs.push('name');
     if(!Chat.validILPhone(d.phone)) errs.push('phone');
     if(!d.subject) errs.push('subject');
+    if(!d.grade) errs.push('grade');
+    if((d.grade==='י' || d.grade==='יא' || d.grade==='יב') && !d.units) errs.push('units');
     if(!d.planType) errs.push('plan');
-    const hasSlots = Array.isArray(d.lessonSlots) && d.lessonSlots.length > 0;
+    if(!d.studentFirst || !d.studentLast) errs.push('studentName');
+
+    const hasSlots = Array.isArray(d.boostSlots) && d.boostSlots.length > 0;
     if(!hasSlots){
-      if(!d.lessonDate) errs.push('date');
-      if(!d.lessonTime) errs.push('time');
+      errs.push('slots');
     }
 
     if(errs.length){
@@ -217,16 +473,21 @@ const BoostFlow = (() => {
       path: 'מנוי קיים – שיעור תגבור',
       cta: 'שיעור תגבור',
       subject: d.subject,
+      grade: d.grade || '',
+      units: d.units || '',
       planType: d.planType,
       planText: d.planText,
       price: d.price ? `${d.price}₪` : '',
-      lessonDate: hasSlots ? (d.lessonSlots[0]?.date || '') : (d.lessonDate || ''),
-      lessonTime: hasSlots ? (d.lessonSlots[0]?.time || '') : (d.lessonTime || ''),
-      lessonSlots: hasSlots ? d.lessonSlots.map(s=>`${s.date} ${s.time}`.trim()).join('; ') : '',
-      lessonSlotsHuman: hasSlots ? d.lessonSlots.map(s=>s.label).join('; ') : '',
+      // ראשוני לתאימות (אם יש צורך בשדות יחידים)
+      lessonDate: d.boostSlots[0]?.date || '',
+      lessonTime: d.boostSlots[0] ? `${d.boostSlots[0].from}–${d.boostSlots[0].to}` : '',
+      // כל המועדים שבחרו
+      boostSlots: d.boostSlots.map(s=>`${s.date} ${s.from}–${s.to}`).join('; '),
+      boostSlotsHuman: d.boostSlots.map(s=>s.label).join('; '),
+      studentFullName: `${d.studentFirst||''} ${d.studentLast||''}`.trim(),
       message: d.message || '',
       extraNotes: '',
-      fullName: `${d.firstName||''} ${d.lastName||''}`.trim(),
+      fullName: `${d.firstName||''} ${d.lastName||''}`.trim(), // מי שמבקש
       phone: d.phone || '',
       source: 'יוסטון – אתר',
       status: 'לטיפול',
