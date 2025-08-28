@@ -1,3 +1,4 @@
+<!-- /index.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -47,6 +48,7 @@
         linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
         var(--gradient);
       background-attachment: fixed;
+      color: var(--text);
     }
     @media (prefers-color-scheme: dark){
       body{ background:
@@ -84,10 +86,8 @@
     .body.chat-body{ padding: clamp(14px, 2.2vw, 20px); min-height: 40vh }
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
 
-    /* בועות קיימות (מהסטייל הגלובלי), נשפר ריווח */
     .bubble.bot, .bubble.user{ border-radius: 16px; }
 
-    /* קבוצות בחירה (כפתורים ככרטיסים) */
     .section{
       display:flex; flex-direction:column; gap:10px;
       margin-block: clamp(12px, 2vw, 16px);
@@ -106,9 +106,7 @@
 
     .btn.choice{
       display:flex; align-items:center; justify-content:space-between;
-      text-align: start;
-      gap:12px;
-      font-weight:700;
+      text-align: start; gap:12px; font-weight:700;
       padding: clamp(12px, 2vw, 16px) clamp(14px, 2.4vw, 18px);
       border-radius: var(--radius);
       border:1px solid transparent;
@@ -119,7 +117,6 @@
     .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover) }
     .btn.choice .emoji{ opacity:.95; font-size:20px; margin-inline-start:8px }
 
-    /* גווני כפתורים רכים */
     .soft-aqua{ background: var(--soft-1); border-color: var(--soft-1-b); color: var(--text) }
     .soft-aqua:hover{ border-color: color-mix(in oklab, var(--soft-1-b), #5b7cfa 35%) }
     .soft-mint{ background: var(--soft-2); border-color: var(--soft-2-b); color: var(--text) }
@@ -129,7 +126,6 @@
     .soft-lilac{ background: var(--soft-4); border-color: var(--soft-4-b); color: var(--text) }
     .soft-lilac:hover{ border-color: color-mix(in oklab, var(--soft-4-b), #8b5cf6 35%) }
 
-    /* פוטר */
     .footer{
       padding: clamp(12px, 2vw, 16px);
       border-top:1px solid var(--card-brd);
@@ -137,7 +133,6 @@
     }
     .footer .spacer{ flex:1 }
 
-    /* נגישות תנועה */
     @media (prefers-reduced-motion: reduce){
       .btn.choice{ transition:none }
       .btn.choice:hover{ transform:none }
@@ -243,7 +238,7 @@
           <div class="section-title">✨ לא מנויים</div>
           <div class="choices" role="group" aria-label="לא מנויים">
             <button class="btn choice soft-aqua" id="btn-oneoff">
-              <span>אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)</span>
+              <span>אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)</span>
               <span class="emoji">📅</span>
             </button>
             <button class="btn choice soft-rose" id="btn-plan-info">
@@ -254,18 +249,18 @@
         `;
         area.appendChild(sec2);
 
-        // חיבורים
+        // חיבורים – נתיבים מעודכנים
         document.getElementById('btn-membership').onclick = ()=>{
           user('ברשותי מנוי חודשי');
           setTimeout(()=> location.href='branches/branch3/index.html', 150);
         };
         document.getElementById('btn-oneoff').onclick = ()=>{
-          user('אני רוצה שיעור חד פעמי (על בסיס מקום פנוי)');
-          setTimeout(()=> location.href='branches/branch1.html', 150);
+          user('אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)');
+          setTimeout(()=> location.href='branches/branch1/boost.html', 150);
         };
         document.getElementById('btn-plan-info').onclick = ()=>{
           user('אני רוצה פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2.html', 150);
+          setTimeout(()=> location.href='branches/branch2/index.html', 150);
         };
       }, 1600);
     }
