@@ -124,7 +124,6 @@
     .soft-rose{ background: var(--soft-3); border-color: var(--soft-3-b); color: var(--text) }
     .soft-rose:hover{ border-color: color-mix(in oklab, var(--soft-3-b), #ef4444 35%) }
     .soft-lilac{ background: var(--soft-4); border-color: var(--soft-4-b); color: var(--text) }
-    .soft-lilac:hover{ border-color: color-mix(in oklab, var(--soft-4-b), #8b5cf6 35%) }
 
     .footer{
       padding: clamp(12px, 2vw, 16px);
@@ -249,7 +248,7 @@
         `;
         area.appendChild(sec2);
 
-        // חיבורים – נתיבים מעודכנים
+        // חיבורים – נתיבים נכונים
         document.getElementById('btn-membership').onclick = ()=>{
           user('ברשותי מנוי חודשי');
           setTimeout(()=> location.href='branches/branch3/index.html', 150);
@@ -260,7 +259,7 @@
         };
         document.getElementById('btn-plan-info').onclick = ()=>{
           user('אני רוצה פרטים על מנוי חודשי');
-          setTimeout(()=> location.href='branches/branch2/index.html', 150);
+          setTimeout(()=> location.href='branches/branch2.html', 150); // ← תוקן
         };
       }, 1600);
     }
