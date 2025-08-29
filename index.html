@@ -11,46 +11,36 @@
   <meta name="theme-color" content="#5b7cfa" />
 
   <style>
-    /* ======= עידכון לוקאלי – נראות דף הבית (נייטרלי, מודרני, נגיש) ======= */
+    /* ===== תוספות קטנות לנראות הדף הראשי (נייטרלי ופשוט) ===== */
     :root{
       --radius:16px;
       --card-brd:#e6eaf3;
       --text:#0f172a;
       --muted:#6b7280;
       --surface: rgba(255,255,255,0.75);
-      --surface-2: rgba(255,255,255,0.55);
       --shadow: 0 8px 24px rgba(15,23,42,0.08);
       --shadow-hover: 0 12px 36px rgba(15,23,42,0.12);
-      --divider: color-mix(in oklab, #e6eaf3 80%, transparent);
-      --chip: #f3f4f6;
+      --divider:#e9eef7;
     }
     @media (prefers-color-scheme: dark){
       :root{
         --surface: rgba(18,22,33,0.6);
-        --surface-2: rgba(18,22,33,0.45);
         --card-brd:#2a3142;
         --text:#e5e7eb;
         --muted:#9ca3af;
-        --divider: color-mix(in oklab, #2a3142 80%, transparent);
-        --chip: #0f172a;
+        --divider:#2a3142;
       }
     }
 
     body{
       font-family:'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:
-        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%),
-        radial-gradient(1000px 600px at 100% -10%, #8ea5ff22, transparent 60%),
-        radial-gradient(800px 500px at 0% 100%, #8bffd922, transparent 60%);
+        linear-gradient(180deg, #f8fafc 0%, #f4f7ff 60%, #f9fafb 100%);
       background-attachment: fixed;
       color: var(--text);
     }
     @media (prefers-color-scheme: dark){
-      body{ background:
-        linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%),
-        radial-gradient(1000px 600px at 100% -10%, #5b7cfa22, transparent 60%),
-        radial-gradient(800px 500px at 0% 100%, #22c55e22, transparent 60%);
-      }
+      body{ background: linear-gradient(180deg, #0b1220 0%, #0e1424 60%, #0b1220 100%) }
     }
 
     .wrap{ padding: clamp(12px, 2.5vw, 24px) }
@@ -69,8 +59,6 @@
       padding: clamp(16px, 2.4vw, 24px);
       border-bottom:1px solid var(--card-brd);
       display:flex; align-items:center; justify-content:space-between; gap:8px;
-      background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.2));
-      backdrop-filter: blur(6px);
     }
     .brand{ display:flex; align-items:center; gap:12px }
     .logo{
@@ -84,74 +72,49 @@
     .body.chat-body{ padding: clamp(14px, 2.2vw, 22px); min-height: 40vh }
     #area{ overflow-y:auto; max-height:70vh; scroll-behavior:smooth }
 
-    .bubble.bot, .bubble.user{ border-radius: 14px; }
-
-    /* ======= חלוקה ברורה לקבוצות ======= */
-    .stack{ display:flex; flex-direction:column; gap:16px; }
-    .group{
-      background: var(--surface-2);
-      border:1px solid var(--card-brd);
-      border-radius: 16px;
-      padding: clamp(10px, 2vw, 14px) clamp(10px, 2vw, 14px);
-    }
-    .group + .group{ margin-top: 10px }
-    .group-header{
+    /* ——— הפרדה פשוטה וברורה בין קבוצות ——— */
+    .section{ margin: 16px 0 }
+    .section-title{
       display:flex; align-items:center; gap:10px;
-      padding: 6px 8px 10px;
-      border-bottom: 1px dashed var(--divider);
-      margin-bottom: 10px;
+      font-weight:700;
+      margin: 4px 0 10px;
     }
-    .group-header .tag{
-      display:inline-flex; align-items:center; gap:8px;
-      background: var(--chip);
-      border: 1px solid var(--card-brd);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight:700; font-size: 0.92rem;
-    }
-    .group-header .sub{
-      color: var(--muted); font-size: .92rem;
+    .section-title .hint{ color:var(--muted); font-weight:400; font-size:.95rem }
+    .divider{
+      height:1px; background: var(--divider);
+      margin: 18px 0;
+      opacity:.9;
     }
 
-    /* ======= כפתורי־כרטיס נייטרליים ======= */
+    /* ——— כפתורי־כרטיס נייטרליים ——— */
     .choices{
       display:grid; gap:12px; margin-top:8px;
       grid-template-columns: 1fr;
     }
     @media (min-width:560px){ .choices{ grid-template-columns: 1fr 1fr } }
-    @media (min-width:920px){ .choices{ grid-template-columns: 1fr 1fr 1fr } }
 
     .btn.choice{
-      display:flex; flex-direction:column; align-items:flex-start; gap:6px;
-      text-align: start; font-weight:700;
-      padding: clamp(12px, 2vw, 16px);
+      display:flex; align-items:center; justify-content:space-between;
+      text-align:start; gap:10px;
+      padding: 14px 16px;
       border-radius: 14px;
       border:1px solid var(--card-brd);
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.55);
       box-shadow: 0 2px 8px rgba(15,23,42,0.06);
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
-      will-change: transform, box-shadow;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      font-weight:700;
     }
     @media (prefers-color-scheme: dark){
       .btn.choice{ background: rgba(18,22,33,0.5) }
     }
-    .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover); background: rgba(255,255,255,0.75) }
-    .btn.choice .top{
-      display:flex; gap:8px; align-items:center; font-size:1rem;
-    }
-    .btn.choice .emoji{ opacity:.92; font-size:20px }
-    .btn.choice .desc{
-      font-weight:400; color: var(--muted); font-size: .92rem;
-      line-height: 1.5;
-    }
+    .btn.choice:hover{ transform: translateY(-1px); box-shadow: var(--shadow-hover); background: rgba(255,255,255,0.7) }
+    .btn.choice .emoji{ opacity:.9; font-size:20px }
 
-    /* ======= פוטר ======= */
+    /* פוטר */
     .footer{
       padding: clamp(12px, 2vw, 16px);
       border-top:1px solid var(--card-brd);
       display:flex; align-items:center; gap:8px;
-      background: linear-gradient(0deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
-      backdrop-filter: blur(6px);
     }
     .footer .spacer{ flex:1 }
 
@@ -188,88 +151,78 @@
 
   <script>
     const area = document.getElementById('area');
-    function autoscroll(){ area.scrollTop = area.scrollHeight; }
+    const autoscroll = ()=> area.scrollTop = area.scrollHeight;
 
-    function bot(html){
+    const bot = (html)=>{
       const d=document.createElement('div');
       d.className='bubble bot';
       d.innerHTML=html;
       area.appendChild(d);
       autoscroll();
       return d;
-    }
-    function user(text){
+    };
+    const user = (text)=>{
       const d=document.createElement('div');
       d.className='bubble user';
       d.textContent=text;
       area.appendChild(d);
       autoscroll();
       return d;
-    }
-    function actionBtn(text, onClick, cls='btn', parent=area){
-      const b=document.createElement('button');
-      b.className=cls;
-      b.textContent=text;
-      b.onclick=()=>{ b.disabled = true; onClick(); };
-      parent.appendChild(b);
-      autoscroll();
-      return b;
-    }
-    function typingThen(text, delay=650){
+    };
+    const typingThen = (html, delay=550)=>{
       const t=document.createElement('div');
       t.className='typing-indicator';
       t.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      area.appendChild(t);
-      autoscroll();
-      setTimeout(()=>{ t.remove(); bot(text); }, delay);
-    }
+      area.appendChild(t); autoscroll();
+      setTimeout(()=>{ t.remove(); bot(html); }, delay);
+    };
 
     function renderHome(){
-      // קונטיינר מקומי לכל ה“כרטיסים”
-      const stack = document.createElement('div');
-      stack.className = 'stack';
-
-      // קבוצת “מנויים”
-      const g1 = document.createElement('div');
-      g1.className = 'group';
-      g1.innerHTML = `
-        <div class="group-header">
-          <span class="tag">🧑‍🎓 מנויים</span>
-          <span class="sub">פעולות למי שכבר מנוי/ה</span>
+      // ——— מנויים ———
+      const sec1 = document.createElement('div');
+      sec1.className = 'section';
+      sec1.innerHTML = `
+        <div class="section-title">
+          <span>🧑‍🎓 מנויים</span>
+          <span class="hint">למי שכבר מנוי/ה</span>
         </div>
         <div class="choices" role="group" aria-label="מנויים">
           <button class="btn choice" id="btn-membership">
-            <div class="top"><span class="emoji">✅</span><span>ברשותי מנוי חודשי</span></div>
-            <div class="desc">כניסה לתפריט המנוי/ה: שיעור תגבור, השלמות, שינוי שעות, הודעה למזכירות ועוד.</div>
+            <span>ברשותי מנוי חודשי</span>
+            <span class="emoji">✅</span>
           </button>
         </div>
       `;
 
-      // קבוצת “לא מנויים”
-      const g2 = document.createElement('div');
-      g2.className = 'group';
-      g2.innerHTML = `
-        <div class="group-header">
-          <span class="tag">✨ לא מנויים</span>
-          <span class="sub">בדיקת זמינות ושאלות לפני הצטרפות</span>
+      // ——— מפריד ברור ———
+      const divLine = document.createElement('div');
+      divLine.className = 'divider';
+
+      // ——— לא מנויים ———
+      const sec2 = document.createElement('div');
+      sec2.className = 'section';
+      sec2.innerHTML = `
+        <div class="section-title">
+          <span>✨ לא מנויים</span>
+          <span class="hint">בדיקת זמינות ושאלות לפני הצטרפות</span>
         </div>
         <div class="choices" role="group" aria-label="לא מנויים">
           <button class="btn choice" id="btn-oneoff">
-            <div class="top"><span class="emoji">📅</span><span>אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)</span></div>
-            <div class="desc">מבוקש לזמן נקודתי? נשמור פרטים ונבדוק מקום פנוי מול המזכירות.</div>
+            <span>אני רוצה שיעור חד־פעמי (על בסיס מקום פנוי)</span>
+            <span class="emoji">📅</span>
           </button>
           <button class="btn choice" id="btn-plan-info">
-            <div class="top"><span class="emoji">ℹ️</span><span>אני רוצה פרטים על מנוי חודשי</span></div>
-            <div class="desc">פירוט מסלולים, עלויות, איך זה עובד ואיך מצטרפים בצורה חכמה.</div>
+            <span>אני רוצה פרטים על מנוי חודשי</span>
+            <span class="emoji">ℹ️</span>
           </button>
         </div>
       `;
 
-      stack.appendChild(g1);
-      stack.appendChild(g2);
-      area.appendChild(stack);
+      area.appendChild(sec1);
+      area.appendChild(divLine);
+      area.appendChild(sec2);
 
-      // ניווטים
+      // קישורים
       document.getElementById('btn-membership').onclick = ()=>{
         user('ברשותי מנוי חודשי');
         setTimeout(()=> location.href='branches/branch3/index.html', 150);
@@ -286,18 +239,9 @@
 
     function start(){
       area.innerHTML = '';
-
-      typingThen(
-        '<strong>היי, אני יוסטון 👨‍🚀</strong><br>' +
-        'העוזר הדיגיטלי של מרכז בראונשטיין 📚',
-        550
-      );
-
-      setTimeout(()=>{
-        typingThen('<strong>במה אוכל לעזור?</strong><br><span class="muted">בחר/י את הקטגוריה המתאימה</span>', 450);
-      }, 850);
-
-      setTimeout(renderHome, 1500);
+      typingThen('<strong>היי, אני יוסטון 👨‍🚀</strong><br>העוזר הדיגיטלי של מרכז בראונשטיין 📚', 480);
+      setTimeout(()=> typingThen('<strong>במה אוכל לעזור?</strong>', 420), 780);
+      setTimeout(renderHome, 1300);
     }
 
     start();
